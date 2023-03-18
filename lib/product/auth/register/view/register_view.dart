@@ -1,0 +1,191 @@
+// ignore_for_file: use_key_in_widget_constructors, must_be_immutable
+
+import 'package:chatbot/core/constants/color_constant.dart';
+import 'package:chatbot/core/extension/regex_extension.dart';
+import 'package:chatbot/core/language/locale_keys.g.dart';
+import 'package:chatbot/core/view/base/base_stateless.dart';
+import 'package:chatbot/core/view/widget/button/app_button.dart';
+import 'package:chatbot/core/view/widget/formfield/app_form_field.dart';
+import 'package:chatbot/product/auth/login/view/login_view.dart';
+import 'package:chatbot/product/auth/name/view/name_view.dart';
+import 'package:chatbot/product/auth/register/viewmodel/register_view_model.dart';
+import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+class RegisterView extends BaseStateless {
+  RegisterViewModel viewModel = RegisterViewModel();
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => viewModel.startFocusNode(),
+      child: Scaffold(
+        backgroundColor: ColorConstant.instance.additionalWhite,
+        body: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 30.0),
+          child: Padding(
+            padding: const EdgeInsets.only(top: 100.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(
+                  flex: 1,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(
+                        LocaleKeys.sign_up.tr(),
+                        style: currentTextTheme(context).headline3?.copyWith(
+                              fontWeight: FontWeight.w500,
+                              color: ColorConstant.instance.greyScale600,
+                            ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 4.0),
+                      Text(
+                        LocaleKeys.enter_information.tr(),
+                        style: currentTextTheme(context).headline1?.copyWith(
+                              fontWeight: FontWeight.w500,
+                              color: ColorConstant.instance.greyScale900,
+                            ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 20.0),
+                      Form(
+                        key: viewModel.registerFormKey,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            AppFormField(
+                              validator: (_) {
+                                if (viewModel.emailController.text.isEmpty) {
+                                  return LocaleKeys.email_blank_regex.tr();
+                                } else if (!viewModel.emailController.text
+                                    .isValidEmail()) {
+                                  return LocaleKeys.email_wrong_regex.tr();
+                                }
+                                return null;
+                              },
+                              isPrefix: false,
+                              controller: viewModel.emailController,
+                              focusNode: viewModel.emailFocusNode,
+                            ),
+                            const SizedBox(height: 10.0),
+                            Consumer<RegisterViewModel>(
+                              builder: (context, state, child) {
+                                return AppFormField(
+                                  isSuffix: true,
+                                  isObscure: state.isObscure,
+                                  suffixIconValue: IconButton(
+                                    onPressed: () => state.changeObscureText(),
+                                    icon: state.isObscure
+                                        ? Icon(
+                                            Icons.visibility_off,
+                                            color: ColorConstant
+                                                .instance.greyScale600,
+                                          )
+                                        : Icon(
+                                            Icons.visibility,
+                                            color: ColorConstant
+                                                .instance.greyScale600,
+                                          ),
+                                  ),
+                                  validator: (_) {
+                                    if (viewModel
+                                        .passwordController.text.isEmpty) {
+                                      return LocaleKeys.password_blank_regex
+                                          .tr();
+                                    }
+                                    return null;
+                                  },
+                                  isPrefix: false,
+                                  controller: viewModel.passwordController,
+                                  focusNode: viewModel.passwordFocusNode,
+                                  hintText: LocaleKeys.password.tr(),
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 15.0),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 21.0),
+                        child: AppButton(
+                          onTap: () {
+                            if (viewModel.registerFormKey.currentState!
+                                .validate()) {
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => NameView(
+                                            email:
+                                                viewModel.emailController.text,
+                                            password: viewModel
+                                                .passwordController.text,
+                                          )));
+                            }
+                          },
+                          widthValue: width(context: context, value: 1.0),
+                          heightValue: height(context: context, value: 0.07),
+                          backgroundColor: ColorConstant.instance.greyScale900,
+                          borderRadius: 66.0,
+                          text: LocaleKeys.sign_up.tr(),
+                          textStyle:
+                              currentTextTheme(context).headline3?.copyWith(
+                                        fontWeight: FontWeight.w400,
+                                        color: ColorConstant
+                                            .instance.additionalWhite,
+                                      ) ??
+                                  const TextStyle(),
+                        ),
+                      ),
+                      const SizedBox(height: 8.0),
+                      InkWell(
+                        onTap: () {
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => LoginView()));
+                        },
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Text(
+                              LocaleKeys.already_account.tr(),
+                              style: currentTextTheme(context)
+                                  .headline6
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.w500,
+                                    color: ColorConstant.instance.greyScale600,
+                                  ),
+                            ),
+                            const SizedBox(width: 2.0),
+                            Text(
+                              LocaleKeys.sign_in.tr(),
+                              style: currentTextTheme(context)
+                                  .headline6
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.w500,
+                                    color: ColorConstant.instance.greyScale900,
+                                  ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
