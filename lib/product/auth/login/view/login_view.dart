@@ -8,7 +8,6 @@ import 'package:chatbot/core/view/widget/button/app_button.dart';
 import 'package:chatbot/core/view/widget/formfield/app_form_field.dart';
 import 'package:chatbot/product/auth/login/viewmodel/login_view_model.dart';
 import 'package:chatbot/product/auth/register/view/register_view.dart';
-import 'package:chatbot/product/bottom_bar/view/bottom_bar_view.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -122,12 +121,7 @@ class LoginView extends BaseStateless {
                               'password': viewModel.passwordController.text,
                             }, context);
                             if (viewModel.loginFormKey.currentState!
-                                .validate()) {
-                              Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) => BottomBarView()));
-                            }
+                                .validate()) {}
                           },
                           widthValue: width(context: context, value: 1.0),
                           heightValue: height(context: context, value: 0.07),

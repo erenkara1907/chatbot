@@ -86,13 +86,18 @@ class LanguageViewModel extends ChangeNotifier {
     if (model.result == true) {
       for (var i = 0; i < model.data!.languages!.length; i++) {
         if (model.data!.languages![i].isPopular == 1) {
-          popularLanguageTitles.add(model.data!.languages![i].title!);
-          popularLanguageIds.add(model.data!.languages![i].id!);
-          popularLanguageImages.add(model.data!.languages![i].flag!);
+          if (popularLanguageTitles.length != 4) {
+            popularLanguageTitles.add(model.data!.languages![i].title!);
+            popularLanguageIds.add(model.data!.languages![i].id!);
+            popularLanguageImages.add(model.data!.languages![i].flag!);
+          }
         } else {
-          languages = model.data!.languages!;
+          languages.clear();
+          languages.addAll(model.data!.languages!);
         }
       }
+      languages.clear();
+      languages.addAll(model.data!.languages!);
     }
   }
 

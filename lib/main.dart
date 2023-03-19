@@ -13,6 +13,7 @@ import 'package:chatbot/product/bottom_bar/viewmodel/bottom_bar_view_model.dart'
 import 'package:chatbot/product/conversation/viewmodel/conversation_room_view_model.dart';
 import 'package:chatbot/product/conversation/viewmodel/conversation_view_model.dart';
 import 'package:chatbot/product/home/viewmodel/home_view_model.dart';
+import 'package:chatbot/product/onboard/view/onboard_view.dart';
 import 'package:chatbot/product/onboard/viewmodel/onboard_view_model.dart';
 import 'package:chatbot/product/profile/viewmodel/profile_view_model.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -56,12 +57,14 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   String token = '';
+  bool isFirst = true;
 
   Future checkLoginStatus() async {
     final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
     final SharedPreferences prefs = await _prefs;
 
     token = prefs.getString(PreferencesKeys.TOKEN.toString())!;
+    isFirst = prefs.getBool(PreferencesKeys.IS_FIRST_APP.toString())!;
   }
 
   @override
@@ -80,14 +83,23 @@ class _MyAppState extends State<MyApp> {
             child: CircularProgressIndicator(),
           );
         } else if (snapshot.connectionState == ConnectionState.done) {
-          return MaterialApp(
-            title: 'ChatBot',
-            theme: appTheme,
-            localizationsDelegates: context.localizationDelegates,
-            locale: context.locale,
-            debugShowCheckedModeBanner: false,
-            home: token.isNotEmpty ? BottomBarView() : LoginView(),
-          );
+          return isFirst
+              ? MaterialApp(
+                  title: 'ChatBot',
+                  theme: appTheme,
+                  localizationsDelegates: context.localizationDelegates,
+                  locale: context.locale,
+                  debugShowCheckedModeBanner: false,
+                  home: token.isNotEmpty ? BottomBarView() : OnboardView(),
+                )
+              : MaterialApp(
+                  title: 'ChatBot',
+                  theme: appTheme,
+                  localizationsDelegates: context.localizationDelegates,
+                  locale: context.locale,
+                  debugShowCheckedModeBanner: false,
+                  home: token.isNotEmpty ? BottomBarView() : LoginView(),
+                );
         } else {
           return const Text('error');
         }

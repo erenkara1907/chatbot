@@ -29,6 +29,8 @@ class ConversationService {
       'topic_id': topicId,
     });
 
+    print('rsponse: ${response.body}');
+
     return ConversationStoreModel.fromJson(jsonDecode(response.body));
   }
 

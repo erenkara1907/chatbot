@@ -192,7 +192,7 @@ class ProficiencyLevel {
 }
 
 class DailyPractice {
-  int? count;
+  String? count;
   String? completionPercentage;
 
   DailyPractice({this.count, this.completionPercentage});

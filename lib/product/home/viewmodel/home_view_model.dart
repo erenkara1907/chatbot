@@ -36,7 +36,6 @@ class HomeViewModel extends ChangeNotifier {
     final SharedPreferences prefs = await _prefs;
 
     String token = prefs.getString(PreferencesKeys.TOKEN.toString())!;
-    isFirst = prefs.getBool(PreferencesKeys.IS_FIRST_APP.toString())!;
 
     final topicResponse = await service.getTopics();
 
@@ -47,6 +46,20 @@ class HomeViewModel extends ChangeNotifier {
       profileModel = profileResponse;
     }
   }
+
+  // Future getTopics() async {
+  //   final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
+  //   final SharedPreferences prefs = await _prefs;
+
+  //   String token = prefs.getString(PreferencesKeys.TOKEN.toString())!;
+  //   isFirst = prefs.getBool(PreferencesKeys.IS_FIRST_APP.toString())!;
+
+  //   final topicResponse = await service.getTopics();
+
+  //   if (topicResponse.result == true) {
+  //     topics = topicResponse.data!.topics!;
+  //   }
+  // }
 
   Future createConversation(BuildContext context,
       {required String topicId}) async {

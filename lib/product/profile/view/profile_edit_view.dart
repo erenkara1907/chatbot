@@ -96,7 +96,8 @@ class _ProfileEditViewState extends BaseState<ProfileEditView> {
                                               .toString(),
                                 }
                               : {
-                                  'avatar_id': viewModel.selectedAvatarId,
+                                  'avatar_id':
+                                      viewModel.selectedAvatarId.toString(),
                                   'name': viewModel.nameController.text,
                                   'native_language_id':
                                       viewModel.selectedLanguageId == -1
@@ -176,19 +177,33 @@ class _ProfileEditViewState extends BaseState<ProfileEditView> {
                           color: ColorConstant.instance.additionalWhite,
                         )),
                     child: state.isPhotoLoaded
-                        ? Container(
-                            width: 60.0,
-                            height: 60.0,
-                            padding: const EdgeInsets.all(15.0),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(50.0),
-                              color: const Color.fromRGBO(221, 212, 251, 1),
-                              image: DecorationImage(
-                                image: NetworkImage(widget.profilePhoto),
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                          )
+                        ? viewModel.selectedAvatarId == -1
+                            ? Container(
+                                width: 60.0,
+                                height: 60.0,
+                                padding: const EdgeInsets.all(15.0),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(50.0),
+                                  color: const Color.fromRGBO(221, 212, 251, 1),
+                                  image: DecorationImage(
+                                    image: NetworkImage(widget.profilePhoto),
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                              )
+                            : Container(
+                                width: 60.0,
+                                height: 60.0,
+                                padding: const EdgeInsets.all(15.0),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(50.0),
+                                  color: const Color.fromRGBO(221, 212, 251, 1),
+                                  image: DecorationImage(
+                                    image: NetworkImage(viewModel.avatarUrl),
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                              )
                         : Container(
                             width: 60.0,
                             height: 60.0,
@@ -223,9 +238,10 @@ class _ProfileEditViewState extends BaseState<ProfileEditView> {
                               await state.pickImage(context);
                               viewModel.imageFile = File(state.image!.path);
                             } else {
-                              viewModel.isSelectAvatar = true;
+                              state.selectAvatar();
                               viewModel.selectedAvatarId =
-                                  widget.avatars[index].id!;
+                                  widget.avatars[index].id! - 1;
+                              viewModel.avatarUrl = widget.avatars[index].url!;
                             }
                           },
                           child: Container(
@@ -240,6 +256,7 @@ class _ProfileEditViewState extends BaseState<ProfileEditView> {
                                 1,
                               ),
                               borderRadius: BorderRadius.circular(50.0),
+                              border: Border.all(width: 1.0, color: state.isSelectAvatar ? Colors.red : Colors.yellow)
                             ),
                             child: Container(
                               width: 50.0,

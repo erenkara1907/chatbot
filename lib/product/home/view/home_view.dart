@@ -1,4 +1,4 @@
-// ignore_for_file: use_key_in_widget_constructors, must_be_immutable
+// ignore_for_file: use_key_in_widget_constructors, must_be_immutable, no_leading_underscores_for_local_identifiers
 
 import 'dart:math';
 
@@ -10,11 +10,24 @@ import 'package:chatbot/product/home/viewmodel/home_view_model.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../../core/enum/preference_keys.dart';
 
 class HomeView extends BaseStateless {
   HomeViewModel viewModel = HomeViewModel();
+
+  Future setFirstLogin() async {
+    final Future<SharedPreferences> prefs = SharedPreferences.getInstance();
+    final SharedPreferences _prefs = await prefs;
+
+    viewModel.isFirst =
+        _prefs.getBool(PreferencesKeys.IS_FIRST_APP.toString())!;
+  }
+
   @override
   Widget build(BuildContext context) {
+    setFirstLogin();
     return Scaffold(
       backgroundColor: ColorConstant.instance.additionalWhite,
       body: FutureBuilder(
@@ -365,13 +378,13 @@ class HomeView extends BaseStateless {
                         color: ColorConstant.instance.additionalWhite,
                       ),
                       const SizedBox(width: 7.0),
-                      // Text(
-                      //   '${viewModel.profileModel.data!.user!.dailyPractice!.completionPercentage} COMPLETED',
-                      //   style: currentTextTheme(context).headline6?.copyWith(
-                      //         fontWeight: FontWeight.w400,
-                      //         color: ColorConstant.instance.additionalWhite,
-                      //       ),
-                      // ),
+                      Text(
+                        '${viewModel.profileModel.data!.user!.dailyPractice!.completionPercentage} COMPLETED',
+                        style: currentTextTheme(context).headline6?.copyWith(
+                              fontWeight: FontWeight.w400,
+                              color: ColorConstant.instance.additionalWhite,
+                            ),
+                      ),
                     ],
                   )
                 ],
@@ -389,9 +402,7 @@ class HomeView extends BaseStateless {
                     backgroundColor: ColorConstant.instance.greyScale800,
                     color: ColorConstant.instance.greyScale50,
                     minHeight: 6.0,
-                    value: viewModel
-                        .profileModel.data!.user!.dailyPractice!.count!
-                        .toDouble(),
+                    value: 0.3,
                   ),
                 ),
               ),
@@ -425,30 +436,30 @@ class HomeView extends BaseStateless {
                         offset: const Offset(3, 3),
                       )
                     ],
-                    // color: Color.fromRGBO(
-                    //   viewModel.profileModel.data!.user!.color![0],
-                    //   viewModel.profileModel.data!.user!.color![1],
-                    //   viewModel.profileModel.data!.user!.color![2],
-                    //   1,
-                    // ),
+                    color: Color.fromRGBO(
+                      viewModel.profileModel.data!.user!.color![0],
+                      viewModel.profileModel.data!.user!.color![1],
+                      viewModel.profileModel.data!.user!.color![2],
+                      1,
+                    ),
                     borderRadius: BorderRadius.circular(50.0),
                     border: Border.all(
                       width: 1.0,
                       color: ColorConstant.instance.additionalWhite,
                     )),
-                // child: Container(
-                //   width: 20.0,
-                //   height: 20.0,
-                //   padding: const EdgeInsets.all(15.0),
-                //   decoration: BoxDecoration(
-                //     borderRadius: BorderRadius.circular(50.0),
-                //     image: DecorationImage(
-                //       image: NetworkImage(
-                //           viewModel.profileModel.data!.user!.profilePhoto!),
-                //       fit: BoxFit.cover,
-                //     ),
-                //   ),
-                // ),
+                child: Container(
+                  width: 20.0,
+                  height: 20.0,
+                  padding: const EdgeInsets.all(15.0),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(50.0),
+                    image: DecorationImage(
+                      image: NetworkImage(
+                          viewModel.profileModel.data!.user!.profilePhoto!),
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
               ),
             ),
             const SizedBox(width: 10.0),
@@ -456,14 +467,14 @@ class HomeView extends BaseStateless {
               mainAxisAlignment: MainAxisAlignment.start,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Text(
-                //   'Hi ${viewModel.profileModel.data!.user!.name!}'
-                //       .toUpperCase(),
-                //   style: currentTextTheme(context).headline6?.copyWith(
-                //         fontWeight: FontWeight.w400,
-                //         color: ColorConstant.instance.greyScale600,
-                //       ),
-                // ),
+                Text(
+                  'Hi ${viewModel.profileModel.data!.user!.name!}'
+                      .toUpperCase(),
+                  style: currentTextTheme(context).headline6?.copyWith(
+                        fontWeight: FontWeight.w400,
+                        color: ColorConstant.instance.greyScale600,
+                      ),
+                ),
                 Text(
                   LocaleKeys.welcome.tr(),
                   style: currentTextTheme(context).headline3?.copyWith(

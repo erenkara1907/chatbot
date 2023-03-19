@@ -19,7 +19,7 @@ class ConversationRoomView extends BaseStateless {
   final int conversationId;
 
   ConversationRoomView({
-    required this.conversationId,
+    this.conversationId = 0,
   });
 
   @override
@@ -53,69 +53,11 @@ class ConversationRoomView extends BaseStateless {
               future: state.getAllMessages(conversationId: conversationId),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(
+                  return Center(
                     child: CircularProgressIndicator(),
                   );
                 } else if (snapshot.connectionState == ConnectionState.done) {
-                  return SizedBox(
-                    height: height(context: context, value: 1.0),
-                    child: Stack(
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.only(
-                              left: 24.0, right: 24.0, bottom: 60.0),
-                          child: messages(state),
-                        ),
-                        Positioned(
-                          bottom: 30.0,
-                          left: 0.0,
-                          right: 0.0,
-                          child: state.isActive == 0
-                              ? Column(
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: [
-                                    ElevatedButton(
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.transparent,
-                                        elevation: 0,
-                                      ),
-                                      onPressed: () {
-                                        rateDialog(context, state);
-                                      },
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.center,
-                                        children: [
-                                          Icon(
-                                            Icons.lock,
-                                            color: ColorConstant
-                                                .instance.additionalRed,
-                                            size: 15.0,
-                                          ),
-                                          const SizedBox(width: 15.0),
-                                          Text(
-                                            LocaleKeys.endChat.tr(),
-                                            style: currentTextTheme(context)
-                                                .headline3
-                                                ?.copyWith(
-                                                  fontWeight: FontWeight.w400,
-                                                  color: ColorConstant
-                                                      .instance.additionalRed,
-                                                ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    sendInput(context, state),
-                                  ],
-                                )
-                              : sendInput(context, state),
-                        )
-                      ],
-                    ),
-                  );
+                  return chat(context, state);
                 } else {
                   return const Text('error');
                 }
@@ -123,6 +65,64 @@ class ConversationRoomView extends BaseStateless {
             );
           },
         ),
+      ),
+    );
+  }
+
+  SizedBox chat(BuildContext context, ConversationRoomViewModel state) {
+    return SizedBox(
+      height: height(context: context, value: 1.0),
+      child: Stack(
+        children: [
+          Padding(
+            padding:
+                const EdgeInsets.only(left: 24.0, right: 24.0, bottom: 60.0),
+            child: messages(state),
+          ),
+          Positioned(
+            bottom: 30.0,
+            left: 0.0,
+            right: 0.0,
+            child: state.isActive == 0
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.transparent,
+                          elevation: 0,
+                        ),
+                        onPressed: () {
+                          rateDialog(context, state);
+                        },
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.lock,
+                              color: ColorConstant.instance.additionalRed,
+                              size: 15.0,
+                            ),
+                            const SizedBox(width: 15.0),
+                            Text(
+                              LocaleKeys.endChat.tr(),
+                              style: currentTextTheme(context)
+                                  .headline3
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.w400,
+                                    color: ColorConstant.instance.additionalRed,
+                                  ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      sendInput(context, state),
+                    ],
+                  )
+                : sendInput(context, state),
+          )
+        ],
       ),
     );
   }

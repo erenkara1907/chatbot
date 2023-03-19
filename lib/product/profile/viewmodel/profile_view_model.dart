@@ -50,6 +50,8 @@ class ProfileViewModel extends ChangeNotifier {
   int selectedLearnPopularLanguageId = -1;
   int selectedLanguageLevelId = -1;
 
+  String avatarUrl = '';
+
   List<Languages> languages = [];
   List<Languages> searchLanguages = [];
   List<String> popularLanguageTitles = [];
@@ -68,6 +70,11 @@ class ProfileViewModel extends ChangeNotifier {
   int selectedAvatarId = -1;
 
   final ImagePicker _picker = ImagePicker();
+
+  selectAvatar() {
+    isSelectAvatar = true;
+    notifyListeners();
+  }
 
   // Pick an image
   Future pickImage(BuildContext context) async {

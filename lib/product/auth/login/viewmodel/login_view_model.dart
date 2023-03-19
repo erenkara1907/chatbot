@@ -42,6 +42,10 @@ class LoginViewModel extends ChangeNotifier {
 
       Navigator.push(
           context, MaterialPageRoute(builder: (context) => BottomBarView()));
-    } else {}
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Wrong email or password')),
+      );
+    }
   }
 }

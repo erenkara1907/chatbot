@@ -13,8 +13,6 @@ import '../../../../core/view/widget/button/app_button.dart';
 import '../../../../core/view/widget/button/language_button.dart';
 
 class NativeLanguageView extends BaseStateless {
-  LanguageViewModel viewModel = LanguageViewModel();
-
   final String email;
   final String password;
   final String name;
@@ -25,6 +23,7 @@ class NativeLanguageView extends BaseStateless {
     required this.name,
   });
 
+  LanguageViewModel viewModel = LanguageViewModel();
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -134,7 +133,7 @@ class NativeLanguageView extends BaseStateless {
           Align(
             alignment: Alignment.center,
             child: Text(
-              LocaleKeys.can_answer.tr(),
+              LocaleKeys.great.tr(),
               style: currentTextTheme(context).headline3?.copyWith(
                     fontWeight: FontWeight.w500,
                     color: ColorConstant.instance.greyScale600,
@@ -145,7 +144,7 @@ class NativeLanguageView extends BaseStateless {
           Align(
             alignment: Alignment.center,
             child: Text(
-              LocaleKeys.what_native.tr(),
+              LocaleKeys.what_learn_language.tr(),
               style: currentTextTheme(context).headline1?.copyWith(
                     fontWeight: FontWeight.w500,
                     color: ColorConstant.instance.greyScale900,
@@ -175,14 +174,12 @@ class NativeLanguageView extends BaseStateless {
                       LanguageButton(
                         image: viewModel.popularLanguageImages[index],
                         languageId: viewModel.popularLanguageIds[index],
-                        selectedIndex: state.selectedPopularIndex,
+                        selectedIndex: state.selectedLearnPopularIndex,
                         onTap: () {
                           viewModel.selectedPopularLanguageId =
                               viewModel.popularLanguageIds[index];
-                          state.changeCheckboxStatusPopular(index: index);
-                          viewModel.selectedPopularIndex = index;
-                          viewModel.nativeLanguage =
-                              viewModel.popularLanguageTitles[index];
+                          state.changeCheckboxLearnStatusPopular(index: index);
+                          viewModel.selectedLearnPopularIndex = index;
                         },
                         widthValue: width(context: context, value: 1.0),
                         heightValue: height(context: context, value: 0.07),
@@ -230,14 +227,12 @@ class NativeLanguageView extends BaseStateless {
                       LanguageButton(
                         image: viewModel.languages[index].flag!,
                         languageId: viewModel.languages[index].id!,
-                        selectedIndex: state.selectedIndex,
+                        selectedIndex: state.selectedLearnIndex,
                         onTap: () {
                           viewModel.selectedLanguageId =
                               viewModel.languages[index].id!;
-                          state.changeCheckboxStatus(index: index);
-                          viewModel.selectedIndex = index;
-                          viewModel.nativeLanguage =
-                              viewModel.languages[index].title!;
+                          state.changeCheckboxLearnStatus(index: index);
+                          viewModel.selectedLearnIndex = index;
                         },
                         widthValue: width(context: context, value: 1.0),
                         heightValue: height(context: context, value: 0.07),
