@@ -133,7 +133,7 @@ class NativeLanguageView extends BaseStateless {
           Align(
             alignment: Alignment.center,
             child: Text(
-              LocaleKeys.great.tr(),
+              LocaleKeys.can_answer.tr(),
               style: currentTextTheme(context).headline3?.copyWith(
                     fontWeight: FontWeight.w500,
                     color: ColorConstant.instance.greyScale600,
@@ -144,7 +144,7 @@ class NativeLanguageView extends BaseStateless {
           Align(
             alignment: Alignment.center,
             child: Text(
-              LocaleKeys.what_learn_language.tr(),
+              LocaleKeys.what_native.tr(),
               style: currentTextTheme(context).headline1?.copyWith(
                     fontWeight: FontWeight.w500,
                     color: ColorConstant.instance.greyScale900,
@@ -174,12 +174,12 @@ class NativeLanguageView extends BaseStateless {
                       LanguageButton(
                         image: viewModel.popularLanguageImages[index],
                         languageId: viewModel.popularLanguageIds[index],
-                        selectedIndex: state.selectedLearnPopularIndex,
+                        selectedIndex: state.selectedPopularIndex,
                         onTap: () {
                           viewModel.selectedPopularLanguageId =
                               viewModel.popularLanguageIds[index];
-                          state.changeCheckboxLearnStatusPopular(index: index);
-                          viewModel.selectedLearnPopularIndex = index;
+                          state.changeCheckboxStatusPopular(index: index);
+                          viewModel.selectedPopularIndex = index;
                         },
                         widthValue: width(context: context, value: 1.0),
                         heightValue: height(context: context, value: 0.07),
@@ -227,12 +227,12 @@ class NativeLanguageView extends BaseStateless {
                       LanguageButton(
                         image: viewModel.languages[index].flag!,
                         languageId: viewModel.languages[index].id!,
-                        selectedIndex: state.selectedLearnIndex,
+                        selectedIndex: state.selectedIndex,
                         onTap: () {
                           viewModel.selectedLanguageId =
                               viewModel.languages[index].id!;
-                          state.changeCheckboxLearnStatus(index: index);
-                          viewModel.selectedLearnIndex = index;
+                          state.changeCheckboxStatus(index: index);
+                          viewModel.selectedIndex = index;
                         },
                         widthValue: width(context: context, value: 1.0),
                         heightValue: height(context: context, value: 0.07),

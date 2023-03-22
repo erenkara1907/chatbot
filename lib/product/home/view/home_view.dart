@@ -10,9 +10,11 @@ import 'package:chatbot/product/home/viewmodel/home_view_model.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/enum/preference_keys.dart';
+import '../../conversation/view/conversation_room_view.dart';
 
 class HomeView extends BaseStateless {
   HomeViewModel viewModel = HomeViewModel();
@@ -30,68 +32,92 @@ class HomeView extends BaseStateless {
     setFirstLogin();
     return Scaffold(
       backgroundColor: ColorConstant.instance.additionalWhite,
-      body: FutureBuilder(
-        future: viewModel.getTopicsAndProfileInfo(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
-          } else if (snapshot.connectionState == ConnectionState.done) {
-            return SingleChildScrollView(
-              physics: const ClampingScrollPhysics(),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  customAppBar(context),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24.0,
+      body: SingleChildScrollView(
+        physics: const ClampingScrollPhysics(),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            FutureBuilder(
+              future: viewModel.getProfileInfo(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center();
+                } else if (snapshot.connectionState == ConnectionState.done) {
+                  return Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      customAppBar(context),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            Divider(
+                              thickness: 1.0,
+                              color: ColorConstant.instance.greyScale300,
+                            ),
+                            const SizedBox(height: 20.0),
+                            lessonCard(context),
+                            const SizedBox(height: 24.0),
+                            Text(
+                              LocaleKeys.topics.tr(),
+                              style: currentTextTheme(context)
+                                  .headline2
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                    color: ColorConstant.instance.greyScale900,
+                                  ),
+                            ),
+                            const SizedBox(height: 16.0),
+                          ],
+                        ),
+                      )
+                    ],
+                  );
+                } else {
+                  return const Text('error');
+                }
+              },
+            ),
+            FutureBuilder(
+              future: viewModel.getTopics(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return Center(
+                    child: CircularProgressIndicator(
+                      color: ColorConstant.instance.greyScale900,
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Divider(
-                          thickness: 1.0,
-                          color: ColorConstant.instance.greyScale300,
-                        ),
-                        const SizedBox(height: 20.0),
-                        lessonCard(context),
-                        const SizedBox(height: 24.0),
-                        Text(
-                          LocaleKeys.topics.tr(),
-                          style: currentTextTheme(context).headline2?.copyWith(
-                                fontWeight: FontWeight.w600,
-                                color: ColorConstant.instance.greyScale900,
-                              ),
-                        ),
-                        const SizedBox(height: 16.0),
-                        GridView.builder(
-                          shrinkWrap: true,
-                          itemCount: viewModel.topics.length,
-                          physics: const ClampingScrollPhysics(),
-                          scrollDirection: Axis.vertical,
-                          gridDelegate:
-                              const SliverGridDelegateWithMaxCrossAxisExtent(
-                            maxCrossAxisExtent: 200,
-                            crossAxisSpacing: 20,
-                            mainAxisSpacing: 20,
-                          ),
-                          itemBuilder: (context, index) {
-                            return topicCard(context, index);
-                          },
-                        ),
-                      ],
+                  );
+                } else if (snapshot.connectionState == ConnectionState.done) {
+                  return Padding(
+                    padding: const EdgeInsets.only(
+                        bottom: 80.0, left: 24.0, right: 24.0),
+                    child: GridView.builder(
+                      shrinkWrap: true,
+                      itemCount: viewModel.topics.length,
+                      physics: const ClampingScrollPhysics(),
+                      scrollDirection: Axis.vertical,
+                      gridDelegate:
+                          const SliverGridDelegateWithMaxCrossAxisExtent(
+                        maxCrossAxisExtent: 200,
+                        crossAxisSpacing: 20,
+                        mainAxisSpacing: 20,
+                      ),
+                      itemBuilder: (context, index) {
+                        return topicCard(context, index);
+                      },
                     ),
-                  )
-                ],
-              ),
-            );
-          } else {
-            return const Text('error');
-          }
-        },
+                  );
+                } else {
+                  return const Text('error');
+                }
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -200,50 +226,64 @@ class HomeView extends BaseStateless {
                       },
                     ),
                     const SizedBox(height: 24.0),
-                    SizedBox(
-                      width: width(context: context, value: 1.0) - 132.0,
-                      height: height(context: context, value: 0.07),
-                      child: ElevatedButton(
-                        onPressed: () {
-                          viewModel.setFirstLogin();
-                          viewModel.createConversation(
-                            context,
-                            topicId: viewModel.topics[index].id!.toString(),
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: ColorConstant.instance.greyScale400,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(66.0),
-                          ),
-                          elevation: 0,
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text(""),
-                            const Text(""),
-                            Text(
-                              LocaleKeys.let_start.tr(),
-                              style: currentTextTheme(context)
-                                  .headline3
-                                  ?.copyWith(
-                                    fontWeight: FontWeight.w400,
-                                    color: ColorConstant.instance.greyScale900,
-                                  ),
-                            ),
-                            Container(
-                              width: 44.0,
-                              height: 44.0,
-                              decoration: BoxDecoration(
-                                color: ColorConstant.instance.greyScale900,
-                                borderRadius: BorderRadius.circular(50.0),
+                    Consumer<HomeViewModel>(
+                      builder: (context, state, child) {
+                        return SizedBox(
+                          width: width(context: context, value: 1.0) - 132.0,
+                          height: height(context: context, value: 0.07),
+                          child: ElevatedButton(
+                            onPressed: () {
+                              state.chnageConversationStatus(false);
+                              viewModel.setFirstLogin();
+                              final response = viewModel.createConversation(
+                                context,
+                                topicId: viewModel.topics[index].id!.toString(),
+                              );
+
+                              response.then((value) {
+                                if (value.result == true) {
+                                  state.chnageConversationStatus(true);
+                                  Navigator.pushReplacement(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          ConversationRoomView(
+                                        conversationId:
+                                            viewModel.conversation.id!,
+                                      ),
+                                    ),
+                                  );
+                                }
+                              });
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor:
+                                  ColorConstant.instance.greyScale400,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(66.0),
                               ),
-                              child: const Icon(Icons.arrow_forward),
+                              elevation: 0,
                             ),
-                          ],
-                        ),
-                      ),
+                            child: state.isCreatedConversation
+                                ? Text(
+                                    LocaleKeys.let_start.tr(),
+                                    style: currentTextTheme(context)
+                                        .headline3
+                                        ?.copyWith(
+                                          fontWeight: FontWeight.w400,
+                                          color: ColorConstant
+                                              .instance.greyScale900,
+                                        ),
+                                  )
+                                : Center(
+                                    child: CircularProgressIndicator(
+                                      color: ColorConstant
+                                          .instance.additionalWhite,
+                                    ),
+                                  ),
+                          ),
+                        );
+                      },
                     ),
                   ],
                 ),
@@ -260,12 +300,7 @@ class HomeView extends BaseStateless {
       width: width(context: context, value: 1.0),
       decoration: BoxDecoration(
         color: ColorConstant.instance.greyScale100,
-        borderRadius: viewModel.isFirst
-            ? const BorderRadius.only(
-                topLeft: Radius.circular(20.0),
-                topRight: Radius.circular(20.0),
-              )
-            : BorderRadius.circular(20.0),
+        borderRadius: BorderRadius.circular(20.0),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.start,
@@ -333,7 +368,8 @@ class HomeView extends BaseStateless {
                 ],
               ),
             ),
-          )
+          ),
+          const SizedBox(height: 10.0),
         ],
       ),
     );
@@ -402,7 +438,10 @@ class HomeView extends BaseStateless {
                     backgroundColor: ColorConstant.instance.greyScale800,
                     color: ColorConstant.instance.greyScale50,
                     minHeight: 6.0,
-                    value: 0.3,
+                    value: double.parse(
+                      viewModel.profileModel.data!.user!.dailyPractice!.count
+                          .toString(),
+                    ),
                   ),
                 ),
               ),
@@ -434,7 +473,7 @@ class HomeView extends BaseStateless {
                         blurRadius: 10.0,
                         spreadRadius: 1.0,
                         offset: const Offset(3, 3),
-                      )
+                      ),
                     ],
                     color: Color.fromRGBO(
                       viewModel.profileModel.data!.user!.color![0],

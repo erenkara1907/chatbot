@@ -2,7 +2,6 @@
 
 import 'package:chatbot/core/enum/preference_keys.dart';
 import 'package:chatbot/product/conversation/service/conversation_service.dart';
-import 'package:chatbot/product/conversation/view/conversation_room_view.dart';
 import 'package:chatbot/product/home/model/profile_home_model.dart';
 import 'package:chatbot/product/home/service/home_service.dart';
 import 'package:flutter/material.dart';
@@ -20,6 +19,8 @@ class HomeViewModel extends ChangeNotifier {
 
   Conversation conversation = Conversation();
 
+  bool isCreatedConversation = true;
+
   bool isFirst = true;
 
   Future setFirstLogin() async {
@@ -31,18 +32,22 @@ class HomeViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future getTopicsAndProfileInfo() async {
+  Future getTopics() async {
+    final topicResponse = await service.getTopics();
+
+    if (topicResponse.result == true) {
+      topics = topicResponse.data!.topics!;
+    }
+  }
+
+  Future getProfileInfo() async {
     final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
     final SharedPreferences prefs = await _prefs;
 
     String token = prefs.getString(PreferencesKeys.TOKEN.toString())!;
-
-    final topicResponse = await service.getTopics();
-
     final profileResponse = await service.getProfileInfo(token);
 
-    if (topicResponse.result == true && profileResponse.result == true) {
-      topics = topicResponse.data!.topics!;
+    if (profileResponse.result == true) {
       profileModel = profileResponse;
     }
   }
@@ -61,7 +66,12 @@ class HomeViewModel extends ChangeNotifier {
   //   }
   // }
 
-  Future createConversation(BuildContext context,
+  chnageConversationStatus(bool status) {
+    isCreatedConversation = status;
+    notifyListeners();
+  }
+
+  Future<ConversationStoreModel> createConversation(BuildContext context,
       {required String topicId}) async {
     final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
     final SharedPreferences prefs = await _prefs;
@@ -73,14 +83,8 @@ class HomeViewModel extends ChangeNotifier {
 
     if (response.result == true) {
       conversation = response.data!.conversation!;
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => ConversationRoomView(
-            conversationId: response.data!.conversation!.id!,
-          ),
-        ),
-      );
     }
+
+    return response;
   }
 }

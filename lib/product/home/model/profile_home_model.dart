@@ -44,6 +44,7 @@ class User {
   NativeLanguage? nativeLanguage;
   List<LearnLanguages>? learnLanguages;
   String? profilePhoto;
+  bool? isAvatar;
   List<int>? color;
   DailyPractice? dailyPractice;
 
@@ -54,6 +55,7 @@ class User {
       this.nativeLanguage,
       this.learnLanguages,
       this.profilePhoto,
+      this.isAvatar,
       this.color,
       this.dailyPractice});
 
@@ -71,6 +73,7 @@ class User {
       });
     }
     profilePhoto = json['profile_photo'];
+    isAvatar = json['is_avatar'];
     color = json['color'].cast<int>();
     dailyPractice = json['daily_practice'] != null
         ? DailyPractice.fromJson(json['daily_practice'])

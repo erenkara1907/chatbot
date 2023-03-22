@@ -89,6 +89,9 @@ class LearnLanguageView extends BaseStateless {
                       context,
                       MaterialPageRoute(
                         builder: (context) => LanguageLevelView(
+                          learnLanguage: viewModel.selectedLearnIndex != -1
+                              ? viewModel.selectedLearnTitle
+                              : viewModel.selectedLearnTitlePopular,
                           email: email,
                           password: password,
                           name: name,
@@ -184,6 +187,8 @@ class LearnLanguageView extends BaseStateless {
                               viewModel.popularLanguageIds[index];
                           state.changeCheckboxLearnStatusPopular(index: index);
                           viewModel.selectedLearnPopularIndex = index;
+                          viewModel.selectedLearnTitlePopular =
+                              viewModel.popularLanguageTitles[index];
                         },
                         widthValue: width(context: context, value: 1.0),
                         heightValue: height(context: context, value: 0.07),
@@ -237,6 +242,8 @@ class LearnLanguageView extends BaseStateless {
                               viewModel.languages[index].id!;
                           state.changeCheckboxLearnStatus(index: index);
                           viewModel.selectedLearnIndex = index;
+                          viewModel.selectedLearnTitle =
+                              viewModel.languages[index].title!;
                         },
                         widthValue: width(context: context, value: 1.0),
                         heightValue: height(context: context, value: 0.07),

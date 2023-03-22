@@ -29,7 +29,7 @@ class ConversationService {
       'topic_id': topicId,
     });
 
-    print('rsponse: ${response.body}');
+    print('conversation: ${response.body}');
 
     return ConversationStoreModel.fromJson(jsonDecode(response.body));
   }
@@ -72,6 +72,7 @@ class ConversationService {
         headers: {
           'Authorization': 'Bearer $token',
         });
+
 
     return TranslateModel.fromJson(jsonDecode(response.body));
   }

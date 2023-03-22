@@ -113,28 +113,12 @@ class OnboardView extends BaseStateless {
                       ),
                       elevation: 0,
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(""),
-                        const Text(""),
-                        Text(
-                          LocaleKeys.welcome_button.tr(),
-                          style: currentTextTheme(context).headline3?.copyWith(
-                                fontWeight: FontWeight.w400,
-                                color: ColorConstant.instance.greyScale900,
-                              ),
-                        ),
-                        Container(
-                          width: 44.0,
-                          height: 44.0,
-                          decoration: BoxDecoration(
+                    child: Text(
+                      LocaleKeys.welcome_button.tr(),
+                      style: currentTextTheme(context).headline3?.copyWith(
+                            fontWeight: FontWeight.w400,
                             color: ColorConstant.instance.greyScale900,
-                            borderRadius: BorderRadius.circular(50.0),
                           ),
-                          child: const Icon(Icons.arrow_forward),
-                        ),
-                      ],
                     ),
                   ),
                 ),

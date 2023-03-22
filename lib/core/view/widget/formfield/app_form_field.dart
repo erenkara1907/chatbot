@@ -21,6 +21,7 @@ class AppFormField extends BaseStateless {
   final Widget? suffixIconValue;
   final bool isSuffix;
   final bool isObscure;
+  final bool enabled;
 
   AppFormField({
     this.widthValue,
@@ -36,6 +37,7 @@ class AppFormField extends BaseStateless {
     this.suffixIconValue,
     this.isSuffix = false,
     this.isObscure = false,
+    this.enabled = false,
   });
 
   @override
@@ -44,6 +46,7 @@ class AppFormField extends BaseStateless {
       width: widthValue ?? width(context: context, value: 1.0),
       height: heightValue ?? height(context: context, value: 0.07),
       child: TextFormField(
+        readOnly: enabled,
         obscureText: isObscure,
         validator: validator ??
             (_) {
@@ -95,6 +98,24 @@ class AppFormField extends BaseStateless {
                   ),
                 ),
                 focusedErrorBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(
+                    66.0,
+                  ),
+                  borderSide: BorderSide(
+                    width: 1.0,
+                    color: ColorConstant.instance.additionalRed,
+                  ),
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(
+                    66.0,
+                  ),
+                  borderSide: BorderSide(
+                    width: 1.0,
+                    color: ColorConstant.instance.additionalRed,
+                  ),
+                ),
+                disabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(
                     66.0,
                   ),

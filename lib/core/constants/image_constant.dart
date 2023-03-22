@@ -29,4 +29,5 @@ class ImageConstant {
   String uploadImage = '$asset' 'upload_image.png';
   String avatarBig = '$asset' 'avatar_big.png';
   String avatarHome = '$asset' 'home_avatar.png';
+  String smallRobot = '$asset' 'small_robot.png';
 }

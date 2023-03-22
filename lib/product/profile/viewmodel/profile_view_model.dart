@@ -5,6 +5,7 @@ import 'dart:typed_data';
 
 import 'package:chatbot/product/auth/language/service/language_service.dart';
 import 'package:chatbot/product/bottom_bar/view/bottom_bar_view.dart';
+import 'package:chatbot/product/onboard/view/onboard_view.dart';
 import 'package:chatbot/product/profile/model/profile_model.dart';
 import 'package:chatbot/product/profile/service/profile_service.dart';
 import 'package:flutter/material.dart';
@@ -38,6 +39,7 @@ class ProfileViewModel extends ChangeNotifier {
   int selectedIndex = -1;
   int selectedPopularIndex = -1;
   int selectedLevelIndex = -1;
+  int selectedAvatarIndex = -1;
 
   int selectedLanguageId = -1;
   int selectedPopularLanguageId = -1;
@@ -66,6 +68,9 @@ class ProfileViewModel extends ChangeNotifier {
   bool isPhotoLoaded = true;
   bool switchState = true;
 
+  String learnNativeLanguage = '';
+  String learnNativeLanguagePopular = '';
+
   bool isSelectAvatar = true;
   int selectedAvatarId = -1;
 
@@ -74,6 +79,25 @@ class ProfileViewModel extends ChangeNotifier {
   selectAvatar() {
     isSelectAvatar = true;
     notifyListeners();
+  }
+
+  Future deleteAccount(BuildContext context) async {
+    final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
+    final SharedPreferences prefs = await _prefs;
+
+    String token = prefs.getString(PreferencesKeys.TOKEN.toString())!;
+
+    final response = await service.deleteAccount(token);
+
+    if (response.result == true) {
+      prefs.remove(PreferencesKeys.TOKEN.toString());
+      prefs.remove(PreferencesKeys.IS_FIRST_APP.toString());
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => OnboardView()),
+        (route) => false,
+      );
+    }
   }
 
   // Pick an image
@@ -109,12 +133,12 @@ class ProfileViewModel extends ChangeNotifier {
           content: Text('Profil fotoğrafı başarıyla güncellendi'),
         ),
       );
-      await service.updateProfile(
-        token,
-        {
-          // 'avatar_id': response.id.toString(),
-        },
-      );
+      // await service.updateProfile(
+      //   token,
+      //   {
+      //     // 'avatar_id': response.id.toString(),
+      //   },
+      // );
     } else {
       ScaffoldMessenger.of(context)
           .showSnackBar(const SnackBar(content: Text("Fotoğraf Yüklenemedi")));
@@ -167,10 +191,10 @@ class ProfileViewModel extends ChangeNotifier {
 
     String token = prefs.getString(PreferencesKeys.TOKEN.toString())!;
 
-    final profileResponse = await service.getProfileInfo(token);
     await getLanguages();
     await getAvatars(token);
     await getLanguageLevels();
+    final profileResponse = await service.getProfileInfo(token);
 
     if (profileResponse.result == true) {
       profileModel = profileResponse;
@@ -183,13 +207,18 @@ class ProfileViewModel extends ChangeNotifier {
     if (model.result == true) {
       for (var i = 0; i < model.data!.languages!.length; i++) {
         if (model.data!.languages![i].isPopular == 1) {
-          popularLanguageTitles.add(model.data!.languages![i].title!);
-          popularLanguageIds.add(model.data!.languages![i].id!);
-          popularLanguageImages.add(model.data!.languages![i].flag!);
+          if (popularLanguageTitles.length != 4) {
+            popularLanguageTitles.add(model.data!.languages![i].title!);
+            popularLanguageIds.add(model.data!.languages![i].id!);
+            popularLanguageImages.add(model.data!.languages![i].flag!);
+          }
         } else {
-          languages = model.data!.languages!;
+          languages.clear();
+          languages.addAll(model.data!.languages!);
         }
       }
+      languages.clear();
+      languages.addAll(model.data!.languages!);
     }
   }
 

@@ -56,18 +56,22 @@ class Conversation {
   int? isActive;
   Topic? topic;
   Language? language;
+  Language? nativeLanguage;
   ProficiencyLevel? proficiencyLevel;
   String? lastMessage;
   String? createdTime;
+  String? conversationCompletionCount;
 
   Conversation(
       {this.id,
       this.isActive,
       this.topic,
       this.language,
+      this.nativeLanguage,
       this.proficiencyLevel,
       this.lastMessage,
-      this.createdTime});
+      this.createdTime,
+      this.conversationCompletionCount});
 
   Conversation.fromJson(Map<String, dynamic> json) {
     id = json['id'];
@@ -75,11 +79,15 @@ class Conversation {
     topic = json['topic'] != null ? Topic.fromJson(json['topic']) : null;
     language =
         json['language'] != null ? Language.fromJson(json['language']) : null;
+    nativeLanguage = json['native_language'] != null
+        ? Language.fromJson(json['native_language'])
+        : null;
     proficiencyLevel = json['proficiency_level'] != null
         ? ProficiencyLevel.fromJson(json['proficiency_level'])
         : null;
     lastMessage = json['last_message'];
     createdTime = json['created_time'];
+    conversationCompletionCount = json['conversation_completion_count'];
   }
 
   Map<String, dynamic> toJson() {
@@ -92,11 +100,15 @@ class Conversation {
     if (language != null) {
       data['language'] = language!.toJson();
     }
+    if (nativeLanguage != null) {
+      data['native_language'] = nativeLanguage!.toJson();
+    }
     if (proficiencyLevel != null) {
       data['proficiency_level'] = proficiencyLevel!.toJson();
     }
     data['last_message'] = lastMessage;
     data['created_time'] = createdTime;
+    data['conversation_completion_count'] = conversationCompletionCount;
     return data;
   }
 }
@@ -105,13 +117,15 @@ class Topic {
   int? id;
   String? title;
   String? icon;
+  List<String>? description;
 
-  Topic({this.id, this.title, this.icon});
+  Topic({this.id, this.title, this.icon, this.description});
 
   Topic.fromJson(Map<String, dynamic> json) {
     id = json['id'];
     title = json['title'];
     icon = json['icon'];
+    description = json['description'].cast<String>();
   }
 
   Map<String, dynamic> toJson() {
@@ -119,6 +133,7 @@ class Topic {
     data['id'] = id;
     data['title'] = title;
     data['icon'] = icon;
+    data['description'] = description;
     return data;
   }
 }

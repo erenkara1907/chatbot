@@ -27,6 +27,7 @@ class IconConstant {
   String iconWriteUs = '$asset' 'write_us.svg';
   String iconSend = '$asset' 'send.svg';
   String iconCharge = '$asset' 'charge.svg';
+  String iconLogout = '$asset' 'logout.svg';
 
   // Png
   String iconStar = '$asset' 'star.png';

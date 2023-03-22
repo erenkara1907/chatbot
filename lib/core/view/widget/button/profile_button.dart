@@ -32,6 +32,7 @@ class ProfileButton extends BaseStateless {
       child: ElevatedButton(
         onPressed: onTap ?? () {},
         style: ElevatedButton.styleFrom(
+          enableFeedback: false,
             backgroundColor: ColorConstant.instance.additionalWhite,
             shape: RoundedRectangleBorder(
               side: BorderSide(

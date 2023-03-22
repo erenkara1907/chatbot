@@ -4,6 +4,7 @@ import 'package:chatbot/core/enum/preference_keys.dart';
 import 'package:chatbot/product/auth/language/model/language_model.dart';
 import 'package:chatbot/product/auth/language/service/language_service.dart';
 import 'package:chatbot/product/auth/register/service/register_service.dart';
+import 'package:chatbot/product/auth/register/view/register_view.dart';
 import 'package:chatbot/product/bottom_bar/view/bottom_bar_view.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -14,6 +15,9 @@ class LanguageViewModel extends ChangeNotifier {
   TextEditingController searchController = TextEditingController();
 
   FocusNode searchFocusNode = FocusNode();
+
+  String selectedLearnTitle = '';
+  String selectedLearnTitlePopular = '';
 
   bool isCheck = false;
   bool isCheckedValue = false;
@@ -120,7 +124,18 @@ class LanguageViewModel extends ChangeNotifier {
           PreferencesKeys.TOKEN.toString(), response.data!.token!);
 
       Navigator.push(
-          context, MaterialPageRoute(builder: (context) => BottomBarView()));
-    } else {}
+          context, MaterialPageRoute(builder:   (context) => BottomBarView()));
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('The email has already been taken')),
+      );
+
+      Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(
+            builder: (context) => RegisterView(),
+          ),
+          (route) => false);
+    }
   }
 }

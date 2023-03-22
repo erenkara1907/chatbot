@@ -52,6 +52,19 @@ class ProfileService {
       body: body,
     );
 
+
+
+    return ProfileModel.fromJson(jsonDecode(response.body));
+  }
+
+  Future<ProfileModel> deleteAccount(String token) async {
+    final response = await http.delete(
+      Uri.parse(ApiConstant.instance.profilUrl),
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    );
+
     return ProfileModel.fromJson(jsonDecode(response.body));
   }
 }

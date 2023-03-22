@@ -3,7 +3,6 @@
 import 'package:chatbot/core/constants/color_constant.dart';
 import 'package:chatbot/core/language/locale_keys.g.dart';
 import 'package:chatbot/core/view/base/base_stateless.dart';
-import 'package:chatbot/product/auth/language/viewmodel/language_view_model.dart';
 import 'package:chatbot/product/bottom_bar/view/bottom_bar_view.dart';
 import 'package:chatbot/product/conversation/viewmodel/conversation_room_view_model.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -12,6 +11,8 @@ import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/constants/icon_constant.dart';
+import '../../../core/constants/image_constant.dart';
+import '../../../core/view/widget/button/language_button.dart';
 
 class ConversationRoomView extends BaseStateless {
   ConversationRoomViewModel viewModel = ConversationRoomViewModel();
@@ -27,25 +28,6 @@ class ConversationRoomView extends BaseStateless {
     return GestureDetector(
       onTap: () => viewModel.startFocusNode(),
       child: Scaffold(
-        appBar: AppBar(
-          backgroundColor: ColorConstant.instance.additionalWhite,
-          elevation: 0,
-          leading: IconButton(
-            onPressed: () async {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => BottomBarView(),
-                ),
-              );
-            },
-            icon: Icon(
-              Icons.arrow_back_ios,
-              color: ColorConstant.instance.greyScale600,
-              size: 20.0,
-            ),
-          ),
-        ),
         backgroundColor: ColorConstant.instance.additionalWhite,
         body: Consumer<ConversationRoomViewModel>(
           builder: (context, state, child) {
@@ -53,11 +35,14 @@ class ConversationRoomView extends BaseStateless {
               future: state.getAllMessages(conversationId: conversationId),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Center(
+                  return const Center(
                     child: CircularProgressIndicator(),
                   );
                 } else if (snapshot.connectionState == ConnectionState.done) {
-                  return chat(context, state);
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 40.0),
+                    child: chat(context, state),
+                  );
                 } else {
                   return const Text('error');
                 }
@@ -75,8 +60,8 @@ class ConversationRoomView extends BaseStateless {
       child: Stack(
         children: [
           Padding(
-            padding:
-                const EdgeInsets.only(left: 24.0, right: 24.0, bottom: 60.0),
+            padding: const EdgeInsets.only(
+                left: 24.0, right: 24.0, bottom: 60.0, top: 30.0),
             child: messages(state),
           ),
           Positioned(
@@ -121,7 +106,61 @@ class ConversationRoomView extends BaseStateless {
                     ],
                   )
                 : sendInput(context, state),
-          )
+          ),
+          Positioned(
+            left: 0.0,
+            right: 0.0,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: CircleAvatar(
+                    backgroundColor: ColorConstant.instance.greyScale300,
+                    radius: 25.0,
+                    child: Image.asset(
+                      ImageConstant.instance.smallRobot,
+                      fit: BoxFit.fill,
+                      width: 55.0,
+                      height: 55.0,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: ClipRRect(
+                    borderRadius: const BorderRadius.all(
+                      Radius.circular(10.0),
+                    ),
+                    child: LinearProgressIndicator(
+                      backgroundColor: ColorConstant.instance.greyScale50,
+                      color: ColorConstant.instance.greyScale800,
+                      minHeight: 6.0,
+                      value: double.parse(
+                          state.conversationModel.conversationCompletionCount!),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: CircleAvatar(
+                    backgroundColor: ColorConstant.instance.greyScale300,
+                    radius: 15.0,
+                    child: IconButton(
+                        onPressed: () {
+                          Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => BottomBarView()));
+                        },
+                        icon: Icon(
+                          Icons.close,
+                          color: ColorConstant.instance.greyScale900,
+                          size: 15.0,
+                        )),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -355,164 +394,10 @@ class ConversationRoomView extends BaseStateless {
                           radius: 15.0,
                           child: IconButton(
                             onPressed: () async {
-                              String language = Provider.of<LanguageViewModel>(
-                                      context,
-                                      listen: false)
-                                  .nativeLanguage;
-
                               viewModel.translateMessage =
                                   state.messages[index].message!;
 
-                              await viewModel.translate(
-                                conversationId: conversationId,
-                                messageId: state.messages[index].id!,
-                                translateLanguage: language,
-                              );
-                              showModalBottomSheet(
-                                isDismissible: false,
-                                isScrollControlled: true,
-                                context: context,
-                                builder: (BuildContext context) {
-                                  return Consumer<ConversationRoomViewModel>(
-                                    builder: (context, state, child) {
-                                      return FractionallySizedBox(
-                                        heightFactor: 0.9,
-                                        child: Container(
-                                          width: width(
-                                              context: context, value: 1.0),
-                                          decoration: BoxDecoration(
-                                            color: ColorConstant
-                                                .instance.additionalWhite,
-                                            borderRadius:
-                                                const BorderRadius.only(
-                                              topLeft: Radius.circular(20.0),
-                                              topRight: Radius.circular(20.0),
-                                            ),
-                                          ),
-                                          child: Padding(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 24.0,
-                                            ),
-                                            child: SingleChildScrollView(
-                                              physics:
-                                                  const ClampingScrollPhysics(),
-                                              child: Column(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.start,
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: [
-                                                  const SizedBox(height: 15.0),
-                                                  Align(
-                                                    alignment:
-                                                        Alignment.centerRight,
-                                                    child: CircleAvatar(
-                                                      backgroundColor:
-                                                          ColorConstant.instance
-                                                              .greyScale300,
-                                                      radius: 15.0,
-                                                      child: IconButton(
-                                                        onPressed: () {
-                                                          Navigator.pop(
-                                                              context);
-                                                        },
-                                                        icon: Icon(
-                                                          Icons.close,
-                                                          size: 15.0,
-                                                          color: ColorConstant
-                                                              .instance
-                                                              .greyScale900,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  const SizedBox(height: 10.0),
-                                                  Text(
-                                                    LocaleKeys.translate.tr(),
-                                                    style: currentTextTheme(
-                                                            context)
-                                                        .headline1
-                                                        ?.copyWith(
-                                                          fontSize: 24.0,
-                                                          fontWeight:
-                                                              FontWeight.w600,
-                                                          color: ColorConstant
-                                                              .instance
-                                                              .greyScale900,
-                                                        ),
-                                                  ),
-                                                  const SizedBox(height: 24.0),
-                                                  Text(
-                                                    LocaleKeys.message.tr(),
-                                                    style: currentTextTheme(
-                                                            context)
-                                                        .headline1
-                                                        ?.copyWith(
-                                                          fontSize: 20.0,
-                                                          fontWeight:
-                                                              FontWeight.w500,
-                                                          color: ColorConstant
-                                                              .instance
-                                                              .greyScale900,
-                                                        ),
-                                                  ),
-                                                  const SizedBox(height: 16.0),
-                                                  Text(
-                                                    viewModel.translateMessage,
-                                                    style: currentTextTheme(
-                                                            context)
-                                                        .headline1
-                                                        ?.copyWith(
-                                                          fontSize: 16.0,
-                                                          fontWeight:
-                                                              FontWeight.w400,
-                                                          color: ColorConstant
-                                                              .instance
-                                                              .greyScale600,
-                                                        ),
-                                                  ),
-                                                  const SizedBox(height: 24.0),
-                                                  Text(
-                                                    LocaleKeys.translate_to
-                                                        .tr(),
-                                                    style: currentTextTheme(
-                                                            context)
-                                                        .headline1
-                                                        ?.copyWith(
-                                                          fontSize: 20.0,
-                                                          fontWeight:
-                                                              FontWeight.w500,
-                                                          color: ColorConstant
-                                                              .instance
-                                                              .greyScale900,
-                                                        ),
-                                                  ),
-                                                  const SizedBox(height: 16.0),
-                                                  Text(
-                                                    viewModel.translateModel
-                                                        .message!,
-                                                    style: currentTextTheme(
-                                                            context)
-                                                        .headline1
-                                                        ?.copyWith(
-                                                          fontSize: 16.0,
-                                                          fontWeight:
-                                                              FontWeight.w400,
-                                                          color: ColorConstant
-                                                              .instance
-                                                              .greyScale600,
-                                                        ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                  );
-                                },
-                              );
+                              showTranslateMessage(context, index);
                             },
                             icon: Icon(
                               Icons.translate,
@@ -525,6 +410,458 @@ class ConversationRoomView extends BaseStateless {
                     ),
             ),
           ),
+        );
+      },
+    );
+  }
+
+  Future<dynamic> showTranslateMessage(BuildContext context, int index) {
+    return showModalBottomSheet(
+      isDismissible: false,
+      isScrollControlled: true,
+      context: context,
+      builder: (BuildContext context) {
+        return Consumer<ConversationRoomViewModel>(
+          builder: (context, state, child) {
+            return FractionallySizedBox(
+              heightFactor: 0.9,
+              child: Container(
+                width: width(context: context, value: 1.0),
+                decoration: BoxDecoration(
+                  color: ColorConstant.instance.additionalWhite,
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(20.0),
+                    topRight: Radius.circular(20.0),
+                  ),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24.0,
+                  ),
+                  child: FutureBuilder(
+                    future: viewModel.translate(
+                      conversationId: conversationId,
+                      messageId: state.messages[index].id!,
+                      translateTitle: viewModel.nativeLanguage == ''
+                          ? viewModel.nativePopularLanguage
+                          : viewModel.nativeLanguage,
+                    ),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(
+                          child: CircularProgressIndicator(),
+                        );
+                      } else if (snapshot.connectionState ==
+                          ConnectionState.done) {
+                        return SingleChildScrollView(
+                          physics: const ClampingScrollPhysics(),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const SizedBox(height: 15.0),
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: CircleAvatar(
+                                  backgroundColor:
+                                      ColorConstant.instance.greyScale300,
+                                  radius: 15.0,
+                                  child: IconButton(
+                                    onPressed: () {
+                                      Navigator.pop(context);
+                                    },
+                                    icon: Icon(
+                                      Icons.close,
+                                      size: 15.0,
+                                      color:
+                                          ColorConstant.instance.greyScale900,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 10.0),
+                              Text(
+                                LocaleKeys.translate.tr(),
+                                style: currentTextTheme(context)
+                                    .headline1
+                                    ?.copyWith(
+                                      fontSize: 24.0,
+                                      fontWeight: FontWeight.w600,
+                                      color:
+                                          ColorConstant.instance.greyScale900,
+                                    ),
+                              ),
+                              const SizedBox(height: 24.0),
+                              Text(
+                                LocaleKeys.message.tr(),
+                                style: currentTextTheme(context)
+                                    .headline1
+                                    ?.copyWith(
+                                      fontSize: 20.0,
+                                      fontWeight: FontWeight.w500,
+                                      color:
+                                          ColorConstant.instance.greyScale900,
+                                    ),
+                              ),
+                              const SizedBox(height: 16.0),
+                              Text(
+                                viewModel.translateMessage,
+                                style: currentTextTheme(context)
+                                    .headline1
+                                    ?.copyWith(
+                                      fontSize: 16.0,
+                                      fontWeight: FontWeight.w400,
+                                      color:
+                                          ColorConstant.instance.greyScale600,
+                                    ),
+                              ),
+                              const SizedBox(height: 24.0),
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    LocaleKeys.translate_to.tr(),
+                                    style: currentTextTheme(context)
+                                        .headline1
+                                        ?.copyWith(
+                                          fontSize: 20.0,
+                                          fontWeight: FontWeight.w500,
+                                          color: ColorConstant
+                                              .instance.greyScale900,
+                                        ),
+                                  ),
+                                  const SizedBox(width: 10.0),
+                                  SizedBox(
+                                    height:
+                                        height(context: context, value: 0.04),
+                                    child: TextButton(
+                                      style: TextButton.styleFrom(
+                                          shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(10.0),
+                                              side: BorderSide(
+                                                  width: 1.0,
+                                                  color: ColorConstant
+                                                      .instance.greyScale900))),
+                                      onPressed: () {
+                                        showModalBottomSheet(
+                                          isScrollControlled: true,
+                                          context: context,
+                                          builder: (BuildContext context) {
+                                            return FractionallySizedBox(
+                                              heightFactor: 0.88,
+                                              child: Container(
+                                                width: width(
+                                                    context: context,
+                                                    value: 1.0),
+                                                decoration: BoxDecoration(
+                                                    color: ColorConstant
+                                                        .instance
+                                                        .additionalWhite,
+                                                    borderRadius:
+                                                        const BorderRadius.only(
+                                                      topLeft:
+                                                          Radius.circular(20.0),
+                                                      topRight:
+                                                          Radius.circular(20.0),
+                                                    )),
+                                                child: SingleChildScrollView(
+                                                  child: Padding(
+                                                    padding: const EdgeInsets
+                                                        .symmetric(
+                                                      horizontal: 24.0,
+                                                    ),
+                                                    child: Column(
+                                                      mainAxisAlignment:
+                                                          MainAxisAlignment
+                                                              .start,
+                                                      crossAxisAlignment:
+                                                          CrossAxisAlignment
+                                                              .start,
+                                                      children: [
+                                                        const SizedBox(
+                                                            height: 15.0),
+                                                        Align(
+                                                          alignment: Alignment
+                                                              .centerRight,
+                                                          child: CircleAvatar(
+                                                            backgroundColor:
+                                                                ColorConstant
+                                                                    .instance
+                                                                    .greyScale300,
+                                                            radius: 15.0,
+                                                            child: IconButton(
+                                                                onPressed: () {
+                                                                  Navigator.pop(
+                                                                      context);
+                                                                },
+                                                                icon: Icon(
+                                                                  Icons.close,
+                                                                  color: ColorConstant
+                                                                      .instance
+                                                                      .greyScale900,
+                                                                  size: 15.0,
+                                                                )),
+                                                          ),
+                                                        ),
+                                                        const SizedBox(
+                                                            height: 24.0),
+                                                        Text(
+                                                          LocaleKeys
+                                                              .popular_lang
+                                                              .tr(),
+                                                          style:
+                                                              currentTextTheme(
+                                                                      context)
+                                                                  .headline3
+                                                                  ?.copyWith(
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .w500,
+                                                                    color: ColorConstant
+                                                                        .instance
+                                                                        .greyScale600,
+                                                                  ),
+                                                          textAlign:
+                                                              TextAlign.center,
+                                                        ),
+                                                        const SizedBox(
+                                                            height: 15.0),
+                                                        ListView.builder(
+                                                          shrinkWrap: true,
+                                                          physics:
+                                                              const ClampingScrollPhysics(),
+                                                          itemCount: viewModel
+                                                              .popularLanguageIds
+                                                              .length,
+                                                          itemBuilder:
+                                                              (context, index) {
+                                                            return Consumer<
+                                                                ConversationRoomViewModel>(
+                                                              builder: (context,
+                                                                  state,
+                                                                  child) {
+                                                                return Column(
+                                                                  children: [
+                                                                    LanguageButton(
+                                                                      image: viewModel
+                                                                              .popularLanguageImages[
+                                                                          index],
+                                                                      languageId:
+                                                                          viewModel
+                                                                              .popularLanguageIds[index],
+                                                                      selectedIndex:
+                                                                          state
+                                                                              .selectedPopularIndex,
+                                                                      onTap:
+                                                                          () {
+                                                                        viewModel
+                                                                            .selectedPopularLanguageId = viewModel
+                                                                                .popularLanguageIds[
+                                                                            index];
+                                                                        state.changeCheckboxStatusPopular(
+                                                                            index:
+                                                                                index);
+                                                                        viewModel.selectedPopularIndex =
+                                                                            index;
+                                                                        viewModel
+                                                                            .nativePopularLanguage = viewModel
+                                                                                .popularLanguageTitles[
+                                                                            index];
+                                                                        viewModel.nativeLanguage =
+                                                                            '';
+                                                                      },
+                                                                      widthValue: width(
+                                                                          context:
+                                                                              context,
+                                                                          value:
+                                                                              1.0),
+                                                                      heightValue: height(
+                                                                          context:
+                                                                              context,
+                                                                          value:
+                                                                              0.07),
+                                                                      backgroundColor: ColorConstant
+                                                                          .instance
+                                                                          .additionalWhite,
+                                                                      borderRadius:
+                                                                          66.0,
+                                                                      text: viewModel
+                                                                              .popularLanguageTitles[
+                                                                          index],
+                                                                      textStyle: currentTextTheme(context).headline3?.copyWith(
+                                                                              fontWeight: FontWeight.w400,
+                                                                              color: ColorConstant.instance.greyScale900) ??
+                                                                          const TextStyle(),
+                                                                      onChangedCheckBox:
+                                                                          (_) {},
+                                                                    ),
+                                                                    SizedBox(
+                                                                        height: viewModel.popularLanguageTitles[index] ==
+                                                                                "German"
+                                                                            ? 0.0
+                                                                            : 15.0),
+                                                                  ],
+                                                                );
+                                                              },
+                                                            );
+                                                          },
+                                                        ),
+                                                        Text(
+                                                          LocaleKeys.all_lang
+                                                              .tr(),
+                                                          style:
+                                                              currentTextTheme(
+                                                                      context)
+                                                                  .headline3
+                                                                  ?.copyWith(
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .w500,
+                                                                    color: ColorConstant
+                                                                        .instance
+                                                                        .greyScale600,
+                                                                  ),
+                                                          textAlign:
+                                                              TextAlign.center,
+                                                        ),
+                                                        const SizedBox(
+                                                            height: 15.0),
+                                                        ListView.builder(
+                                                          shrinkWrap: true,
+                                                          physics:
+                                                              const ClampingScrollPhysics(),
+                                                          itemCount: viewModel
+                                                              .languages.length,
+                                                          itemBuilder:
+                                                              (context, index) {
+                                                            return Consumer<
+                                                                ConversationRoomViewModel>(
+                                                              builder: (context,
+                                                                  state,
+                                                                  child) {
+                                                                return Column(
+                                                                  children: [
+                                                                    LanguageButton(
+                                                                      image: viewModel
+                                                                          .languages[
+                                                                              index]
+                                                                          .flag!,
+                                                                      languageId: viewModel
+                                                                          .languages[
+                                                                              index]
+                                                                          .id!,
+                                                                      selectedIndex:
+                                                                          state
+                                                                              .selectedIndex,
+                                                                      onTap:
+                                                                          () {
+                                                                        viewModel.selectedLanguageId = viewModel
+                                                                            .languages[index]
+                                                                            .id!;
+                                                                        state.changeCheckboxStatus(
+                                                                            index:
+                                                                                index);
+                                                                        viewModel.selectedIndex =
+                                                                            index;
+                                                                        viewModel.nativeLanguage = viewModel
+                                                                            .languages[index]
+                                                                            .title!;
+                                                                        viewModel.nativePopularLanguage =
+                                                                            '';
+                                                                      },
+                                                                      widthValue: width(
+                                                                          context:
+                                                                              context,
+                                                                          value:
+                                                                              1.0),
+                                                                      heightValue: height(
+                                                                          context:
+                                                                              context,
+                                                                          value:
+                                                                              0.07),
+                                                                      backgroundColor: ColorConstant
+                                                                          .instance
+                                                                          .additionalWhite,
+                                                                      borderRadius:
+                                                                          66.0,
+                                                                      text: viewModel
+                                                                          .languages[
+                                                                              index]
+                                                                          .title!,
+                                                                      textStyle: currentTextTheme(context).headline3?.copyWith(
+                                                                              fontWeight: FontWeight.w400,
+                                                                              color: ColorConstant.instance.greyScale900) ??
+                                                                          const TextStyle(),
+                                                                      onChangedCheckBox:
+                                                                          (value) {},
+                                                                    ),
+                                                                    const SizedBox(
+                                                                        height:
+                                                                            15.0),
+                                                                  ],
+                                                                );
+                                                              },
+                                                            );
+                                                          },
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                        );
+                                      },
+                                      child: Text(
+                                        viewModel.nativeLanguage == '' &&
+                                                viewModel
+                                                        .nativePopularLanguage ==
+                                                    ''
+                                            ? state.conversationModel
+                                                .nativeLanguage!.title!
+                                            : viewModel.nativeLanguage == ''
+                                                ? viewModel
+                                                    .nativePopularLanguage
+                                                : viewModel.nativeLanguage,
+                                        style: currentTextTheme(context)
+                                            .headline3
+                                            ?.copyWith(
+                                              fontSize: 14.0,
+                                              fontWeight: FontWeight.w400,
+                                              color: ColorConstant
+                                                  .instance.greyScale900,
+                                            ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 16.0),
+                              Text(
+                                viewModel.translateModel.message!,
+                                style: currentTextTheme(context)
+                                    .headline1
+                                    ?.copyWith(
+                                      fontSize: 16.0,
+                                      fontWeight: FontWeight.w400,
+                                      color:
+                                          ColorConstant.instance.greyScale600,
+                                    ),
+                              ),
+                            ],
+                          ),
+                        );
+                      } else {
+                        return const Text('error');
+                      }
+                    },
+                  ),
+                ),
+              ),
+            );
+          },
         );
       },
     );

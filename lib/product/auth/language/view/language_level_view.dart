@@ -19,12 +19,15 @@ class LanguageLevelView extends BaseStateless {
   final String name;
   final String nativeId;
   final String learnId;
+  final String learnLanguage;
+
   LanguageLevelView({
     required this.email,
     required this.password,
     required this.name,
     required this.nativeId,
     required this.learnId,
+    required this.learnLanguage,
   });
 
   @override
@@ -98,7 +101,7 @@ class LanguageLevelView extends BaseStateless {
           Align(
             alignment: Alignment.center,
             child: Text(
-              LocaleKeys.how_would.tr(),
+              'How would you rate your level of $learnLanguage proficiency?',
               style: currentTextTheme(context).headline1?.copyWith(
                     fontWeight: FontWeight.w500,
                     color: ColorConstant.instance.greyScale900,

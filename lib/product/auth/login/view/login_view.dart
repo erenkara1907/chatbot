@@ -166,7 +166,7 @@ class LoginView extends BaseStateless {
                               style: currentTextTheme(context)
                                   .headline6
                                   ?.copyWith(
-                                    fontWeight: FontWeight.w500,
+                                    fontWeight: FontWeight.w800,
                                     color: ColorConstant.instance.greyScale900,
                                   ),
                             ),

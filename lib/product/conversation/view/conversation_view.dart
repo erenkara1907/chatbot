@@ -37,129 +37,132 @@ class ConversationView extends BaseStateless {
                 );
               } else if (snapshot.connectionState == ConnectionState.done) {
                 return state.conversationModel.isNotEmpty
-                    ? ListView.builder(
-                        itemCount: state.conversationModel.length,
-                        shrinkWrap: true,
-                        physics: const ClampingScrollPhysics(),
-                        addAutomaticKeepAlives: false,
-                        addRepaintBoundaries: false,
-                        itemBuilder: (context, index) {
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 20.0),
-                            child: Column(
-                              children: [
-                                SizedBox(
-                                  width: width(context: context, value: 1.0),
-                                  child: ElevatedButton(
-                                    style: ElevatedButton.styleFrom(
-                                      elevation: 0,
-                                      backgroundColor: ColorConstant
-                                          .instance.additionalWhite,
-                                    ),
-                                    onPressed: () {
-                                      Navigator.pushReplacement(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              ConversationRoomView(
-                                            conversationId: state
-                                                .conversationModel[index].id!,
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.start,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        SizedBox(
-                                          width: 40.0,
-                                          height: 40.0,
-                                          child: Image.network(
-                                            state.conversationModel[index]
-                                                .topic!.icon!,
-                                            fit: BoxFit.cover,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 12.0),
-                                        Column(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.start,
-                                          children: [
-                                            SizedBox(
-                                              width: width(
-                                                  context: context, value: 0.7),
-                                              child: Row(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment
-                                                        .spaceBetween,
-                                                children: [
-                                                  Text(
-                                                    state
-                                                        .conversationModel[
-                                                            index]
-                                                        .topic!
-                                                        .title!,
-                                                    style: currentTextTheme(
-                                                            context)
-                                                        .headline3
-                                                        ?.copyWith(
-                                                          fontWeight:
-                                                              FontWeight.w600,
-                                                          color: ColorConstant
-                                                              .instance
-                                                              .greyScale900,
-                                                        ),
-                                                  ),
-                                                  Icon(
-                                                    Icons.arrow_forward_ios,
-                                                    color: ColorConstant
-                                                        .instance.greyScale900,
-                                                    size: 12.0,
-                                                  ),
-                                                ],
-                                              ),
+                    ? Padding(
+                      padding: const EdgeInsets.only(bottom: 80.0),
+                      child: ListView.builder(
+                          itemCount: state.conversationModel.length,
+                          shrinkWrap: true,
+                          physics: const ClampingScrollPhysics(),
+                          addAutomaticKeepAlives: false,
+                          addRepaintBoundaries: false,
+                          itemBuilder: (context, index) {
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 20.0),
+                              child: Column(
+                                children: [
+                                  SizedBox(
+                                    width: width(context: context, value: 1.0),
+                                    child: ElevatedButton(
+                                      style: ElevatedButton.styleFrom(
+                                        elevation: 0,
+                                        backgroundColor: ColorConstant
+                                            .instance.additionalWhite,
+                                      ),
+                                      onPressed: () {
+                                        Navigator.pushReplacement(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                ConversationRoomView(
+                                              conversationId: state
+                                                  .conversationModel[index].id!,
                                             ),
-                                            SizedBox(
-                                              width: width(
-                                                  context: context, value: 0.7),
-                                              child: Text(
-                                                state.conversationModel[index]
-                                                    .lastMessage!,
-                                                style: currentTextTheme(context)
-                                                    .headline3
-                                                    ?.copyWith(
-                                                      fontWeight:
-                                                          FontWeight.w400,
-                                                      color: ColorConstant
-                                                          .instance
-                                                          .greyScale600,
+                                          ),
+                                        );
+                                      },
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          SizedBox(
+                                            width: 40.0,
+                                            height: 40.0,
+                                            child: Image.network(
+                                              state.conversationModel[index]
+                                                  .topic!.icon!,
+                                              fit: BoxFit.cover,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 12.0),
+                                          Column(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.start,
+                                            children: [
+                                              SizedBox(
+                                                width: width(
+                                                    context: context, value: 0.7),
+                                                child: Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment
+                                                          .spaceBetween,
+                                                  children: [
+                                                    Text(
+                                                      state
+                                                          .conversationModel[
+                                                              index]
+                                                          .topic!
+                                                          .title!,
+                                                      style: currentTextTheme(
+                                                              context)
+                                                          .headline3
+                                                          ?.copyWith(
+                                                            fontWeight:
+                                                                FontWeight.w600,
+                                                            color: ColorConstant
+                                                                .instance
+                                                                .greyScale900,
+                                                          ),
                                                     ),
-                                                overflow: TextOverflow.ellipsis,
-                                                maxLines: 2,
+                                                    Icon(
+                                                      Icons.arrow_forward_ios,
+                                                      color: ColorConstant
+                                                          .instance.greyScale900,
+                                                      size: 12.0,
+                                                    ),
+                                                  ],
+                                                ),
                                               ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
+                                              SizedBox(
+                                                width: width(
+                                                    context: context, value: 0.7),
+                                                child: Text(
+                                                  state.conversationModel[index]
+                                                      .lastMessage!,
+                                                  style: currentTextTheme(context)
+                                                      .headline3
+                                                      ?.copyWith(
+                                                        fontWeight:
+                                                            FontWeight.w400,
+                                                        color: ColorConstant
+                                                            .instance
+                                                            .greyScale600,
+                                                      ),
+                                                  overflow: TextOverflow.ellipsis,
+                                                  maxLines: 2,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   ),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 20.0),
-                                  child: Divider(
-                                    thickness: 1.0,
-                                    color: ColorConstant.instance.greyScale300,
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 20.0),
+                                    child: Divider(
+                                      thickness: 1.0,
+                                      color: ColorConstant.instance.greyScale300,
+                                    ),
                                   ),
-                                ),
-                              ],
-                            ),
-                          );
-                        },
-                      )
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                    )
                     : Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 108.0),
                         child: Column(

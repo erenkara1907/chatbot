@@ -1,15 +1,19 @@
-// ignore_for_file: use_key_in_widget_constructors, no_leading_underscores_for_local_identifiers, must_be_immutable
+// ignore_for_file: use_key_in_widget_constructors, no_leading_underscores_for_local_identifiers, must_be_immutable, use_build_context_synchronously
 
 import 'package:chatbot/core/constants/color_constant.dart';
 import 'package:chatbot/core/constants/icon_constant.dart';
+import 'package:chatbot/core/enum/preference_keys.dart';
 import 'package:chatbot/core/language/locale_keys.g.dart';
 import 'package:chatbot/core/view/base/base_stateless.dart';
 import 'package:chatbot/core/view/widget/button/profile_button.dart';
+import 'package:chatbot/product/auth/login/view/login_view.dart';
+import 'package:chatbot/product/bottom_bar/viewmodel/bottom_bar_view_model.dart';
 import 'package:chatbot/product/profile/view/profile_edit_view.dart';
 import 'package:chatbot/product/profile/viewmodel/profile_view_model.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/view/widget/button/language_button.dart';
 import '../../../core/view/widget/button/language_level_button.dart';
@@ -136,7 +140,14 @@ class ProfileView extends BaseStateless {
                                               ? 0.7
                                               : 0.9,
                                       child: state.isLanguageLevelBottomSheet
-                                          ? languageLevels(context)
+                                          ? languageLevels(
+                                              context,
+                                              viewModel.selectedLearnIndex != -1
+                                                  ? viewModel
+                                                      .learnNativeLanguage
+                                                  : viewModel
+                                                      .learnNativeLanguagePopular,
+                                            )
                                           : languages(context),
                                     );
                                   },
@@ -235,7 +246,26 @@ class ProfileView extends BaseStateless {
                           text: LocaleKeys.terms.tr(),
                         ),
                         ProfileButton(
-                          image: IconConstant.instance.iconWriteUs,
+                          onTap: () async {
+                            final Future<SharedPreferences> _prefs =
+                                SharedPreferences.getInstance();
+                            final SharedPreferences prefs = await _prefs;
+                            prefs.remove(PreferencesKeys.TOKEN.toString());
+                            prefs.remove(
+                                PreferencesKeys.IS_FIRST_APP.toString());
+
+                            Provider.of<BottomBarViewModel>(context,
+                                    listen: false)
+                                .selectedIndex = 0;
+
+                            Navigator.pushAndRemoveUntil(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => LoginView()),
+                              (route) => false,
+                            );
+                          },
+                          image: IconConstant.instance.iconLogout,
                           text: LocaleKeys.logout.tr(),
                           isLogout: true,
                         ),
@@ -326,6 +356,8 @@ class ProfileView extends BaseStateless {
                                   index: index);
                               viewModel.selectedLearnPopularIndex = index;
                               state.changeBottomSheet(true);
+                              viewModel.learnNativeLanguagePopular =
+                                  viewModel.popularLanguageTitles[index];
                             },
                             widthValue: width(context: context, value: 1.0),
                             heightValue: height(context: context, value: 0.07),
@@ -381,6 +413,8 @@ class ProfileView extends BaseStateless {
                               state.changeCheckboxLearnStatus(index: index);
                               viewModel.selectedLearnIndex = index;
                               state.changeBottomSheet(true);
+                              viewModel.learnNativeLanguage =
+                                  viewModel.languages[index].title!;
                             },
                             widthValue: width(context: context, value: 1.0),
                             heightValue: height(context: context, value: 0.07),
@@ -412,7 +446,7 @@ class ProfileView extends BaseStateless {
     );
   }
 
-  SingleChildScrollView languageLevels(BuildContext context) {
+  SingleChildScrollView languageLevels(BuildContext context, String title) {
     return SingleChildScrollView(
       physics: const ClampingScrollPhysics(),
       child: Container(
@@ -446,7 +480,7 @@ class ProfileView extends BaseStateless {
               ),
               const SizedBox(height: 5.0),
               Text(
-                LocaleKeys.how_would.tr(),
+                'How would you rate your level of $title proficiency?',
                 style: currentTextTheme(context).headline1?.copyWith(
                       fontWeight: FontWeight.w500,
                       color: ColorConstant.instance.greyScale900,
@@ -472,15 +506,21 @@ class ProfileView extends BaseStateless {
                               state.changeCheckboxStatusLevels(index: index);
                               viewModel.selectedLevelIndex = index;
                               Future.delayed(const Duration(seconds: 1), () {
+                                state.isLanguageLevelBottomSheet = false;
+                                state.selectedLevelIndex = -1;
+                                state.selectedLearnIndex = -1;
                                 Navigator.pop(context);
                               });
+
+
+
 
                               await state.updateProfile(
                                 context,
                                 {
                                   'learn_language_id': viewModel
                                               .selectedLearnLanguageId ==
-                                          -1
+                                          -1 && viewModel.selectedLearnPopularLanguageId == -1
                                       ? viewModel.profileModel.data!.user!
                                           .learnLanguages![0].id
                                           .toString()

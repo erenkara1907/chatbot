@@ -12,6 +12,8 @@ class RegisterService {
       body: user,
     );
 
+
+
     return RegisterModel.fromJson(jsonDecode(response.body));
-  }  
+  }
 }

@@ -2,18 +2,25 @@
 
 import 'dart:async';
 
+import 'package:chatbot/product/auth/language/model/language_model.dart';
+import 'package:chatbot/product/auth/language/service/language_service.dart';
 import 'package:chatbot/product/bottom_bar/view/bottom_bar_view.dart';
 import 'package:chatbot/product/conversation/model/translate_model.dart';
 import 'package:chatbot/product/conversation/service/conversation_service.dart';
+import 'package:chatbot/product/profile/model/profile_model.dart';
+import 'package:chatbot/product/profile/service/profile_service.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/enum/preference_keys.dart';
+import '../model/conversation_room_model.dart';
 import '../model/message_model.dart';
 import '../model/rate_model.dart';
 
 class ConversationRoomViewModel extends ChangeNotifier {
   ConversationService service = ConversationService();
+  ProfileService profileService = ProfileService();
+  LanguageService languageService = LanguageService();
 
   TextEditingController sendMessageController = TextEditingController();
 
@@ -24,8 +31,23 @@ class ConversationRoomViewModel extends ChangeNotifier {
   String translateMessage = '';
 
   TranslateMessage translateModel = TranslateMessage();
+  ProfileModel profileModel = ProfileModel();
 
   int isActive = 0;
+
+  List<Languages> languages = [];
+  List<String> popularLanguageTitles = [];
+  List<String> popularLanguageImages = [];
+  List<int> popularLanguageIds = [];
+
+  int selectedIndex = -1;
+  int selectedPopularIndex = -1;
+
+  int selectedLanguageId = -1;
+  int selectedPopularLanguageId = -1;
+
+  String nativeLanguage = '';
+  String nativePopularLanguage = '';
 
   // ignore: unused_field
   // StreamController? _streamController;
@@ -35,6 +57,7 @@ class ConversationRoomViewModel extends ChangeNotifier {
   }
 
   List<Messages> messages = [];
+  Conversation conversationModel = Conversation();
   List<Rates> rates = [];
 
   Future getRates(String token) async {
@@ -43,6 +66,27 @@ class ConversationRoomViewModel extends ChangeNotifier {
     if (response.result == true) {
       rates.clear();
       rates.addAll(response.data!.rates!);
+    }
+  }
+
+  Future getLanguages() async {
+    final model = await languageService.getLanguages();
+
+    if (model.result == true) {
+      for (var i = 0; i < model.data!.languages!.length; i++) {
+        if (model.data!.languages![i].isPopular == 1) {
+          if (popularLanguageTitles.length != 4) {
+            popularLanguageTitles.add(model.data!.languages![i].title!);
+            popularLanguageIds.add(model.data!.languages![i].id!);
+            popularLanguageImages.add(model.data!.languages![i].flag!);
+          }
+        } else {
+          languages.clear();
+          languages.addAll(model.data!.languages!);
+        }
+      }
+      languages.clear();
+      languages.addAll(model.data!.languages!);
     }
   }
 
@@ -70,18 +114,32 @@ class ConversationRoomViewModel extends ChangeNotifier {
     }
   }
 
+  changeCheckboxStatus({required int index}) {
+    selectedPopularIndex = -1;
+    selectedIndex = index;
+    notifyListeners();
+  }
+
+  changeCheckboxStatusPopular({required int index}) {
+    selectedIndex = -1;
+    selectedPopularIndex = index;
+    notifyListeners();
+  }
+
   Future getAllMessages({required int conversationId}) async {
     final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
     final SharedPreferences prefs = await _prefs;
 
     String token = prefs.getString(PreferencesKeys.TOKEN.toString())!;
 
+    await getRates(token);
+
     final response =
         await service.getAllMessages(token, conversationId: conversationId);
-    await getRates(token);
 
     if (response.result == true) {
       messages = response.data!.messages!;
+      conversationModel = response.data!.conversation!;
       isActive = response.data!.conversation!.isActive!;
     }
   }
@@ -113,21 +171,29 @@ class ConversationRoomViewModel extends ChangeNotifier {
   Future translate(
       {required int conversationId,
       required int messageId,
-      required String translateLanguage}) async {
+      String? translateTitle}) async {
     final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
     final SharedPreferences prefs = await _prefs;
 
     String token = prefs.getString(PreferencesKeys.TOKEN.toString())!;
 
-    final response = await service.translate(
-      token,
-      conversationId: conversationId,
-      messageId: messageId,
-      translateLanguage: translateLanguage,
-    );
 
-    if (response.result == true) {
-      translateModel = response.data!.message!;
+
+    final profileResponse = await profileService.getProfileInfo(token);
+    await getLanguages();
+
+    if (profileResponse.result == true) {
+      final response = await service.translate(
+        token,
+        conversationId: conversationId,
+        messageId: messageId,
+        translateLanguage: translateTitle ?? profileResponse.data!.user!.nativeLanguage!.title!
+
+      );
+
+      if (response.result == true) {
+        translateModel = response.data!.message!;
+      }
     }
   }
 }
