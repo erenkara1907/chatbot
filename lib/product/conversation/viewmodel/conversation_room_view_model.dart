@@ -4,7 +4,6 @@ import 'dart:async';
 
 import 'package:chatbot/product/auth/language/model/language_model.dart';
 import 'package:chatbot/product/auth/language/service/language_service.dart';
-import 'package:chatbot/product/bottom_bar/view/bottom_bar_view.dart';
 import 'package:chatbot/product/conversation/model/translate_model.dart';
 import 'package:chatbot/product/conversation/service/conversation_service.dart';
 import 'package:chatbot/product/profile/model/profile_model.dart';
@@ -13,8 +12,8 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/enum/preference_keys.dart';
+import '../model/chat_model.dart';
 import '../model/conversation_room_model.dart';
-import '../model/message_model.dart';
 import '../model/rate_model.dart';
 
 class ConversationRoomViewModel extends ChangeNotifier {
@@ -33,7 +32,9 @@ class ConversationRoomViewModel extends ChangeNotifier {
   TranslateMessage translateModel = TranslateMessage();
   ProfileModel profileModel = ProfileModel();
 
+  int endChat = 0;
   int isActive = 0;
+  bool isData = false;
 
   List<Languages> languages = [];
   List<String> popularLanguageTitles = [];
@@ -56,9 +57,45 @@ class ConversationRoomViewModel extends ChangeNotifier {
     sendMessageFocusNode.unfocus();
   }
 
-  List<Messages> messages = [];
+  // List<Messages> messages = [];
   Conversation conversationModel = Conversation();
+  String conversationCompleteCount = "0.0";
   List<Rates> rates = [];
+
+  List<ChatModel> chatList = [];
+  List<ChatModel> tempList = [];
+  List<ChatModel> get getChatList => chatList;
+
+  void addUserMessage({required String message}) {
+    chatList.add(
+      ChatModel(
+        message: message,
+        role: 'user',
+        id: 1,
+        endConversation: 0,
+        conversationCompletionCount: "0.0",
+      ),
+    );
+    notifyListeners();
+  }
+
+  Future<void> sendMessageAndGetAnswers(
+      {required String message, required int conversationId}) async {
+    final Future<SharedPreferences> prefs = SharedPreferences.getInstance();
+    final SharedPreferences _prefs = await prefs;
+
+    String token = _prefs.getString(PreferencesKeys.TOKEN.toString())!;
+
+    final response = await service.sendMessage(
+        message: message, conversationId: conversationId, token: token);
+
+    chatList.addAll(response);
+
+    conversationCompleteCount = response[0].conversationCompletionCount;
+    endChat = response[0].endConversation;
+
+    notifyListeners();
+  }
 
   Future getRates(String token) async {
     final response = await service.getRates(token);
@@ -93,25 +130,19 @@ class ConversationRoomViewModel extends ChangeNotifier {
   Future sendToBackendRateId(
     BuildContext context, {
     required int conversationId,
-    required int endConversationId,
-    required int rateId,
+    int? endConversationId,
+    int? rateId,
   }) async {
     final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
     final SharedPreferences prefs = await _prefs;
 
     String token = prefs.getString(PreferencesKeys.TOKEN.toString())!;
-
-    final response = await service.conversationUpdate(
+    await service.conversationUpdate(
       token,
       conversationId: conversationId,
       endConversationId: endConversationId,
-      rateId: rateId,
+      rateId: rateId ?? 2,
     );
-
-    if (response.result == true) {
-      Navigator.pushReplacement(
-          context, MaterialPageRoute(builder: (context) => BottomBarView()));
-    }
   }
 
   changeCheckboxStatus({required int index}) {
@@ -127,6 +158,7 @@ class ConversationRoomViewModel extends ChangeNotifier {
   }
 
   Future getAllMessages({required int conversationId}) async {
+    isData = true;
     final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
     final SharedPreferences prefs = await _prefs;
 
@@ -138,30 +170,53 @@ class ConversationRoomViewModel extends ChangeNotifier {
         await service.getAllMessages(token, conversationId: conversationId);
 
     if (response.result == true) {
-      messages = response.data!.messages!;
-      conversationModel = response.data!.conversation!;
+      // messages = response.data!.messages!;
+      // chatList = response.data!.messages;
+      chatList = List.generate(
+        response.data!.messages!.length,
+        (index) => ChatModel(
+          message: response.data!.messages![index].message!,
+          role: response.data!.messages![index].role!,
+          id: response.data!.messages![index].id!,
+          conversationCompletionCount: "0.0",
+          endConversation: response.data!.messages![index].endConversation!,
+        ),
+      );
+
+      endChat = response.data!.messages!.last.endConversation!;
+
       isActive = response.data!.conversation!.isActive!;
-    }
-  }
 
-  Future sendMessage({required int conversationId}) async {
-    changeSendIcon();
-    final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
-    final SharedPreferences prefs = await _prefs;
 
-    String token = prefs.getString(PreferencesKeys.TOKEN.toString())!;
 
-    final response = await service.sendMessage(token,
-        message: sendMessageController.text, conversationId: conversationId);
+      conversationCompleteCount =
+          response.data!.conversation!.conversationCompletionCount!;
+      conversationModel = response.data!.conversation!;
 
-    if (response.result == true) {
-      messages = response.data!.messages!;
-      sendMessageController.text = '';
-      changeSendIcon();
+      isData = false;
     }
 
     notifyListeners();
   }
+
+  // Future sendMessage({required int conversationId}) async {
+  //   changeSendIcon();
+  //   final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
+  //   final SharedPreferences prefs = await _prefs;
+
+  //   String token = prefs.getString(PreferencesKeys.TOKEN.toString())!;
+
+  //   final response = await service.sendMessage(token,
+  //       message: sendMessageController.text, conversationId: conversationId);
+
+  //   if (response.result == true) {
+  //     messages = response.data!.messages!;
+  //     sendMessageController.text = '';
+  //     changeSendIcon();
+  //   }
+
+  //   notifyListeners();
+  // }
 
   changeSendIcon() {
     isTap = !isTap;
@@ -177,8 +232,6 @@ class ConversationRoomViewModel extends ChangeNotifier {
 
     String token = prefs.getString(PreferencesKeys.TOKEN.toString())!;
 
-
-
     final profileResponse = await profileService.getProfileInfo(token);
     await getLanguages();
 
@@ -187,8 +240,9 @@ class ConversationRoomViewModel extends ChangeNotifier {
         token,
         conversationId: conversationId,
         messageId: messageId,
-        translateLanguage: translateTitle ?? profileResponse.data!.user!.nativeLanguage!.title!
-
+        translateLanguage: translateTitle!.isEmpty
+            ? profileResponse.data!.user!.nativeLanguage!.title!
+            : translateTitle,
       );
 
       if (response.result == true) {

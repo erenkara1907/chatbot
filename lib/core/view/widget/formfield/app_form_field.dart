@@ -22,6 +22,7 @@ class AppFormField extends BaseStateless {
   final bool isSuffix;
   final bool isObscure;
   final bool enabled;
+  final bool autoFocus;
 
   AppFormField({
     this.widthValue,
@@ -38,15 +39,17 @@ class AppFormField extends BaseStateless {
     this.isSuffix = false,
     this.isObscure = false,
     this.enabled = false,
+    this.autoFocus = false,
   });
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       width: widthValue ?? width(context: context, value: 1.0),
-      height: heightValue ?? height(context: context, value: 0.07),
+      height: heightValue ?? height(context: context, value: 0.08),
       child: TextFormField(
         readOnly: enabled,
+        autofocus: autoFocus,
         obscureText: isObscure,
         validator: validator ??
             (_) {
@@ -60,6 +63,7 @@ class AppFormField extends BaseStateless {
               fontWeight: FontWeight.w400,
               color: ColorConstant.instance.greyScale900,
             ),
+        cursorColor: ColorConstant.instance.greyScale900,
         decoration: isPrefix || isSuffix
             ? InputDecoration(
                 prefixIcon: prefixIconValue ?? const SizedBox(),

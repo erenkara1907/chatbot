@@ -12,6 +12,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:skeletons/skeletons.dart';
 
 import '../../../core/enum/preference_keys.dart';
 import '../../conversation/view/conversation_room_view.dart';
@@ -42,7 +43,110 @@ class HomeView extends BaseStateless {
               future: viewModel.getProfileInfo(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center();
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                    child: Column(
+                      children: [
+                        Row(
+                          children: [
+                            const SkeletonAvatar(
+                              style: SkeletonAvatarStyle(
+                                width: 35.0,
+                                height: 35.0,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 5.0),
+                            Expanded(
+                              child: Column(
+                                children: [
+                                  SkeletonParagraph(
+                                    style: const SkeletonParagraphStyle(
+                                      lines: 1,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 5.0),
+                                  SkeletonParagraph(
+                                    style: SkeletonParagraphStyle(
+                                      lines: 1,
+                                      lineStyle: SkeletonLineStyle(
+                                        width:
+                                            width(context: context, value: 0.1),
+                                      ),
+                                    ),
+                                  )
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 5.0),
+                            const SkeletonAvatar(
+                              style: SkeletonAvatarStyle(
+                                width: 35.0,
+                                height: 35.0,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 20.0),
+                        Container(
+                          height: height(context: context, value: 0.085),
+                          width: width(context: context, value: 1.0),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(20.0),
+                            color: ColorConstant.instance.greyScale300,
+                          ),
+                        ),
+                        const SizedBox(height: 20.0),
+                        SkeletonParagraph(
+                          style: SkeletonParagraphStyle(
+                              lines: 1,
+                              lineStyle: SkeletonLineStyle(
+                                  width: width(context: context, value: 0.15))),
+                        ),
+                        const SizedBox(height: 20.0),
+                        ListView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: 6,
+                          itemBuilder: (context, index) {
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 15.0),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Container(
+                                      height:
+                                          height(context: context, value: 0.2),
+                                      decoration: BoxDecoration(
+                                        color:
+                                            ColorConstant.instance.greyScale300,
+                                        borderRadius:
+                                            BorderRadius.circular(20.0),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 15.0),
+                                  Expanded(
+                                    child: Container(
+                                      height:
+                                          height(context: context, value: 0.2),
+                                      decoration: BoxDecoration(
+                                        color:
+                                            ColorConstant.instance.greyScale300,
+                                        borderRadius:
+                                            BorderRadius.circular(20.0),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  );
                 } else if (snapshot.connectionState == ConnectionState.done) {
                   return Column(
                     mainAxisAlignment: MainAxisAlignment.start,
@@ -234,7 +338,7 @@ class HomeView extends BaseStateless {
                           child: ElevatedButton(
                             onPressed: () {
                               state.chnageConversationStatus(false);
-                              viewModel.setFirstLogin();
+                              state.setFirstLogin();
                               final response = viewModel.createConversation(
                                 context,
                                 topicId: viewModel.topics[index].id!.toString(),

@@ -14,6 +14,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:skeletons/skeletons.dart';
 
 import '../../../core/view/widget/button/language_button.dart';
 import '../../../core/view/widget/button/language_level_button.dart';
@@ -28,8 +29,72 @@ class ProfileView extends BaseStateless {
         future: viewModel.getProfileInfo(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(),
+            return Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const SkeletonAvatar(
+                    style: SkeletonAvatarStyle(
+                      width: 80.0,
+                      height: 80.0,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(height: 15.0),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 40.0),
+                    child: SkeletonParagraph(
+                      style: const SkeletonParagraphStyle(
+                        lines: 1,
+                        lineStyle: SkeletonLineStyle(),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 25.0),
+                  ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: 5,
+                    itemBuilder: (context, index) {
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 15.0),
+                        child: Container(
+                          padding: const EdgeInsets.all(8.0),
+                          decoration: BoxDecoration(
+                            color: ColorConstant.instance.greyScale300,
+                            borderRadius: BorderRadius.circular(10.0),
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              const Expanded(
+                                child: SkeletonAvatar(
+                                  style: SkeletonAvatarStyle(
+                                    width: 35.0,
+                                    height: 35.0,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                              ),
+                              Expanded(
+                                flex: 4,
+                                child: SkeletonParagraph(
+                                  style: const SkeletonParagraphStyle(
+                                    lines: 1,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
             );
           } else if (snapshot.connectionState == ConnectionState.done) {
             return Padding(
@@ -512,15 +577,15 @@ class ProfileView extends BaseStateless {
                                 Navigator.pop(context);
                               });
 
-
-
-
                               await state.updateProfile(
                                 context,
                                 {
                                   'learn_language_id': viewModel
-                                              .selectedLearnLanguageId ==
-                                          -1 && viewModel.selectedLearnPopularLanguageId == -1
+                                                  .selectedLearnLanguageId ==
+                                              -1 &&
+                                          viewModel
+                                                  .selectedLearnPopularLanguageId ==
+                                              -1
                                       ? viewModel.profileModel.data!.user!
                                           .learnLanguages![0].id
                                           .toString()

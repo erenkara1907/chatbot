@@ -1,4 +1,4 @@
-// ignore_for_file: use_build_context_synchronously, unused_local_variable, no_leading_underscores_for_local_identifiers
+// ignore_for_file: use_build_context_synchronously, unused_local_variable, no_leading_underscores_for_local_identifiers, iterable_contains_unrelated_type
 
 import 'package:chatbot/core/enum/preference_keys.dart';
 import 'package:chatbot/product/auth/language/model/language_model.dart';
@@ -43,11 +43,37 @@ class LanguageViewModel extends ChangeNotifier {
   RegisterService registerService = RegisterService();
 
   List<Languages> languages = [];
-  List<Languages> searchLanguages = [];
+
   List<String> popularLanguageTitles = [];
   List<String> popularLanguageImages = [];
   List<int> popularLanguageIds = [];
   List<LanguageProficiencyLevels> languageLevels = [];
+
+  bool isGetLanguage = true;
+
+  bool isFullSearch = false;
+
+  // List<Languages> searchLanguages = [];
+  // searchLanguageFromList() {
+  //   if (searchController.text.isNotEmpty) {
+  //     for (var i = 0; i < languages.length; i++) {
+  //       if (languages[i]
+  //           .title!
+  //           .toLowerCase()
+  //           .contains(searchController.text.toLowerCase())) {
+  //         searchLanguages.add(languages[i]);
+  //       }
+  //       print('length: ${searchLanguages.length}');
+  //     }
+  //   }
+  // }
+
+  // setSearchList() {
+  //   print('girdi');
+  //   searchLanguageFromList();
+  //   isFullSearch = true;
+  //   notifyListeners();
+  // }
 
   startFocusNode() {
     searchFocusNode.unfocus();
@@ -85,6 +111,7 @@ class LanguageViewModel extends ChangeNotifier {
   }
 
   Future getLanguages() async {
+    isGetLanguage = false;
     final model = await service.getLanguages();
 
     if (model.result == true) {
@@ -102,7 +129,10 @@ class LanguageViewModel extends ChangeNotifier {
       }
       languages.clear();
       languages.addAll(model.data!.languages!);
+      isGetLanguage = true;
     }
+
+    notifyListeners();
   }
 
   Future getLanguageLevels() async {
@@ -124,11 +154,26 @@ class LanguageViewModel extends ChangeNotifier {
           PreferencesKeys.TOKEN.toString(), response.data!.token!);
 
       Navigator.push(
-          context, MaterialPageRoute(builder:   (context) => BottomBarView()));
+          context, MaterialPageRoute(builder: (context) => BottomBarView()));
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('The email has already been taken')),
       );
+
+      selectedIndex = -1;
+      selectedPopularIndex = -1;
+      selectedLevelIndex = -1;
+
+      selectedLanguageId = -1;
+      selectedPopularLanguageId = -1;
+
+      selectedLearnIndex = -1;
+      selectedLearnPopularIndex = -1;
+      selectedLearnLevelIndex = -1;
+
+      selectedLearnLanguageId = -1;
+      selectedLearnPopularLanguageId = -1;
+      selectedLanguageLevelId = -1;
 
       Navigator.pushAndRemoveUntil(
           context,

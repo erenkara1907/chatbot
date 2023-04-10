@@ -1,146 +1,111 @@
-// ignore_for_file: use_key_in_widget_constructors, must_be_immutable, use_build_context_synchronously
+// ignore_for_file: prefer_final_fields, unused_field, must_be_immutable, use_build_context_synchronously
 
 import 'package:chatbot/core/constants/color_constant.dart';
-import 'package:chatbot/core/language/locale_keys.g.dart';
-import 'package:chatbot/core/view/base/base_stateless.dart';
-import 'package:chatbot/product/bottom_bar/view/bottom_bar_view.dart';
+import 'package:chatbot/core/constants/image_constant.dart';
+import 'package:chatbot/core/view/base/base_state.dart';
+import 'package:chatbot/product/conversation/view/text_widget.dart';
 import 'package:chatbot/product/conversation/viewmodel/conversation_room_view_model.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
+import 'package:skeletons/skeletons.dart';
 
 import '../../../core/constants/icon_constant.dart';
-import '../../../core/constants/image_constant.dart';
+import '../../../core/language/locale_keys.g.dart';
 import '../../../core/view/widget/button/language_button.dart';
+import '../../bottom_bar/view/bottom_bar_view.dart';
 
-class ConversationRoomView extends BaseStateless {
+class ConversationRoomView extends StatefulWidget {
+  final int conversationId;
+  // final List<Messages> messages;
+
+  const ConversationRoomView({
+    Key? key,
+    required this.conversationId,
+    // this.messages = const [],
+  }) : super(key: key);
+  @override
+// ignore: library_private_types_in_public_api
+  _ConversationRoomViewState createState() => _ConversationRoomViewState();
+}
+
+class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
+  bool _isTyping = false;
+  bool? _isFirst;
+
   ConversationRoomViewModel viewModel = ConversationRoomViewModel();
 
-  final int conversationId;
+  late TextEditingController sendTextController;
+  late ScrollController _listScrollController;
+  late FocusNode focusNode;
 
-  ConversationRoomView({
-    this.conversationId = 0,
-  });
+  @override
+  void initState() {
+    Provider.of<ConversationRoomViewModel>(context, listen: false)
+        .getAllMessages(conversationId: widget.conversationId);
+    _listScrollController = ScrollController();
+    sendTextController = TextEditingController();
+    focusNode = FocusNode();
+    _isFirst = true;
+
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    _listScrollController.dispose();
+    sendTextController.dispose();
+    focusNode.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => viewModel.startFocusNode(),
-      child: Scaffold(
-        backgroundColor: ColorConstant.instance.additionalWhite,
-        body: Consumer<ConversationRoomViewModel>(
-          builder: (context, state, child) {
-            return FutureBuilder(
-              future: state.getAllMessages(conversationId: conversationId),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(
-                    child: CircularProgressIndicator(),
-                  );
-                } else if (snapshot.connectionState == ConnectionState.done) {
-                  return Padding(
-                    padding: const EdgeInsets.only(top: 40.0),
-                    child: chat(context, state),
-                  );
-                } else {
-                  return const Text('error');
-                }
-              },
-            );
-          },
-        ),
-      ),
-    );
-  }
-
-  SizedBox chat(BuildContext context, ConversationRoomViewModel state) {
-    return SizedBox(
-      height: height(context: context, value: 1.0),
-      child: Stack(
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(
-                left: 24.0, right: 24.0, bottom: 60.0, top: 30.0),
-            child: messages(state),
-          ),
-          Positioned(
-            bottom: 30.0,
-            left: 0.0,
-            right: 0.0,
-            child: state.isActive == 0
-                ? Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.transparent,
-                          elevation: 0,
-                        ),
-                        onPressed: () {
-                          rateDialog(context, state);
-                        },
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.lock,
-                              color: ColorConstant.instance.additionalRed,
-                              size: 15.0,
-                            ),
-                            const SizedBox(width: 15.0),
-                            Text(
-                              LocaleKeys.endChat.tr(),
-                              style: currentTextTheme(context)
-                                  .headline3
-                                  ?.copyWith(
-                                    fontWeight: FontWeight.w400,
-                                    color: ColorConstant.instance.additionalRed,
-                                  ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      sendInput(context, state),
-                    ],
-                  )
-                : sendInput(context, state),
-          ),
-          Positioned(
-            left: 0.0,
-            right: 0.0,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: CircleAvatar(
-                    backgroundColor: ColorConstant.instance.greyScale300,
-                    radius: 25.0,
-                    child: Image.asset(
-                      ImageConstant.instance.smallRobot,
-                      fit: BoxFit.fill,
-                      width: 55.0,
-                      height: 55.0,
-                    ),
+    var chatProvider = Provider.of<ConversationRoomViewModel>(context);
+    // widget.isFirst
+    //     ? chatProvider.chatList = List.generate(
+    //         widget.messages.length,
+    //         (index) => ChatModel(
+    //           message: widget.messages[index].message!,
+    //           role: widget.messages[index].role!,
+    //         ),
+    //       )
+    //     : null;
+    return Scaffold(
+      backgroundColor: ColorConstant.instance.additionalWhite,
+      appBar: !chatProvider.isData
+          ? AppBar(
+              elevation: 0,
+              backgroundColor: ColorConstant.instance.additionalWhite,
+              leading: Padding(
+                padding: const EdgeInsets.only(left: 24.0),
+                child: CircleAvatar(
+                  backgroundColor: ColorConstant.instance.greyScale300,
+                  radius: 25.0,
+                  child: Image.asset(
+                    ImageConstant.instance.smallRobot,
+                    fit: BoxFit.fill,
                   ),
                 ),
-                Expanded(
-                  flex: 2,
-                  child: ClipRRect(
-                    borderRadius: const BorderRadius.all(
-                      Radius.circular(10.0),
-                    ),
-                    child: LinearProgressIndicator(
-                      backgroundColor: ColorConstant.instance.greyScale50,
-                      color: ColorConstant.instance.greyScale800,
-                      minHeight: 6.0,
-                      value: double.parse(
-                          state.conversationModel.conversationCompletionCount!),
-                    ),
-                  ),
+              ),
+              title: ClipRRect(
+                borderRadius: const BorderRadius.all(
+                  Radius.circular(10.0),
                 ),
-                Expanded(
+                child: LinearProgressIndicator(
+                  backgroundColor: ColorConstant.instance.greyScale50,
+                  color: chatProvider.isActive == 0 || chatProvider.endChat == 1
+                      ? ColorConstant.instance.additionalGreen
+                      : ColorConstant.instance.greyScale800,
+                  minHeight: 6.0,
+                  value: double.parse(chatProvider.conversationCompleteCount),
+                ),
+              ),
+              actions: [
+                Padding(
+                  padding: const EdgeInsets.only(right: 24.0),
                   child: CircleAvatar(
                     backgroundColor: ColorConstant.instance.greyScale300,
                     radius: 15.0,
@@ -159,11 +124,403 @@ class ConversationRoomView extends BaseStateless {
                   ),
                 ),
               ],
+            )
+          : AppBar(
+              elevation: 0,
+              backgroundColor: ColorConstant.instance.additionalWhite,
+              leading: const Padding(
+                  padding: EdgeInsets.only(left: 24.0),
+                  child: SkeletonAvatar(
+                    style: SkeletonAvatarStyle(
+                      shape: BoxShape.circle,
+                      width: 15.0,
+                      height: 15.0,
+                    ),
+                  )),
+              title: ClipRRect(
+                borderRadius: const BorderRadius.all(
+                  Radius.circular(10.0),
+                ),
+                child: SkeletonParagraph(
+                  style: const SkeletonParagraphStyle(
+                    lines: 1,
+                  ),
+                ),
+              ),
+              actions: const [
+                Padding(
+                    padding: EdgeInsets.only(right: 24.0),
+                    child: SkeletonAvatar(
+                      style: SkeletonAvatarStyle(
+                        shape: BoxShape.circle,
+                        width: 35.0,
+                        height: 35.0,
+                      ),
+                    )),
+              ],
             ),
-          ),
-        ],
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+          child: !chatProvider.isData
+              ? Column(
+                  children: [
+                    Flexible(
+                      child: ListView.builder(
+                        controller: _listScrollController,
+                        itemCount: chatProvider.getChatList.length,
+                        addAutomaticKeepAlives: false,
+                        addRepaintBoundaries: false,
+                        physics: const ClampingScrollPhysics(),
+                        itemBuilder: (context, index) {
+                          return chatWidget(
+                            chatProvider,
+                            index,
+                          );
+                        },
+                      ),
+                    ),
+                    if (_isTyping) ...[
+                      const SpinKitThreeBounce(
+                        color: Colors.black,
+                        size: 18.0,
+                      )
+                    ],
+                    chatProvider.endChat == 1
+                        ? chatProvider.isActive == 0
+                            ? const Center()
+                            : Column(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  TextButton(
+                                    style: TextButton.styleFrom(
+                                      backgroundColor: Colors.transparent,
+                                      elevation: 0,
+                                    ),
+                                    onPressed: () async {
+                                      await chatProvider.sendToBackendRateId(
+                                        context,
+                                        conversationId: widget.conversationId,
+                                        endConversationId: 1,
+                                      );
+                                      rateDialog(context, chatProvider);
+                                    },
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.lock,
+                                          color: ColorConstant
+                                              .instance.additionalRed,
+                                          size: 15.0,
+                                        ),
+                                        const SizedBox(width: 15.0),
+                                        Text(
+                                          LocaleKeys.endChat.tr(),
+                                          style: currentTextTheme.headline3
+                                              ?.copyWith(
+                                            fontWeight: FontWeight.w400,
+                                            color: ColorConstant
+                                                .instance.additionalRed,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              )
+                        : const Center(),
+                    const SizedBox(height: 5.0),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 10.0),
+                      child: SizedBox(
+                        width: width(1.0),
+                        height: height(0.075),
+                        child: TextField(
+                          enabled: chatProvider.isActive == 0 ? false : true,
+                          controller: sendTextController,
+                          focusNode: focusNode,
+                          style: currentTextTheme.headline3?.copyWith(
+                            fontWeight: FontWeight.w400,
+                            color: ColorConstant.instance.greyScale900,
+                          ),
+                          decoration: InputDecoration(
+                            filled: true,
+                            fillColor: ColorConstant.instance.additionalWhite,
+                            suffixIcon: Padding(
+                              padding: const EdgeInsets.only(right: 8.0),
+                              child: Container(
+                                width: 44.0,
+                                height: 44.0,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(50.0),
+                                  color: ColorConstant.instance.greyScale300,
+                                ),
+                                child: Center(
+                                  child: IconButton(
+                                    onPressed: () async {
+                                      await sendMessage(
+                                          chatProvider: chatProvider);
+                                    },
+                                    icon: SvgPicture.asset(
+                                        IconConstant.instance.iconSend),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(50.0),
+                              borderSide: BorderSide(
+                                width: 1.0,
+                                color: ColorConstant.instance.greyScale400,
+                              ),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(50.0),
+                              borderSide: BorderSide(
+                                width: 1.0,
+                                color: ColorConstant.instance.greyScale400,
+                              ),
+                            ),
+                            hintText: chatProvider.isActive == 0
+                                ? 'Chat is completed'
+                                : LocaleKeys.ask.tr(),
+                            hintStyle: currentTextTheme.headline3?.copyWith(
+                              fontWeight: FontWeight.w400,
+                              color: ColorConstant.instance.greyScale500,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                )
+              : Column(
+                  children: [
+                    Flexible(
+                      child: ListView.builder(
+                        itemCount: 10,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemBuilder: (context, index) {
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 15.0),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: ColorConstant.instance.greyScale200,
+                              ),
+                              child: SkeletonParagraph(
+                                style: SkeletonParagraphStyle(
+                                    lines: 3,
+                                    spacing: 6,
+                                    lineStyle: SkeletonLineStyle(
+                                      randomLength: true,
+                                      height: 10,
+                                      borderRadius: BorderRadius.circular(8),
+                                      minLength:
+                                          MediaQuery.of(context).size.width / 6,
+                                      maxLength:
+                                          MediaQuery.of(context).size.width / 3,
+                                    )),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    if (_isTyping) ...[
+                      const SpinKitThreeBounce(
+                        color: Colors.black,
+                        size: 18.0,
+                      )
+                    ],
+                    const SizedBox(height: 5.0),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Expanded(
+                          flex: 3,
+                          child: SkeletonParagraph(
+                            style: const SkeletonParagraphStyle(
+                              lines: 1,
+                            ),
+                          ),
+                        ),
+                        const Expanded(
+                          child: SkeletonAvatar(
+                            style: SkeletonAvatarStyle(
+                              width: 35.0,
+                              height: 35.0,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        )
+                      ],
+                    )
+                  ],
+                ),
+        ),
       ),
     );
+  }
+
+  Align chatWidget(ConversationRoomViewModel chatProvider, int index) {
+    return Align(
+      alignment: chatProvider.chatList[index].role == 'user'
+          ? Alignment.centerRight
+          : Alignment.centerLeft,
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(
+            chatProvider.chatList[index].role == 'user' ? 94.0 : 0.0,
+            10.0,
+            chatProvider.chatList[index].role == 'user'
+                ? 0.0
+                : chatProvider.chatList[index].message == 'Please try again.'
+                    ? 164.0
+                    : 94.0,
+            10.0),
+        child: Container(
+          padding: const EdgeInsets.all(8.0),
+          decoration: BoxDecoration(
+            color: chatProvider.chatList[index].role == 'user'
+                ? ColorConstant.instance.greyScale600
+                : chatProvider.chatList[index].message == 'Please try again.'
+                    ? ColorConstant.instance.additionalRed
+                    : ColorConstant.instance.greyScale200,
+            borderRadius: BorderRadius.only(
+                topLeft: const Radius.circular(20.0),
+                topRight: const Radius.circular(20.0),
+                bottomLeft: Radius.circular(
+                    chatProvider.chatList[index].role == 'user' ? 20.0 : 0.0),
+                bottomRight: Radius.circular(
+                    chatProvider.chatList[index].role == 'user' ? 0.0 : 20.0)),
+          ),
+          child: chatProvider.chatList[index].role == 'user'
+              ? Text(
+                  chatProvider.chatList[index].message,
+                  style: currentTextTheme.headline3?.copyWith(
+                    fontWeight: FontWeight.w400,
+                    color: chatProvider.chatList[index].role == 'user'
+                        ? ColorConstant.instance.additionalWhite
+                        : ColorConstant.instance.greyScale900,
+                  ),
+                )
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    chatProvider.chatList[index].role == 'user'
+                        ? Text(
+                            chatProvider.chatList[index].message,
+                            style: currentTextTheme.headline3?.copyWith(
+                              fontWeight: FontWeight.w400,
+                              color: ColorConstant.instance.additionalWhite,
+                            ),
+                          )
+                        : DefaultTextStyle(
+                            style: currentTextTheme.headline3?.copyWith(
+                                  fontWeight: FontWeight.w400,
+                                  color: chatProvider.chatList[index].message ==
+                                          'Please try again.'
+                                      ? ColorConstant.instance.additionalWhite
+                                      : ColorConstant.instance.greyScale900,
+                                ) ??
+                                const TextStyle(),
+                            child: Text(chatProvider.chatList[index].message)),
+                    const SizedBox(height: 10.0),
+                    chatProvider.chatList[index].message == 'Please try again.'
+                        ? const Center()
+                        : CircleAvatar(
+                            backgroundColor:
+                                ColorConstant.instance.greyScale400,
+                            radius: 15.0,
+                            child: IconButton(
+                              onPressed: () async {
+                                chatProvider.translateMessage =
+                                    chatProvider.chatList[index].message;
+
+                                showTranslateMessage(context, index);
+                              },
+                              icon: Icon(
+                                Icons.translate,
+                                color: ColorConstant.instance.greyScale600,
+                                size: 15.0,
+                              ),
+                            ),
+                          ),
+                  ],
+                ),
+        ),
+      ),
+    );
+  }
+
+  void scrollListToEND() {
+    _listScrollController.animateTo(
+      _listScrollController.position.maxScrollExtent,
+      duration: const Duration(seconds: 1),
+      curve: Curves.easeOut,
+    );
+  }
+
+  Future<void> sendMessage(
+      {required ConversationRoomViewModel chatProvider}) async {
+    if (_isTyping) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: TextWidget(
+            label: "You can't multiple messages at a time",
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+    if (sendTextController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: TextWidget(
+            label: "Please type a message",
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    try {
+      String msg = sendTextController.text;
+      _isFirst = false;
+
+      _isTyping = true;
+      chatProvider.addUserMessage(message: msg);
+      sendTextController.clear();
+      focusNode.unfocus();
+
+      await chatProvider.sendMessageAndGetAnswers(
+        message: msg,
+        conversationId: widget.conversationId,
+      );
+
+      chatProvider.tempList = chatProvider.chatList;
+    } catch (error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: TextWidget(
+            label: error.toString(),
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      scrollListToEND();
+      _isTyping = false;
+      // Future.delayed(const Duration(seconds: 2), () {
+
+      // });
+    }
   }
 
   Future<dynamic> rateDialog(
@@ -179,7 +536,7 @@ class ConversationRoomView extends BaseStateless {
                 horizontal: 24.0,
               ),
               child: Container(
-                width: width(context: context, value: 1.0),
+                width: width(1.0),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(20.0),
                   color: ColorConstant.instance.additionalWhite,
@@ -195,12 +552,10 @@ class ConversationRoomView extends BaseStateless {
                         children: [
                           Text(
                             LocaleKeys.rate_text.tr(),
-                            style: currentTextTheme(context)
-                                .headline3
-                                ?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                  color: ColorConstant.instance.greyScale900,
-                                ),
+                            style: currentTextTheme.headline3?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: ColorConstant.instance.greyScale900,
+                            ),
                           ),
                           TextButton(
                             onPressed: () {
@@ -211,12 +566,10 @@ class ConversationRoomView extends BaseStateless {
                             },
                             child: Text(
                               LocaleKeys.skip.tr(),
-                              style: currentTextTheme(context)
-                                  .headline4
-                                  ?.copyWith(
-                                    fontWeight: FontWeight.w400,
-                                    color: ColorConstant.instance.greyScale600,
-                                  ),
+                              style: currentTextTheme.headline4?.copyWith(
+                                fontWeight: FontWeight.w400,
+                                color: ColorConstant.instance.greyScale600,
+                              ),
                             ),
                           )
                         ],
@@ -234,9 +587,16 @@ class ConversationRoomView extends BaseStateless {
                                 onTap: () async {
                                   await state.sendToBackendRateId(
                                     context,
-                                    conversationId: conversationId,
-                                    endConversationId: conversationId,
+                                    conversationId: widget.conversationId,
                                     rateId: state.rates[index].id!,
+                                    endConversationId: 1,
+                                  );
+
+                                  Navigator.pushReplacement(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => BottomBarView(),
+                                    ),
                                   );
                                 },
                                 child: Padding(
@@ -267,154 +627,6 @@ class ConversationRoomView extends BaseStateless {
     );
   }
 
-  Padding sendInput(BuildContext context, ConversationRoomViewModel state) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24.0),
-      child: SizedBox(
-        width: width(context: context, value: 1.0),
-        height: height(context: context, value: 0.075),
-        child: TextFormField(
-          enabled: state.isActive == 0 ? false : true,
-          controller: state.sendMessageController,
-          focusNode: state.sendMessageFocusNode,
-          style: currentTextTheme(context).headline3?.copyWith(
-                fontWeight: FontWeight.w400,
-                color: ColorConstant.instance.greyScale900,
-              ),
-          decoration: InputDecoration(
-            filled: true,
-            fillColor: ColorConstant.instance.additionalWhite,
-            suffixIcon: Padding(
-              padding: const EdgeInsets.only(right: 8.0),
-              child: Container(
-                width: 44.0,
-                height: 44.0,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(50.0),
-                  color: ColorConstant.instance.greyScale300,
-                ),
-                child: Center(
-                  child: state.isTap
-                      ? CircularProgressIndicator(
-                          color: ColorConstant.instance.greyScale600,
-                        )
-                      : IconButton(
-                          onPressed: () {
-                            if (state.sendMessageController.text.isNotEmpty) {
-                              state.sendMessage(
-                                conversationId: conversationId,
-                              );
-                            }
-                          },
-                          icon: SvgPicture.asset(
-                            IconConstant.instance.iconSend,
-                          ),
-                        ),
-                ),
-              ),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(50.0),
-              borderSide: BorderSide(
-                width: 1.0,
-                color: ColorConstant.instance.greyScale400,
-              ),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(50.0),
-              borderSide: BorderSide(
-                width: 1.0,
-                color: ColorConstant.instance.greyScale400,
-              ),
-            ),
-            hintText: LocaleKeys.ask.tr(),
-            hintStyle: currentTextTheme(context).headline3?.copyWith(
-                  fontWeight: FontWeight.w400,
-                  color: ColorConstant.instance.greyScale500,
-                ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  ListView messages(ConversationRoomViewModel state) {
-    return ListView.builder(
-      shrinkWrap: true,
-      itemCount: state.messages.length,
-      addAutomaticKeepAlives: false,
-      addRepaintBoundaries: false,
-      physics: const ClampingScrollPhysics(),
-      itemBuilder: (context, index) {
-        return Align(
-          alignment: state.messages[index].role == 'user'
-              ? Alignment.centerRight
-              : Alignment.centerLeft,
-          child: Padding(
-            padding: const EdgeInsets.only(bottom: 10.0),
-            child: Container(
-              padding: const EdgeInsets.all(8.0),
-              decoration: BoxDecoration(
-                color: state.messages[index].role == 'user'
-                    ? ColorConstant.instance.greyScale600
-                    : ColorConstant.instance.greyScale200,
-                borderRadius: BorderRadius.only(
-                    topLeft: const Radius.circular(20.0),
-                    topRight: const Radius.circular(20.0),
-                    bottomLeft: Radius.circular(
-                        state.messages[index].role == 'user' ? 20.0 : 0.0),
-                    bottomRight: Radius.circular(
-                        state.messages[index].role == 'user' ? 0.0 : 20.0)),
-              ),
-              child: state.messages[index].role == 'user'
-                  ? Text(
-                      state.messages[index].message!,
-                      style: currentTextTheme(context).headline3?.copyWith(
-                            fontWeight: FontWeight.w400,
-                            color: state.messages[index].role == 'user'
-                                ? ColorConstant.instance.additionalWhite
-                                : ColorConstant.instance.greyScale900,
-                          ),
-                    )
-                  : Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          state.messages[index].message!,
-                          style: currentTextTheme(context).headline3?.copyWith(
-                                fontWeight: FontWeight.w400,
-                                color: state.messages[index].role == 'user'
-                                    ? ColorConstant.instance.additionalWhite
-                                    : ColorConstant.instance.greyScale900,
-                              ),
-                        ),
-                        const SizedBox(height: 10.0),
-                        CircleAvatar(
-                          backgroundColor: ColorConstant.instance.greyScale400,
-                          radius: 15.0,
-                          child: IconButton(
-                            onPressed: () async {
-                              viewModel.translateMessage =
-                                  state.messages[index].message!;
-
-                              showTranslateMessage(context, index);
-                            },
-                            icon: Icon(
-                              Icons.translate,
-                              color: ColorConstant.instance.greyScale600,
-                              size: 15.0,
-                            ),
-                          ),
-                        )
-                      ],
-                    ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
   Future<dynamic> showTranslateMessage(BuildContext context, int index) {
     return showModalBottomSheet(
       isDismissible: false,
@@ -426,7 +638,7 @@ class ConversationRoomView extends BaseStateless {
             return FractionallySizedBox(
               heightFactor: 0.9,
               child: Container(
-                width: width(context: context, value: 1.0),
+                width: width(1.0),
                 decoration: BoxDecoration(
                   color: ColorConstant.instance.additionalWhite,
                   borderRadius: const BorderRadius.only(
@@ -440,16 +652,58 @@ class ConversationRoomView extends BaseStateless {
                   ),
                   child: FutureBuilder(
                     future: viewModel.translate(
-                      conversationId: conversationId,
-                      messageId: state.messages[index].id!,
+                      conversationId: widget.conversationId,
+                      messageId: state.chatList[index].id,
                       translateTitle: viewModel.nativeLanguage == ''
                           ? viewModel.nativePopularLanguage
                           : viewModel.nativeLanguage,
                     ),
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const Center(
-                          child: CircularProgressIndicator(),
+                        return Column(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 25.0),
+                            SkeletonParagraph(
+                              style: SkeletonParagraphStyle(
+                                lines: 1,
+                                lineStyle: SkeletonLineStyle(
+                                  width: width(0.15),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 20.0),
+                            SkeletonParagraph(
+                              style: SkeletonParagraphStyle(
+                                lines: 1,
+                                lineStyle: SkeletonLineStyle(
+                                  width: width(0.10),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 15.0),
+                            SkeletonParagraph(
+                              style: const SkeletonParagraphStyle(
+                                lines: 4,
+                              ),
+                            ),
+                            const SizedBox(height: 20.0),
+                            SkeletonParagraph(
+                              style: SkeletonParagraphStyle(
+                                lines: 1,
+                                lineStyle: SkeletonLineStyle(
+                                  width: width(0.10),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 15.0),
+                            SkeletonParagraph(
+                              style: const SkeletonParagraphStyle(
+                                lines: 4,
+                              ),
+                            ),
+                          ],
                         );
                       } else if (snapshot.connectionState ==
                           ConnectionState.done) {
@@ -482,38 +736,29 @@ class ConversationRoomView extends BaseStateless {
                               const SizedBox(height: 10.0),
                               Text(
                                 LocaleKeys.translate.tr(),
-                                style: currentTextTheme(context)
-                                    .headline1
-                                    ?.copyWith(
-                                      fontSize: 24.0,
-                                      fontWeight: FontWeight.w600,
-                                      color:
-                                          ColorConstant.instance.greyScale900,
-                                    ),
+                                style: currentTextTheme.headline1?.copyWith(
+                                  fontSize: 24.0,
+                                  fontWeight: FontWeight.w600,
+                                  color: ColorConstant.instance.greyScale900,
+                                ),
                               ),
                               const SizedBox(height: 24.0),
                               Text(
                                 LocaleKeys.message.tr(),
-                                style: currentTextTheme(context)
-                                    .headline1
-                                    ?.copyWith(
-                                      fontSize: 20.0,
-                                      fontWeight: FontWeight.w500,
-                                      color:
-                                          ColorConstant.instance.greyScale900,
-                                    ),
+                                style: currentTextTheme.headline1?.copyWith(
+                                  fontSize: 20.0,
+                                  fontWeight: FontWeight.w500,
+                                  color: ColorConstant.instance.greyScale900,
+                                ),
                               ),
                               const SizedBox(height: 16.0),
                               Text(
-                                viewModel.translateMessage,
-                                style: currentTextTheme(context)
-                                    .headline1
-                                    ?.copyWith(
-                                      fontSize: 16.0,
-                                      fontWeight: FontWeight.w400,
-                                      color:
-                                          ColorConstant.instance.greyScale600,
-                                    ),
+                                state.translateMessage,
+                                style: currentTextTheme.headline1?.copyWith(
+                                  fontSize: 16.0,
+                                  fontWeight: FontWeight.w400,
+                                  color: ColorConstant.instance.greyScale600,
+                                ),
                               ),
                               const SizedBox(height: 24.0),
                               Row(
@@ -521,19 +766,16 @@ class ConversationRoomView extends BaseStateless {
                                 children: [
                                   Text(
                                     LocaleKeys.translate_to.tr(),
-                                    style: currentTextTheme(context)
-                                        .headline1
-                                        ?.copyWith(
-                                          fontSize: 20.0,
-                                          fontWeight: FontWeight.w500,
-                                          color: ColorConstant
-                                              .instance.greyScale900,
-                                        ),
+                                    style: currentTextTheme.headline1?.copyWith(
+                                      fontSize: 20.0,
+                                      fontWeight: FontWeight.w500,
+                                      color:
+                                          ColorConstant.instance.greyScale900,
+                                    ),
                                   ),
                                   const SizedBox(width: 10.0),
                                   SizedBox(
-                                    height:
-                                        height(context: context, value: 0.04),
+                                    height: height(0.04),
                                     child: TextButton(
                                       style: TextButton.styleFrom(
                                           shape: RoundedRectangleBorder(
@@ -551,9 +793,7 @@ class ConversationRoomView extends BaseStateless {
                                             return FractionallySizedBox(
                                               heightFactor: 0.88,
                                               child: Container(
-                                                width: width(
-                                                    context: context,
-                                                    value: 1.0),
+                                                width: width(1.0),
                                                 decoration: BoxDecoration(
                                                     color: ColorConstant
                                                         .instance
@@ -611,17 +851,15 @@ class ConversationRoomView extends BaseStateless {
                                                               .popular_lang
                                                               .tr(),
                                                           style:
-                                                              currentTextTheme(
-                                                                      context)
+                                                              currentTextTheme
                                                                   .headline3
                                                                   ?.copyWith(
-                                                                    fontWeight:
-                                                                        FontWeight
-                                                                            .w500,
-                                                                    color: ColorConstant
-                                                                        .instance
-                                                                        .greyScale600,
-                                                                  ),
+                                                            fontWeight:
+                                                                FontWeight.w500,
+                                                            color: ColorConstant
+                                                                .instance
+                                                                .greyScale600,
+                                                          ),
                                                           textAlign:
                                                               TextAlign.center,
                                                         ),
@@ -671,15 +909,11 @@ class ConversationRoomView extends BaseStateless {
                                                                         viewModel.nativeLanguage =
                                                                             '';
                                                                       },
-                                                                      widthValue: width(
-                                                                          context:
-                                                                              context,
-                                                                          value:
+                                                                      widthValue:
+                                                                          width(
                                                                               1.0),
-                                                                      heightValue: height(
-                                                                          context:
-                                                                              context,
-                                                                          value:
+                                                                      heightValue:
+                                                                          height(
                                                                               0.07),
                                                                       backgroundColor: ColorConstant
                                                                           .instance
@@ -689,7 +923,7 @@ class ConversationRoomView extends BaseStateless {
                                                                       text: viewModel
                                                                               .popularLanguageTitles[
                                                                           index],
-                                                                      textStyle: currentTextTheme(context).headline3?.copyWith(
+                                                                      textStyle: currentTextTheme.headline3?.copyWith(
                                                                               fontWeight: FontWeight.w400,
                                                                               color: ColorConstant.instance.greyScale900) ??
                                                                           const TextStyle(),
@@ -711,17 +945,15 @@ class ConversationRoomView extends BaseStateless {
                                                           LocaleKeys.all_lang
                                                               .tr(),
                                                           style:
-                                                              currentTextTheme(
-                                                                      context)
+                                                              currentTextTheme
                                                                   .headline3
                                                                   ?.copyWith(
-                                                                    fontWeight:
-                                                                        FontWeight
-                                                                            .w500,
-                                                                    color: ColorConstant
-                                                                        .instance
-                                                                        .greyScale600,
-                                                                  ),
+                                                            fontWeight:
+                                                                FontWeight.w500,
+                                                            color: ColorConstant
+                                                                .instance
+                                                                .greyScale600,
+                                                          ),
                                                           textAlign:
                                                               TextAlign.center,
                                                         ),
@@ -770,15 +1002,11 @@ class ConversationRoomView extends BaseStateless {
                                                                         viewModel.nativePopularLanguage =
                                                                             '';
                                                                       },
-                                                                      widthValue: width(
-                                                                          context:
-                                                                              context,
-                                                                          value:
+                                                                      widthValue:
+                                                                          width(
                                                                               1.0),
-                                                                      heightValue: height(
-                                                                          context:
-                                                                              context,
-                                                                          value:
+                                                                      heightValue:
+                                                                          height(
                                                                               0.07),
                                                                       backgroundColor: ColorConstant
                                                                           .instance
@@ -789,7 +1017,7 @@ class ConversationRoomView extends BaseStateless {
                                                                           .languages[
                                                                               index]
                                                                           .title!,
-                                                                      textStyle: currentTextTheme(context).headline3?.copyWith(
+                                                                      textStyle: currentTextTheme.headline3?.copyWith(
                                                                               fontWeight: FontWeight.w400,
                                                                               color: ColorConstant.instance.greyScale900) ??
                                                                           const TextStyle(),
@@ -825,14 +1053,13 @@ class ConversationRoomView extends BaseStateless {
                                                 ? viewModel
                                                     .nativePopularLanguage
                                                 : viewModel.nativeLanguage,
-                                        style: currentTextTheme(context)
-                                            .headline3
+                                        style: currentTextTheme.headline3
                                             ?.copyWith(
-                                              fontSize: 14.0,
-                                              fontWeight: FontWeight.w400,
-                                              color: ColorConstant
-                                                  .instance.greyScale900,
-                                            ),
+                                          fontSize: 14.0,
+                                          fontWeight: FontWeight.w400,
+                                          color: ColorConstant
+                                              .instance.greyScale900,
+                                        ),
                                       ),
                                     ),
                                   ),
@@ -841,14 +1068,11 @@ class ConversationRoomView extends BaseStateless {
                               const SizedBox(height: 16.0),
                               Text(
                                 viewModel.translateModel.message!,
-                                style: currentTextTheme(context)
-                                    .headline1
-                                    ?.copyWith(
-                                      fontSize: 16.0,
-                                      fontWeight: FontWeight.w400,
-                                      color:
-                                          ColorConstant.instance.greyScale600,
-                                    ),
+                                style: currentTextTheme.headline1?.copyWith(
+                                  fontSize: 16.0,
+                                  fontWeight: FontWeight.w400,
+                                  color: ColorConstant.instance.greyScale600,
+                                ),
                               ),
                             ],
                           ),

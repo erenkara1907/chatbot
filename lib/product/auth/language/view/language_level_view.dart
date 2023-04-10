@@ -6,6 +6,7 @@ import 'package:chatbot/product/auth/language/viewmodel/language_view_model.dart
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:skeletons/skeletons.dart';
 
 import '../../../../core/constants/color_constant.dart';
 import '../../../../core/language/locale_keys.g.dart';
@@ -68,13 +69,91 @@ class LanguageLevelView extends BaseStateless {
           future: viewModel.getLanguageLevels(),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
+              return skeletonLoading(context);
             } else if (snapshot.connectionState == ConnectionState.done) {
               return languages(context);
             } else {
               return const Text("Error");
             }
           },
+        ),
+      ),
+    );
+  }
+
+  Padding skeletonLoading(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+      child: SingleChildScrollView(
+        physics: const NeverScrollableScrollPhysics(),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 60.0),
+              child: SkeletonParagraph(
+                style: const SkeletonParagraphStyle(
+                  lines: 1,
+                ),
+              ),
+            ),
+            const SizedBox(height: 5.0),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 30.0),
+              child: SkeletonParagraph(
+                style: const SkeletonParagraphStyle(
+                  lines: 2,
+                ),
+              ),
+            ),
+            const SizedBox(height: 20.0),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: SkeletonParagraph(
+                style: SkeletonParagraphStyle(
+                  lines: 1,
+                  lineStyle: SkeletonLineStyle(
+                    width: width(context: context, value: 0.2),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 10.0),
+            ListView.builder(
+              shrinkWrap: true,
+              itemCount: 12,
+              physics: const NeverScrollableScrollPhysics(),
+              itemBuilder: (context, index) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 15.0),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        flex: 3,
+                        child: SkeletonParagraph(
+                          style: const SkeletonParagraphStyle(
+                            lines: 1,
+                          ),
+                        ),
+                      ),
+                      const Expanded(
+                        child: SkeletonAvatar(
+                          style: SkeletonAvatarStyle(
+                            width: 35.0,
+                            height: 35.0,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      )
+                    ],
+                  ),
+                );
+              },
+            ),
+          ],
         ),
       ),
     );

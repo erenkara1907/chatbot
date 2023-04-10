@@ -99,6 +99,10 @@ class RegisterView extends BaseStateless {
                                         .passwordController.text.isEmpty) {
                                       return LocaleKeys.password_blank_regex
                                           .tr();
+                                    } else if (viewModel
+                                            .passwordController.text.length <
+                                        6) {
+                                      return 'Password must be at least 6 digits';
                                     }
                                     return null;
                                   },

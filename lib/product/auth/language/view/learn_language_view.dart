@@ -1,16 +1,17 @@
 // ignore_for_file: use_key_in_widget_constructors, must_be_immutable
 
 import 'package:chatbot/core/view/base/base_stateless.dart';
-import 'package:chatbot/product/auth/language/view/language_level_view.dart';
 import 'package:chatbot/product/auth/language/viewmodel/language_view_model.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:skeletons/skeletons.dart';
 
 import '../../../../core/constants/color_constant.dart';
 import '../../../../core/language/locale_keys.g.dart';
 import '../../../../core/view/widget/button/app_button.dart';
 import '../../../../core/view/widget/button/language_button.dart';
+import 'language_level_view.dart';
 
 class LearnLanguageView extends BaseStateless {
   final String email;
@@ -58,74 +59,171 @@ class LearnLanguageView extends BaseStateless {
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
-      body: Stack(
-        children: [
-          SingleChildScrollView(
-            physics: const ClampingScrollPhysics(),
-            child: FutureBuilder(
-              future: viewModel.getLanguages(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                } else if (snapshot.connectionState == ConnectionState.done) {
-                  return languages(context);
-                } else {
-                  return const Text("Error");
-                }
-              },
-            ),
-          ),
-          Positioned(
-            bottom: 40.0,
-            right: 0.0,
-            left: 0.0,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 40.0),
-              child: AppButton(
-                onTap: () {
-                  if (viewModel.selectedLearnLanguageId != -1 ||
-                      viewModel.selectedLearnPopularLanguageId != -1) {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => LanguageLevelView(
-                          learnLanguage: viewModel.selectedLearnIndex != -1
-                              ? viewModel.selectedLearnTitle
-                              : viewModel.selectedLearnTitlePopular,
-                          email: email,
-                          password: password,
-                          name: name,
-                          nativeId: nativeId,
-                          learnId: viewModel.selectedLearnIndex != -1
-                              ? viewModel.selectedLearnLanguageId.toString()
-                              : viewModel.selectedLearnPopularLanguageId
-                                  .toString(),
-                        ),
-                      ),
-                    );
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          LocaleKeys.language_blank.tr(),
-                        ),
-                      ),
-                    );
-                  }
-                },
-                widthValue: width(context: context, value: 1.0),
-                heightValue: height(context: context, value: 0.07),
-                backgroundColor: ColorConstant.instance.greyScale900,
-                borderRadius: 66.0,
-                text: LocaleKeys.next.tr(),
-                textStyle: currentTextTheme(context).headline3?.copyWith(
-                        fontWeight: FontWeight.w400,
-                        color: ColorConstant.instance.additionalWhite) ??
-                    const TextStyle(),
+      body: FutureBuilder(
+        future: viewModel.getLanguages(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return skeletonLoading(context);
+          } else if (snapshot.connectionState == ConnectionState.done) {
+            return Stack(
+              children: [
+                SingleChildScrollView(
+                  physics: const ClampingScrollPhysics(),
+                  child: languages(context),
+                ),
+                Positioned(
+                  bottom: 40.0,
+                  right: 0.0,
+                  left: 0.0,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 40.0),
+                    child: AppButton(
+                      onTap: () {
+                        if (viewModel.selectedLearnLanguageId != -1 ||
+                            viewModel.selectedLearnPopularLanguageId != -1) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => LanguageLevelView(
+                                learnLanguage:
+                                    viewModel.selectedLearnIndex != -1
+                                        ? viewModel.selectedLearnTitle
+                                        : viewModel.selectedLearnTitlePopular,
+                                email: email,
+                                password: password,
+                                name: name,
+                                nativeId: nativeId,
+                                learnId: viewModel.selectedLearnIndex != -1
+                                    ? viewModel.selectedLearnLanguageId
+                                        .toString()
+                                    : viewModel.selectedLearnPopularLanguageId
+                                        .toString(),
+                              ),
+                            ),
+                          );
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                LocaleKeys.language_blank.tr(),
+                              ),
+                            ),
+                          );
+                        }
+                      },
+                      widthValue: width(context: context, value: 1.0),
+                      heightValue: height(context: context, value: 0.07),
+                      backgroundColor: ColorConstant.instance.greyScale900,
+                      borderRadius: 66.0,
+                      text: LocaleKeys.next.tr(),
+                      textStyle: currentTextTheme(context).headline3?.copyWith(
+                              fontWeight: FontWeight.w400,
+                              color: ColorConstant.instance.additionalWhite) ??
+                          const TextStyle(),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          } else {
+            return const Text('error');
+          }
+        },
+      ),
+    );
+  }
+
+  Padding skeletonLoading(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+      child: SingleChildScrollView(
+        physics: const NeverScrollableScrollPhysics(),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 60.0),
+              child: SkeletonParagraph(
+                style: const SkeletonParagraphStyle(
+                  lines: 1,
+                ),
               ),
             ),
-          ),
-        ],
+            const SizedBox(height: 5.0),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 30.0),
+              child: SkeletonParagraph(
+                style: const SkeletonParagraphStyle(
+                  lines: 2,
+                ),
+              ),
+            ),
+            const SizedBox(height: 20.0),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: SkeletonParagraph(
+                style: SkeletonParagraphStyle(
+                  lines: 1,
+                  lineStyle: SkeletonLineStyle(
+                    width: width(context: context, value: 0.2),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 10.0),
+            ListView.builder(
+              shrinkWrap: true,
+              itemCount: 12,
+              physics: const NeverScrollableScrollPhysics(),
+              itemBuilder: (context, index) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 15.0),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        flex: 3,
+                        child: Row(
+                          children: [
+                            const Expanded(
+                              child: SkeletonAvatar(
+                                style: SkeletonAvatarStyle(
+                                  width: 35.0,
+                                  height: 35.0,
+                                  shape: BoxShape.rectangle,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 10.0),
+                            Expanded(
+                              flex: 3,
+                              child: SkeletonParagraph(
+                                style: const SkeletonParagraphStyle(
+                                  lines: 1,
+                                ),
+                              ),
+                            )
+                          ],
+                        ),
+                      ),
+                      const Expanded(
+                        child: SkeletonAvatar(
+                          style: SkeletonAvatarStyle(
+                            width: 35.0,
+                            height: 35.0,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      )
+                    ],
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
