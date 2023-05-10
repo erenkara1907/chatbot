@@ -878,16 +878,14 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
                                                                 ConversationRoomViewModel>(
                                                               builder: (context,
                                                                   state,
-                                                                  child) {
+                                                                  child) { 
                                                                 return Column(
                                                                   children: [
                                                                     LanguageButton(
                                                                       image: viewModel
                                                                               .popularLanguageImages[
                                                                           index],
-                                                                      languageId:
-                                                                          viewModel
-                                                                              .popularLanguageIds[index],
+                                                                      languageId: index + 1,
                                                                       selectedIndex:
                                                                           state
                                                                               .selectedPopularIndex,
@@ -932,7 +930,7 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
                                                                     ),
                                                                     SizedBox(
                                                                         height: viewModel.popularLanguageTitles[index] ==
-                                                                                "German"
+                                                                                "Turkish"
                                                                             ? 0.0
                                                                             : 15.0),
                                                                   ],
@@ -979,10 +977,7 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
                                                                           .languages[
                                                                               index]
                                                                           .flag!,
-                                                                      languageId: viewModel
-                                                                          .languages[
-                                                                              index]
-                                                                          .id!,
+                                                                      languageId: index + 1,
                                                                       selectedIndex:
                                                                           state
                                                                               .selectedIndex,

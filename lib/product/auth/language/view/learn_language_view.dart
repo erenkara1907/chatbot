@@ -1,6 +1,6 @@
 // ignore_for_file: use_key_in_widget_constructors, must_be_immutable
 
-import 'package:chatbot/core/view/base/base_stateless.dart';
+import 'package:chatbot/core/view/base/base_state.dart';
 import 'package:chatbot/product/auth/language/viewmodel/language_view_model.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -11,22 +11,33 @@ import '../../../../core/constants/color_constant.dart';
 import '../../../../core/language/locale_keys.g.dart';
 import '../../../../core/view/widget/button/app_button.dart';
 import '../../../../core/view/widget/button/language_button.dart';
+import '../../../../core/view/widget/formfield/app_form_field.dart';
+import '../model/language_model.dart';
 import 'language_level_view.dart';
 
-class LearnLanguageView extends BaseStateless {
+class LearnLanguageView extends StatefulWidget {
   final String email;
   final String password;
   final String name;
   final String nativeId;
 
-  LearnLanguageView({
+  const LearnLanguageView({
     required this.email,
     required this.password,
     required this.name,
     required this.nativeId,
   });
 
+  @override
+  State<LearnLanguageView> createState() => _LearnLanguageViewState();
+}
+
+class _LearnLanguageViewState extends BaseState<LearnLanguageView> {
   LanguageViewModel viewModel = LanguageViewModel();
+
+  List<Languages> items = [];
+  bool isPage = false;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -59,77 +70,229 @@ class LearnLanguageView extends BaseStateless {
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
-      body: FutureBuilder(
-        future: viewModel.getLanguages(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return skeletonLoading(context);
-          } else if (snapshot.connectionState == ConnectionState.done) {
-            return Stack(
-              children: [
-                SingleChildScrollView(
-                  physics: const ClampingScrollPhysics(),
-                  child: languages(context),
-                ),
-                Positioned(
-                  bottom: 40.0,
-                  right: 0.0,
-                  left: 0.0,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 40.0),
-                    child: AppButton(
-                      onTap: () {
-                        if (viewModel.selectedLearnLanguageId != -1 ||
-                            viewModel.selectedLearnPopularLanguageId != -1) {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => LanguageLevelView(
-                                learnLanguage:
-                                    viewModel.selectedLearnIndex != -1
-                                        ? viewModel.selectedLearnTitle
-                                        : viewModel.selectedLearnTitlePopular,
-                                email: email,
-                                password: password,
-                                name: name,
-                                nativeId: nativeId,
-                                learnId: viewModel.selectedLearnIndex != -1
-                                    ? viewModel.selectedLearnLanguageId
-                                        .toString()
-                                    : viewModel.selectedLearnPopularLanguageId
-                                        .toString(),
+      body: Consumer<LanguageViewModel>(
+        builder: (context, state, child) {
+          viewModel.languages = state.languages;
+          viewModel.popularLanguageIds = state.popularLanguageIds;
+          viewModel.popularLanguageImages = state.popularLanguageImages;
+          viewModel.popularLanguageTitles = state.popularLanguageTitles;
+          return state.isGetLanguage
+              ? isPage
+                  ? SizedBox(
+                      height: height(1.0),
+                      child: Stack(
+                        children: [
+                          SingleChildScrollView(
+                            physics: const ClampingScrollPhysics(),
+                            child: languages(context),
+                          ),
+                          Positioned(
+                            bottom: 40.0,
+                            right: 0.0,
+                            left: 0.0,
+                            child: Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 40.0),
+                              child: AppButton(
+                                onTap: () {
+                                  if (state.selectedLearnLanguageId != -1 ||
+                                      state.selectedLearnPopularLanguageId !=
+                                          -1) {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => LanguageLevelView(
+                                          learnLanguage: viewModel
+                                                      .selectedLearnIndex !=
+                                                  -1
+                                              ? viewModel.selectedLearnTitle
+                                              : viewModel
+                                                  .selectedLearnTitlePopular,
+                                          email: widget.email,
+                                          password: widget.password,
+                                          name: widget.name,
+                                          nativeId: widget.nativeId,
+                                          learnId: viewModel
+                                                      .selectedLearnIndex !=
+                                                  -1
+                                              ? viewModel
+                                                  .selectedLearnLanguageId
+                                                  .toString()
+                                              : viewModel
+                                                  .selectedLearnPopularLanguageId
+                                                  .toString(),
+                                        ),
+                                      ),
+                                    );
+                                  } else {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          LocaleKeys.language_blank.tr(),
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                },
+                                widthValue: width(1.0),
+                                heightValue: height(0.07),
+                                backgroundColor:
+                                    ColorConstant.instance.greyScale900,
+                                borderRadius: 66.0,
+                                text: LocaleKeys.next.tr(),
+                                textStyle: currentTextTheme.headline3?.copyWith(
+                                        fontWeight: FontWeight.w400,
+                                        color: ColorConstant
+                                            .instance.additionalWhite) ??
+                                    const TextStyle(),
                               ),
                             ),
-                          );
-                        } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                LocaleKeys.language_blank.tr(),
-                              ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : Stack(
+                      children: [
+                        SingleChildScrollView(
+                          physics: const ClampingScrollPhysics(),
+                          child: languages(context),
+                        ),
+                        Positioned(
+                          bottom: 40.0,
+                          right: 0.0,
+                          left: 0.0,
+                          child: Padding(
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 40.0),
+                            child: AppButton(
+                              onTap: () {
+                                if (state.selectedLearnLanguageId != -1 ||
+                                    state.selectedLearnPopularLanguageId !=
+                                        -1) {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => LanguageLevelView(
+                                        learnLanguage:
+                                            state.selectedLearnIndex != -1
+                                                ? state.selectedLearnTitle
+                                                : state
+                                                    .selectedLearnTitlePopular,
+                                        email: widget.email,
+                                        password: widget.password,
+                                        name: widget.name,
+                                        nativeId: widget.nativeId,
+                                        learnId: state.selectedLearnIndex !=
+                                                -1
+                                            ? state.selectedLearnLanguageId
+                                                .toString()
+                                            : state
+                                                .selectedLearnPopularLanguageId
+                                                .toString(),
+                                      ),
+                                    ),
+                                  );
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        LocaleKeys.language_blank.tr(),
+                                      ),
+                                    ),
+                                  );
+                                }
+                              },
+                              widthValue: width(1.0),
+                              heightValue: height(0.07),
+                              backgroundColor:
+                                  ColorConstant.instance.greyScale900,
+                              borderRadius: 66.0,
+                              text: LocaleKeys.next.tr(),
+                              textStyle: currentTextTheme.headline3?.copyWith(
+                                      fontWeight: FontWeight.w400,
+                                      color: ColorConstant
+                                          .instance.additionalWhite) ??
+                                  const TextStyle(),
                             ),
-                          );
-                        }
-                      },
-                      widthValue: width(context: context, value: 1.0),
-                      heightValue: height(context: context, value: 0.07),
-                      backgroundColor: ColorConstant.instance.greyScale900,
-                      borderRadius: 66.0,
-                      text: LocaleKeys.next.tr(),
-                      textStyle: currentTextTheme(context).headline3?.copyWith(
-                              fontWeight: FontWeight.w400,
-                              color: ColorConstant.instance.additionalWhite) ??
-                          const TextStyle(),
-                    ),
-                  ),
-                ),
-              ],
-            );
-          } else {
-            return const Text('error');
-          }
+                          ),
+                        ),
+                      ],
+                    )
+              : skeletonLoading(context);
         },
       ),
+    );
+  }
+
+  FutureBuilder<dynamic> futures() {
+    return FutureBuilder(
+      future: viewModel.getLanguages(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return skeletonLoading(context);
+        } else if (snapshot.connectionState == ConnectionState.done) {
+          return Stack(
+            children: [
+              SingleChildScrollView(
+                physics: const ClampingScrollPhysics(),
+                child: languages(context),
+              ),
+              Positioned(
+                bottom: 40.0,
+                right: 0.0,
+                left: 0.0,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 40.0),
+                  child: AppButton(
+                    onTap: () {
+                      if (viewModel.selectedLearnLanguageId != -1 ||
+                          viewModel.selectedLearnPopularLanguageId != -1) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => LanguageLevelView(
+                              learnLanguage: viewModel.selectedLearnIndex != -1
+                                  ? viewModel.selectedLearnTitle
+                                  : viewModel.selectedLearnTitlePopular,
+                              email: widget.email,
+                              password: widget.password,
+                              name: widget.name,
+                              nativeId: widget.nativeId,
+                              learnId: viewModel.selectedLearnIndex != -1
+                                  ? viewModel.selectedLearnLanguageId.toString()
+                                  : viewModel.selectedLearnPopularLanguageId
+                                      .toString(),
+                            ),
+                          ),
+                        );
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              LocaleKeys.language_blank.tr(),
+                            ),
+                          ),
+                        );
+                      }
+                    },
+                    widthValue: width(1.0),
+                    heightValue: height(0.07),
+                    backgroundColor: ColorConstant.instance.greyScale900,
+                    borderRadius: 66.0,
+                    text: LocaleKeys.next.tr(),
+                    textStyle: currentTextTheme.headline3?.copyWith(
+                            fontWeight: FontWeight.w400,
+                            color: ColorConstant.instance.additionalWhite) ??
+                        const TextStyle(),
+                  ),
+                ),
+              ),
+            ],
+          );
+        } else {
+          return const Text('error');
+        }
+      },
     );
   }
 
@@ -166,7 +329,7 @@ class LearnLanguageView extends BaseStateless {
                 style: SkeletonParagraphStyle(
                   lines: 1,
                   lineStyle: SkeletonLineStyle(
-                    width: width(context: context, value: 0.2),
+                    width: width(0.2),
                   ),
                 ),
               ),
@@ -228,144 +391,240 @@ class LearnLanguageView extends BaseStateless {
     );
   }
 
+  void filterSearchResults(String query) {
+    List<Languages> dummySearchList = [];
+    dummySearchList.addAll(viewModel.languages);
+
+    if (query.isNotEmpty) {
+      List<Languages> dummyListData = [];
+
+      for (var i = 0; i < dummySearchList.length; i++) {
+        if (dummySearchList[i].title!.toLowerCase().contains(
+              query.toLowerCase(),
+            )) {
+          dummyListData.add(dummySearchList[i]);
+        }
+
+        setState(() {
+          isPage = true;
+          items.clear();
+          items.addAll(dummyListData);
+        });
+      }
+    } else {
+      setState(() {
+        isPage = true;
+        items.clear();
+      });
+    }
+  }
+
   Padding languages(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          Align(
-            alignment: Alignment.center,
-            child: Text(
-              LocaleKeys.great.tr(),
-              style: currentTextTheme(context).headline3?.copyWith(
+      child: Consumer<LanguageViewModel>(
+        builder: (context, state, child) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              Align(
+                alignment: Alignment.center,
+                child: Text(
+                  LocaleKeys.great.tr(),
+                  style: currentTextTheme.headline3?.copyWith(
                     fontWeight: FontWeight.w500,
                     color: ColorConstant.instance.greyScale600,
                   ),
-            ),
-          ),
-          const SizedBox(height: 4.0),
-          Align(
-            alignment: Alignment.center,
-            child: Text(
-              LocaleKeys.what_learn_language.tr(),
-              style: currentTextTheme(context).headline1?.copyWith(
+                ),
+              ),
+              const SizedBox(height: 4.0),
+              Align(
+                alignment: Alignment.center,
+                child: Text(
+                  LocaleKeys.what_learn_language.tr(),
+                  style: currentTextTheme.headline1?.copyWith(
                     fontWeight: FontWeight.w500,
                     color: ColorConstant.instance.greyScale900,
                   ),
-              textAlign: TextAlign.center,
-            ),
-          ),
-          const SizedBox(height: 20.0),
-          Text(
-            LocaleKeys.popular_lang.tr(),
-            style: currentTextTheme(context).headline3?.copyWith(
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              const SizedBox(height: 20.0),
+              AppFormField(
+                autoFocus: true,
+                onChanged: (_) {
+                  filterSearchResults(viewModel.searchController.text);
+                  state.selectedIndex = -1;
+                  viewModel.selectedPopularIndex = -1;
+                },
+                controller: viewModel.searchController,
+                focusNode: viewModel.searchFocusNode,
+                isPrefix: true,
+                prefixIconValue: const Icon(Icons.search, color: Colors.black),
+                textAlign: TextAlign.left,
+                hintText: LocaleKeys.search_language.tr(),
+              ),
+              const SizedBox(height: 20.0),
+              Text(
+                items.isNotEmpty
+                    ? LocaleKeys.all_lang.tr()
+                    : LocaleKeys.popular_lang.tr(),
+                style: currentTextTheme.headline3?.copyWith(
                   fontWeight: FontWeight.w500,
                   color: ColorConstant.instance.greyScale600,
                 ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 15.0),
-          ListView.builder(
-            shrinkWrap: true,
-            physics: const ClampingScrollPhysics(),
-            itemCount: viewModel.popularLanguageIds.length,
-            itemBuilder: (context, index) {
-              return Consumer<LanguageViewModel>(
-                builder: (context, state, child) {
-                  return Column(
-                    children: [
-                      LanguageButton(
-                        image: viewModel.popularLanguageImages[index],
-                        languageId: viewModel.popularLanguageIds[index],
-                        selectedIndex: state.selectedLearnPopularIndex,
-                        onTap: () {
-                          viewModel.selectedLearnPopularLanguageId =
-                              viewModel.popularLanguageIds[index];
-                          state.changeCheckboxLearnStatusPopular(index: index);
-                          viewModel.selectedLearnPopularIndex = index;
-                          viewModel.selectedLearnTitlePopular =
-                              viewModel.popularLanguageTitles[index];
-                        },
-                        widthValue: width(context: context, value: 1.0),
-                        heightValue: height(context: context, value: 0.07),
-                        backgroundColor: ColorConstant.instance.additionalWhite,
-                        borderRadius: 66.0,
-                        text: viewModel.popularLanguageTitles[index],
-                        textStyle: currentTextTheme(context)
-                                .headline3
-                                ?.copyWith(
-                                    fontWeight: FontWeight.w400,
-                                    color:
-                                        ColorConstant.instance.greyScale900) ??
-                            const TextStyle(),
-                        onChangedCheckBox: (_) {},
-                      ),
-                      SizedBox(
-                          height:
-                              viewModel.popularLanguageTitles[index] == "German"
-                                  ? 0.0
-                                  : 15.0),
-                    ],
-                  );
-                },
-              );
-            },
-          ),
-          Text(
-            LocaleKeys.all_lang.tr(),
-            style: currentTextTheme(context).headline3?.copyWith(
-                  fontWeight: FontWeight.w500,
-                  color: ColorConstant.instance.greyScale600,
-                ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 15.0),
-          ListView.builder(
-            shrinkWrap: true,
-            physics: const ClampingScrollPhysics(),
-            itemCount: viewModel.languages.length,
-            itemBuilder: (context, index) {
-              return Consumer<LanguageViewModel>(
-                builder: (context, state, child) {
-                  return Column(
-                    children: [
-                      LanguageButton(
-                        image: viewModel.languages[index].flag!,
-                        languageId: viewModel.languages[index].id!,
-                        selectedIndex: state.selectedLearnIndex,
-                        onTap: () {
-                          viewModel.selectedLearnLanguageId =
-                              viewModel.languages[index].id!;
-                          state.changeCheckboxLearnStatus(index: index);
-                          viewModel.selectedLearnIndex = index;
-                          viewModel.selectedLearnTitle =
-                              viewModel.languages[index].title!;
-                        },
-                        widthValue: width(context: context, value: 1.0),
-                        heightValue: height(context: context, value: 0.07),
-                        backgroundColor: ColorConstant.instance.additionalWhite,
-                        borderRadius: 66.0,
-                        text: viewModel.languages[index].title!,
-                        textStyle: currentTextTheme(context)
-                                .headline3
-                                ?.copyWith(
-                                    fontWeight: FontWeight.w400,
-                                    color:
-                                        ColorConstant.instance.greyScale900) ??
-                            const TextStyle(),
-                        onChangedCheckBox: (value) {},
-                      ),
-                      const SizedBox(height: 15.0),
-                    ],
-                  );
-                },
-              );
-            },
-          ),
-          const SizedBox(height: 70.0),
-        ],
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 15.0),
+              items.isNotEmpty
+                  ? Column(
+                      children: [
+                        ListView.builder(
+                          shrinkWrap: true,
+                          physics: const ClampingScrollPhysics(),
+                          itemCount: items.length,
+                          itemBuilder: (context, index) {
+                            return Column(
+                              children: [
+                                LanguageButton(
+                                  image: items[index].flag!,
+                                  languageId: index + 1,
+                                  selectedIndex: state.selectedLearnIndex,
+                                  onTap: () {
+                                    viewModel.selectedLearnLanguageId =
+                                        items[index].id!;
+                                    state.changeCheckboxLearnStatus(
+                                        index: index);
+                                    viewModel.selectedLearnIndex = index;
+                                    viewModel.selectedLearnTitle =
+                                        items[index].title!;
+                                  },
+                                  widthValue: width(1.0),
+                                  heightValue: height(0.07),
+                                  backgroundColor:
+                                      ColorConstant.instance.additionalWhite,
+                                  borderRadius: 66.0,
+                                  text: items[index].title!,
+                                  textStyle: currentTextTheme.headline3
+                                          ?.copyWith(
+                                              fontWeight: FontWeight.w400,
+                                              color: ColorConstant
+                                                  .instance.greyScale900) ??
+                                      const TextStyle(),
+                                  onChangedCheckBox: (value) {},
+                                ),
+                                const SizedBox(height: 15.0),
+                              ],
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 70.0),
+                      ],
+                    )
+                  : Column(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        ListView.builder(
+                          shrinkWrap: true,
+                          physics: const ClampingScrollPhysics(),
+                          itemCount: viewModel.popularLanguageIds.length,
+                          itemBuilder: (context, index) {
+                            return Column(
+                              children: [
+                                LanguageButton(
+                                  image: viewModel.popularLanguageImages[index],
+                                  languageId: index + 1,
+                                  selectedIndex:
+                                      state.selectedLearnPopularIndex,
+                                  onTap: () {
+                                    state.selectedLearnPopularLanguageId =
+                                        viewModel.popularLanguageIds[index];
+                                    state.changeCheckboxLearnStatusPopular(
+                                        index: index);
+                                    viewModel.selectedLearnPopularIndex = index;
+                                    viewModel.selectedLearnTitlePopular =
+                                        viewModel.popularLanguageTitles[index];
+                                  },
+                                  widthValue: width(1.0),
+                                  heightValue: height(0.07),
+                                  backgroundColor:
+                                      ColorConstant.instance.additionalWhite,
+                                  borderRadius: 66.0,
+                                  text: viewModel.popularLanguageTitles[index],
+                                  textStyle: currentTextTheme.headline3
+                                          ?.copyWith(
+                                              fontWeight: FontWeight.w400,
+                                              color: ColorConstant
+                                                  .instance.greyScale900) ??
+                                      const TextStyle(),
+                                  onChangedCheckBox: (_) {},
+                                ),
+                                SizedBox(
+                                    height: viewModel
+                                                .popularLanguageTitles[index] ==
+                                            "Turkish"
+                                        ? 0.0
+                                        : 15.0),
+                              ],
+                            );
+                          },
+                        ),
+                        Text(
+                          LocaleKeys.all_lang.tr(),
+                          style: currentTextTheme.headline3?.copyWith(
+                            fontWeight: FontWeight.w500,
+                            color: ColorConstant.instance.greyScale600,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 15.0),
+                        ListView.builder(
+                          shrinkWrap: true,
+                          physics: const ClampingScrollPhysics(),
+                          itemCount: viewModel.languages.length,
+                          itemBuilder: (context, index) {
+                            return Column(
+                              children: [
+                                LanguageButton(
+                                  image: viewModel.languages[index].flag!,
+                                  languageId: index + 1,
+                                  selectedIndex: state.selectedLearnIndex,
+                                  onTap: () {
+                                    state.selectedLearnLanguageId =
+                                        viewModel.languages[index].id!;
+                                    state.changeCheckboxLearnStatus(
+                                        index: index);
+                                    viewModel.selectedLearnIndex = index;
+                                    viewModel.selectedLearnTitle =
+                                        viewModel.languages[index].title!;
+                                  },
+                                  widthValue: width(1.0),
+                                  heightValue: height(0.07),
+                                  backgroundColor:
+                                      ColorConstant.instance.additionalWhite,
+                                  borderRadius: 66.0,
+                                  text: viewModel.languages[index].title!,
+                                  textStyle: currentTextTheme.headline3
+                                          ?.copyWith(
+                                              fontWeight: FontWeight.w400,
+                                              color: ColorConstant
+                                                  .instance.greyScale900) ??
+                                      const TextStyle(),
+                                  onChangedCheckBox: (value) {},
+                                ),
+                                const SizedBox(height: 15.0),
+                              ],
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 70.0),
+                      ],
+                    )
+            ],
+          );
+        },
       ),
     );
   }

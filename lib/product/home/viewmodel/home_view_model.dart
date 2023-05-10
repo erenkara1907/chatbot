@@ -22,6 +22,12 @@ class HomeViewModel extends ChangeNotifier {
   bool isCreatedConversation = true;
 
   bool isFirst = true;
+  bool barrierDismissible = true;
+
+  changeBarrierDismissible() {
+    barrierDismissible = !barrierDismissible;
+    notifyListeners();
+  }
 
   Future setFirstLogin() async {
     final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();

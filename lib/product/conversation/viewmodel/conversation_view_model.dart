@@ -30,10 +30,10 @@ class ConversationViewModel extends ChangeNotifier {
       for (var i = 0; i < response.data!.conversations!.length; i++) {
         if (response.data!.conversations![i].isActive == 0) {
           completedMessages.clear();
-          completedMessages.add(response.data!.conversations![i]);
+          completedMessages.addAll(response.data!.conversations!);
         } else {
           conversationModel.clear();
-          conversationModel.add(response.data!.conversations![i]);
+          conversationModel.addAll(response.data!.conversations!);
         }
       }
     }

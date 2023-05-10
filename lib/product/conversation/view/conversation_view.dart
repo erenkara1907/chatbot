@@ -9,9 +9,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:skeletons/skeletons.dart';
 
+import '../../home/viewmodel/home_view_model.dart';
 import 'conversation_room_view.dart';
 
 class ConversationView extends BaseStateless {
+  HomeViewModel viewModel = HomeViewModel();
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
@@ -116,7 +118,7 @@ class ConversationView extends BaseStateless {
                                   : noMessage(context),
                               state.completedMessages.isNotEmpty
                                   ? completedMessages(state)
-                                  : noMessage(context),
+                                  : noMCompleteessage(context),
                             ],
                           ),
                         ),
@@ -141,6 +143,8 @@ class ConversationView extends BaseStateless {
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
+          createMessage(context),
+          const SizedBox(height: 30.0),
           Text(
             LocaleKeys.no_message.tr(),
             style: currentTextTheme(context).headline3?.copyWith(
@@ -154,111 +158,420 @@ class ConversationView extends BaseStateless {
     );
   }
 
-  ListView messages(ConversationViewModel state) {
-    return ListView.builder(
-      itemCount: state.conversationModel.length,
-      shrinkWrap: true,
-      physics: const ClampingScrollPhysics(),
-      addAutomaticKeepAlives: false,
-      addRepaintBoundaries: false,
-      itemBuilder: (context, index) {
-        return Padding(
-          padding: const EdgeInsets.only(
-            bottom: 20.0,
-            top: 25.0,
+  Padding noMCompleteessage(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 108.0),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Text(
+            LocaleKeys.no_message.tr(),
+            style: currentTextTheme(context).headline3?.copyWith(
+                  fontWeight: FontWeight.w500,
+                  color: ColorConstant.instance.greyScale600,
+                ),
+            textAlign: TextAlign.center,
           ),
-          child: Column(
-            children: [
-              SizedBox(
-                width: width(context: context, value: 1.0),
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    elevation: 0,
-                    backgroundColor: ColorConstant.instance.additionalWhite,
+        ],
+      ),
+    );
+  }
+
+  CircleAvatar createMessage(BuildContext context) {
+    return CircleAvatar(
+      backgroundColor: ColorConstant.instance.greyScale900,
+      radius: 25.0,
+      child: IconButton(
+        onPressed: () {
+          showModalBottomSheet(
+            isScrollControlled: true,
+            context: context,
+            builder: (BuildContext context) {
+              return FractionallySizedBox(
+                heightFactor: 0.88,
+                child: Container(
+                  width: width(context: context, value: 1.0),
+                  decoration: BoxDecoration(
+                    color: ColorConstant.instance.additionalWhite,
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(20.0),
+                      topRight: Radius.circular(20.0),
+                    ),
                   ),
-                  onPressed: () async {
-                    // await state.getAllMessages(
-                    //     conversationId: state.conversationModel[index].id!);
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ConversationRoomView(
-                          // messages: state.messages,
-                          conversationId: state.conversationModel[index].id!,
-                        ),
-                      ),
-                    );
-                  },
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SizedBox(
-                        width: 40.0,
-                        height: 40.0,
-                        child: Image.network(
-                          state.conversationModel[index].topic!.icon!,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                      const SizedBox(width: 12.0),
-                      Column(
+                  child: Padding(
+                    padding: const EdgeInsets.only(
+                      top: 15.0,
+                      right: 24.0,
+                      left: 24.0,
+                    ),
+                    child: SingleChildScrollView(
+                      physics: const ClampingScrollPhysics(),
+                      child: Column(
                         mainAxisAlignment: MainAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          SizedBox(
-                            width: width(context: context, value: 0.7),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  state.conversationModel[index].topic!.title!,
-                                  style: currentTextTheme(context)
-                                      .headline3
-                                      ?.copyWith(
-                                        fontWeight: FontWeight.w600,
-                                        color:
-                                            ColorConstant.instance.greyScale900,
-                                      ),
-                                ),
-                                Icon(
-                                  Icons.arrow_forward_ios,
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: CircleAvatar(
+                              backgroundColor:
+                                  ColorConstant.instance.greyScale300,
+                              radius: 15.0,
+                              child: IconButton(
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                },
+                                icon: Icon(
+                                  Icons.close,
+                                  size: 15.0,
                                   color: ColorConstant.instance.greyScale900,
-                                  size: 12.0,
                                 ),
-                              ],
+                              ),
                             ),
                           ),
-                          SizedBox(
-                            width: width(context: context, value: 0.7),
-                            child: Text(
-                              state.conversationModel[index].lastMessage!,
-                              style: currentTextTheme(context)
-                                  .headline3
-                                  ?.copyWith(
-                                    fontWeight: FontWeight.w400,
-                                    color: ColorConstant.instance.greyScale600,
+                          const SizedBox(height: 24.0),
+                          Text(
+                            LocaleKeys.topics.tr(),
+                            style: currentTextTheme(context)
+                                .headline2
+                                ?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  color: ColorConstant.instance.greyScale900,
+                                ),
+                          ),
+                          const SizedBox(height: 24.0),
+                          FutureBuilder(
+                            future: viewModel.getTopics(),
+                            builder: (context, snapshot) {
+                              if (snapshot.connectionState ==
+                                  ConnectionState.waiting) {
+                                return Center(
+                                  child: CircularProgressIndicator(
+                                    color: ColorConstant.instance.greyScale900,
                                   ),
-                              overflow: TextOverflow.ellipsis,
-                              maxLines: 2,
-                            ),
+                                );
+                              } else if (snapshot.connectionState ==
+                                  ConnectionState.done) {
+                                return GridView.builder(
+                                  shrinkWrap: true,
+                                  itemCount: viewModel.topics.length,
+                                  physics: const ClampingScrollPhysics(),
+                                  scrollDirection: Axis.vertical,
+                                  gridDelegate:
+                                      const SliverGridDelegateWithMaxCrossAxisExtent(
+                                    maxCrossAxisExtent: 200,
+                                    crossAxisSpacing: 20,
+                                    mainAxisSpacing: 20,
+                                  ),
+                                  itemBuilder: (context, index) {
+                                    return topicCard(context, index);
+                                  },
+                                );
+                              } else {
+                                return const Text('error');
+                              }
+                            },
                           ),
                         ],
                       ),
-                    ],
+                    ),
                   ),
                 ),
+              );
+            },
+          );
+        },
+        icon: Icon(
+          Icons.add,
+          color: ColorConstant.instance.additionalWhite,
+        ),
+      ),
+    );
+  }
+
+  InkWell topicCard(BuildContext context, int index) {
+    return InkWell(
+      onTap: () {
+        topicDialog(context, index);
+      },
+      child: Container(
+        width: width(context: context, value: 0.4),
+        height: height(context: context, value: 0.2),
+        decoration: BoxDecoration(
+            color: ColorConstant.instance.greyScale50,
+            borderRadius: BorderRadius.circular(16.0),
+            border: Border.all(
+              width: 1.0,
+              color: ColorConstant.instance.greyScale300,
+            )),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            vertical: 24.0,
+            horizontal: 21.0,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                viewModel.topics[index].title!,
+                style: currentTextTheme(context).headline3?.copyWith(
+                      fontWeight: FontWeight.w500,
+                      color: ColorConstant.instance.greyScale900,
+                    ),
               ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                child: Divider(
-                  thickness: 1.0,
-                  color: ColorConstant.instance.greyScale300,
+              Image.network(
+                viewModel.topics[index].icon!,
+                width: 50.0,
+                height: 50.0,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<dynamic> topicDialog(BuildContext context, int index) {
+    return showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(42.0),
+                width: width(context: context, value: 1.0),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16.0),
+                  color: ColorConstant.instance.additionalWhite,
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Align(
+                        alignment: Alignment.center,
+                        child: Image.network(viewModel.topics[index].icon!)),
+                    Align(
+                      alignment: Alignment.center,
+                      child: Text(
+                        viewModel.topics[index].title!,
+                        style: currentTextTheme(context).headline1?.copyWith(
+                              fontSize: 24.0,
+                              fontWeight: FontWeight.w600,
+                              color: ColorConstant.instance.greyScale900,
+                            ),
+                      ),
+                    ),
+                    const SizedBox(height: 24.0),
+                    Text(
+                      viewModel.topics[index].description![0],
+                      style: currentTextTheme(context).headline4?.copyWith(
+                            fontWeight: FontWeight.w400,
+                            color: ColorConstant.instance.greyScale900,
+                          ),
+                    ),
+                    const SizedBox(height: 15.0),
+                    ListView.builder(
+                      itemCount:
+                          viewModel.topics[index].description!.length - 1,
+                      addAutomaticKeepAlives: false,
+                      addRepaintBoundaries: false,
+                      shrinkWrap: true,
+                      physics: const ClampingScrollPhysics(),
+                      itemBuilder: (context, i) {
+                        return Text(
+                          viewModel.topics[index].description![i + 1],
+                          style: currentTextTheme(context).headline4?.copyWith(
+                                fontWeight: FontWeight.w400,
+                                color: ColorConstant.instance.greyScale900,
+                              ),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 24.0),
+                    Consumer<HomeViewModel>(
+                      builder: (context, state, child) {
+                        return SizedBox(
+                          width: width(context: context, value: 1.0) - 132.0,
+                          height: height(context: context, value: 0.07),
+                          child: ElevatedButton(
+                            onPressed: () {
+                              state.chnageConversationStatus(false);
+                              state.setFirstLogin();
+                              final response = viewModel.createConversation(
+                                context,
+                                topicId: viewModel.topics[index].id!.toString(),
+                              );
+
+                              response.then((value) {
+                                if (value.result == true) {
+                                  state.chnageConversationStatus(true);
+                                  Navigator.pushReplacement(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          ConversationRoomView(
+                                        conversationId:
+                                            viewModel.conversation.id!,
+                                      ),
+                                    ),
+                                  );
+                                }
+                              });
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor:
+                                  ColorConstant.instance.greyScale400,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(66.0),
+                              ),
+                              elevation: 0,
+                            ),
+                            child: state.isCreatedConversation
+                                ? Text(
+                                    LocaleKeys.let_start.tr(),
+                                    style: currentTextTheme(context)
+                                        .headline3
+                                        ?.copyWith(
+                                          fontWeight: FontWeight.w400,
+                                          color: ColorConstant
+                                              .instance.greyScale900,
+                                        ),
+                                  )
+                                : Center(
+                                    child: CircularProgressIndicator(
+                                      color: ColorConstant
+                                          .instance.additionalWhite,
+                                    ),
+                                  ),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
         );
       },
+    );
+  }
+
+  Padding messages(ConversationViewModel state) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 20.0),
+      child: ListView.builder(
+        itemCount: state.conversationModel.length,
+        shrinkWrap: true,
+        physics: const ClampingScrollPhysics(),
+        addAutomaticKeepAlives: false,
+        addRepaintBoundaries: false,
+        itemBuilder: (context, index) {
+          return Padding(
+            padding: const EdgeInsets.only(
+              top: 25.0,
+            ),
+            child: Column(
+              children: [
+                SizedBox(
+                  width: width(context: context, value: 1.0),
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      elevation: 0,
+                      backgroundColor: ColorConstant.instance.additionalWhite,
+                    ),
+                    onPressed: () async {
+                      // await state.getAllMessages(
+                      //     conversationId: state.conversationModel[index].id!);
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ConversationRoomView(
+                            // messages: state.messages,
+                            conversationId: state.conversationModel[index].id!,
+                          ),
+                        ),
+                      );
+                    },
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SizedBox(
+                          width: 40.0,
+                          height: 40.0,
+                          child: Image.network(
+                            state.conversationModel[index].topic!.icon!,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                        const SizedBox(width: 12.0),
+                        Column(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            SizedBox(
+                              width: width(context: context, value: 0.7),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    state
+                                        .conversationModel[index].topic!.title!,
+                                    style: currentTextTheme(context)
+                                        .headline3
+                                        ?.copyWith(
+                                          fontWeight: FontWeight.w600,
+                                          color: ColorConstant
+                                              .instance.greyScale900,
+                                        ),
+                                  ),
+                                  Icon(
+                                    Icons.arrow_forward_ios,
+                                    color: ColorConstant.instance.greyScale900,
+                                    size: 12.0,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            SizedBox(
+                              width: width(context: context, value: 0.7),
+                              child: Text(
+                                state.conversationModel[index].lastMessage!,
+                                style: currentTextTheme(context)
+                                    .headline3
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.w400,
+                                      color:
+                                          ColorConstant.instance.greyScale600,
+                                    ),
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 2,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                  child: Divider(
+                    thickness: 1.0,
+                    color: ColorConstant.instance.greyScale300,
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 

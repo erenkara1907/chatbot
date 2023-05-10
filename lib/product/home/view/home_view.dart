@@ -226,50 +226,56 @@ class HomeView extends BaseStateless {
     );
   }
 
-  InkWell topicCard(BuildContext context, int index) {
-    return InkWell(
-      onTap: () {
-        topicDialog(context, index);
+  Consumer topicCard(BuildContext context, int index) {
+    return Consumer<HomeViewModel>(
+      builder: (context, state, child) {
+        return InkWell(
+          onTap: () {
+            topicDialog(context, index,
+                stateModel: state, barrier: state.barrierDismissible);
+          },
+          child: Container(
+            width: width(context: context, value: 0.4),
+            height: height(context: context, value: 0.2),
+            decoration: BoxDecoration(
+                color: ColorConstant.instance.greyScale50,
+                borderRadius: BorderRadius.circular(16.0),
+                border: Border.all(
+                  width: 1.0,
+                  color: ColorConstant.instance.greyScale300,
+                )),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                vertical: 24.0,
+                horizontal: 21.0,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    viewModel.topics[index].title!,
+                    style: currentTextTheme(context).headline3?.copyWith(
+                          fontWeight: FontWeight.w500,
+                          color: ColorConstant.instance.greyScale900,
+                        ),
+                  ),
+                  Image.network(
+                    viewModel.topics[index].icon!,
+                    width: 50.0,
+                    height: 50.0,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
       },
-      child: Container(
-        width: width(context: context, value: 0.4),
-        height: height(context: context, value: 0.2),
-        decoration: BoxDecoration(
-            color: ColorConstant.instance.greyScale50,
-            borderRadius: BorderRadius.circular(16.0),
-            border: Border.all(
-              width: 1.0,
-              color: ColorConstant.instance.greyScale300,
-            )),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            vertical: 24.0,
-            horizontal: 21.0,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                viewModel.topics[index].title!,
-                style: currentTextTheme(context).headline3?.copyWith(
-                      fontWeight: FontWeight.w500,
-                      color: ColorConstant.instance.greyScale900,
-                    ),
-              ),
-              Image.network(
-                viewModel.topics[index].icon!,
-                width: 50.0,
-                height: 50.0,
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 
-  Future<dynamic> topicDialog(BuildContext context, int index) {
+  Future<dynamic> topicDialog(BuildContext context, int index,
+      {HomeViewModel? stateModel, bool? barrier}) {
     return showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -337,6 +343,11 @@ class HomeView extends BaseStateless {
                           height: height(context: context, value: 0.07),
                           child: ElevatedButton(
                             onPressed: () {
+                              // viewModel.changeBarrierDismissible();
+                              // if (stateModel!.barrierDismissible == true) {
+                              //   stateModel.barrierDismissible = false;
+                              // }
+
                               state.chnageConversationStatus(false);
                               state.setFirstLogin();
                               final response = viewModel.createConversation(
@@ -357,6 +368,9 @@ class HomeView extends BaseStateless {
                                       ),
                                     ),
                                   );
+                                  // if (stateModel.barrierDismissible == false) {
+                                  //   stateModel.barrierDismissible = true;
+                                  // }
                                 }
                               });
                             },

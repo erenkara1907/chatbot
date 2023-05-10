@@ -304,7 +304,7 @@ class ProfileView extends BaseStateless {
                             );
                           },
                           image: IconConstant.instance.iconWriteUs,
-                          text: LocaleKeys.write_us.tr(),
+                          text: LocaleKeys.write_us.tr(), 
                         ),
                         ProfileButton(
                           image: IconConstant.instance.iconTerms,
@@ -412,7 +412,7 @@ class ProfileView extends BaseStateless {
                         children: [
                           LanguageButton(
                             image: viewModel.popularLanguageImages[index],
-                            languageId: viewModel.popularLanguageIds[index],
+                            languageId: index + 1,
                             selectedIndex: state.selectedLearnPopularIndex,
                             onTap: () {
                               viewModel.selectedLearnPopularLanguageId =
@@ -441,7 +441,7 @@ class ProfileView extends BaseStateless {
                           ),
                           SizedBox(
                               height: viewModel.popularLanguageTitles[index] ==
-                                      "German"
+                                      "Turkish"
                                   ? 0.0
                                   : 15.0),
                         ],
@@ -470,7 +470,7 @@ class ProfileView extends BaseStateless {
                         children: [
                           LanguageButton(
                             image: viewModel.languages[index].flag!,
-                            languageId: viewModel.languages[index].id!,
+                            languageId: index + 1,
                             selectedIndex: state.selectedLearnIndex,
                             onTap: () {
                               viewModel.selectedLearnLanguageId =

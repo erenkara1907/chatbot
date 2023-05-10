@@ -20,8 +20,6 @@ class HomeService {
       'Authorization': 'Bearer $token',
     });
 
-
-
     return ProfileHomeModel.fromJson(jsonDecode(response.body));
   }
 }

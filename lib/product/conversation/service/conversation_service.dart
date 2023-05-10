@@ -17,7 +17,7 @@ class ConversationService {
       'Authorization': 'Bearer $token',
     });
 
-
+    print('response: ${response.body}');
 
     return ConversationModel.fromJson(jsonDecode(response.body));
   }
@@ -30,6 +30,8 @@ class ConversationService {
     }, body: {
       'topic_id': topicId,
     });
+
+    
 
     return ConversationStoreModel.fromJson(jsonDecode(response.body));
   }
@@ -78,10 +80,6 @@ class ConversationService {
           'message': message,
         },
       );
-
-
-
-
 
       Map jsonResponse = json.decode(utf8.decode(response.bodyBytes));
 

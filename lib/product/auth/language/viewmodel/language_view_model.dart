@@ -129,8 +129,9 @@ class LanguageViewModel extends ChangeNotifier {
       }
       languages.clear();
       languages.addAll(model.data!.languages!);
-      isGetLanguage = true;
     }
+
+    isGetLanguage = true;
 
     notifyListeners();
   }
@@ -160,20 +161,20 @@ class LanguageViewModel extends ChangeNotifier {
         const SnackBar(content: Text('The email has already been taken')),
       );
 
-      selectedIndex = -1;
-      selectedPopularIndex = -1;
-      selectedLevelIndex = -1;
+      int selectedIndex = -1;
+      int selectedPopularIndex = -1;
+      int selectedLevelIndex = -1;
 
-      selectedLanguageId = -1;
-      selectedPopularLanguageId = -1;
+      int selectedLanguageId = -1;
+      int selectedPopularLanguageId = -1;
 
-      selectedLearnIndex = -1;
-      selectedLearnPopularIndex = -1;
-      selectedLearnLevelIndex = -1;
+      int selectedLearnIndex = -1;
+      int selectedLearnPopularIndex = -1;
+      int selectedLearnLevelIndex = -1;
 
-      selectedLearnLanguageId = -1;
-      selectedLearnPopularLanguageId = -1;
-      selectedLanguageLevelId = -1;
+      int selectedLearnLanguageId = -1;
+      int selectedLearnPopularLanguageId = -1;
+      int selectedLanguageLevelId = -1;
 
       Navigator.pushAndRemoveUntil(
           context,
