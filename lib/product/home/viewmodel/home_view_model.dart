@@ -23,6 +23,17 @@ class HomeViewModel extends ChangeNotifier {
 
   bool isFirst = true;
   bool barrierDismissible = true;
+  bool isActivePage = false;
+
+  setActivePage() {
+    Future.delayed(
+      const Duration(milliseconds: 1500),
+      () {
+        isActivePage = true;
+        notifyListeners();
+      },
+    );
+  }
 
   changeBarrierDismissible() {
     barrierDismissible = !barrierDismissible;

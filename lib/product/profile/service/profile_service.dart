@@ -52,8 +52,6 @@ class ProfileService {
       body: body,
     );
 
-
-
     return ProfileModel.fromJson(jsonDecode(response.body));
   }
 

@@ -14,7 +14,6 @@ import 'package:chatbot/product/conversation/viewmodel/conversation_room_view_mo
 import 'package:chatbot/product/conversation/viewmodel/conversation_view_model.dart';
 import 'package:chatbot/product/home/viewmodel/home_view_model.dart';
 import 'package:chatbot/product/onboard/view/onboard_view.dart';
-import 'package:chatbot/product/onboard/viewmodel/onboard_view_model.dart';
 import 'package:chatbot/product/profile/viewmodel/profile_view_model.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -28,7 +27,6 @@ Future<void> main() async {
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (context) => OnboardViewModel()),
         ChangeNotifierProvider(create: (context) => NameViewModel()),
         ChangeNotifierProvider(create: (context) => RegisterViewModel()),
         ChangeNotifierProvider(create: (context) => LanguageViewModel()),
@@ -90,7 +88,8 @@ class _MyAppState extends State<MyApp> {
                   localizationsDelegates: context.localizationDelegates,
                   locale: context.locale,
                   debugShowCheckedModeBanner: false,
-                  home: token.isNotEmpty ? BottomBarView() : OnboardView(),
+                  home:
+                      token.isNotEmpty ? BottomBarView() : const OnboardView(),
                 )
               : MaterialApp(
                   title: 'ChatBot',

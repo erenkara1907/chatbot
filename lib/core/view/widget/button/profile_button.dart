@@ -14,15 +14,19 @@ class ProfileButton extends BaseStateless {
   final void Function()? onTap;
   final bool isDivider;
   final String language;
+  final bool isIcon;
+  final IconData icon;
 
   ProfileButton({
-    required this.image,
+    this.image = "",
     required this.text,
     this.isLogout = false,
     this.isEnglish = false,
     this.onTap,
     this.isDivider = true,
     this.language = '',
+    this.isIcon = false,
+    this.icon = Icons.person,
   });
 
   @override
@@ -32,7 +36,7 @@ class ProfileButton extends BaseStateless {
       child: ElevatedButton(
         onPressed: onTap ?? () {},
         style: ElevatedButton.styleFrom(
-          enableFeedback: false,
+            enableFeedback: false,
             backgroundColor: ColorConstant.instance.additionalWhite,
             shape: RoundedRectangleBorder(
               side: BorderSide(
@@ -53,12 +57,18 @@ class ProfileButton extends BaseStateless {
               children: [
                 Row(
                   children: [
-                    SvgPicture.asset(
-                      image,
-                      color: isLogout
-                          ? ColorConstant.instance.additionalRed
-                          : ColorConstant.instance.greyScale900,
-                    ),
+                    isIcon
+                        ? Icon(
+                            icon,
+                            size: 24.0,
+                            color: ColorConstant.instance.additionalRed,
+                          )
+                        : SvgPicture.asset(
+                            image,
+                            color: isLogout
+                                ? ColorConstant.instance.additionalRed
+                                : ColorConstant.instance.greyScale900,
+                          ),
                     const SizedBox(width: 20.0),
                     Text(
                       text,

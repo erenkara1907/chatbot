@@ -13,9 +13,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/constants/icon_constant.dart';
+import '../../../core/view/widget/button/language_button.dart';
 import '../../../core/view/widget/button/profile_button.dart';
 import '../../../core/view/widget/formfield/app_form_field.dart';
-import '../../auth/language/model/language_model.dart';
 import '../model/avatar_model.dart';
 
 class ProfileEditView extends StatefulWidget {
@@ -24,7 +24,8 @@ class ProfileEditView extends StatefulWidget {
   final String profilePhoto;
   final List<Avatars> avatars;
   final int nativeLanguageId;
-  final List<Languages> languages;
+  final String nativeLanguage;
+  final Color profileBackgroundColor;
 
   const ProfileEditView({
     Key? key,
@@ -33,7 +34,8 @@ class ProfileEditView extends StatefulWidget {
     required this.profilePhoto,
     required this.avatars,
     required this.nativeLanguageId,
-    required this.languages,
+    required this.nativeLanguage,
+    required this.profileBackgroundColor,
   }) : super(key: key);
   @override
   State<ProfileEditView> createState() => _ProfileEditViewState();
@@ -70,19 +72,13 @@ class _ProfileEditViewState extends BaseState<ProfileEditView> {
                               ? {
                                   'name': viewModel.nameController.text,
                                   'password': viewModel.passwordController.text,
-                                  'native_language_id':
-                                      viewModel.selectedLanguageId == -1
-                                          ? widget.nativeLanguageId.toString()
-                                          : viewModel.selectedLanguageId
-                                              .toString(),
+                                  'native_language_code':
+                                      viewModel.selectedLanguageCode
                                 }
                               : {
                                   'name': viewModel.nameController.text,
-                                  'native_language_id':
-                                      viewModel.selectedLanguageId == -1
-                                          ? widget.nativeLanguageId.toString()
-                                          : viewModel.selectedLanguageId
-                                              .toString(),
+                                  'native_language_code':
+                                      viewModel.selectedLanguageCode
                                 }
                           : viewModel.passwordController.text.isNotEmpty
                               ? {
@@ -91,32 +87,34 @@ class _ProfileEditViewState extends BaseState<ProfileEditView> {
                                       .toString(),
                                   'name': viewModel.nameController.text,
                                   'password': viewModel.passwordController.text,
-                                  'native_language_id':
-                                      viewModel.selectedLanguageId == -1
-                                          ? widget.nativeLanguageId.toString()
-                                          : viewModel.selectedLanguageId
-                                              .toString(),
+                                  'native_language_code':
+                                      viewModel.selectedLanguageCode
                                 }
                               : {
                                   'avatar_id': viewModel.selectedAvatarId
                                       .toString()
                                       .toString(),
                                   'name': viewModel.nameController.text,
-                                  'native_language_id':
-                                      viewModel.selectedLanguageId == -1
-                                          ? widget.nativeLanguageId.toString()
-                                          : viewModel.selectedLanguageId
-                                              .toString(),
+                                  'native_language_code':
+                                      viewModel.selectedLanguageCode
                                 },
                     )
                   : await viewModel.uploadFile(context);
             },
-            child: Text(
-              'Save',
-              style: currentTextTheme.headline4?.copyWith(
-                fontWeight: FontWeight.w400,
-                color: ColorConstant.instance.additionalGreen,
-              ),
+            child: Consumer<ProfileViewModel>(
+              builder: (context, state, child) {
+                if (state.isUpdating) {
+                  return const CircularProgressIndicator();
+                } else {
+                  return Text(
+                    'Save',
+                    style: currentTextTheme.headline4?.copyWith(
+                      fontWeight: FontWeight.w400,
+                      color: ColorConstant.instance.additionalGreen,
+                    ),
+                  );
+                }
+              },
             ),
           ),
         ],
@@ -185,19 +183,22 @@ class _ProfileEditViewState extends BaseState<ProfileEditView> {
                                 )),
                             child: state.isPhotoLoaded
                                 ? viewModel.selectedAvatarId == -1
-                                    ? Container(
-                                        width: 60.0,
-                                        height: 60.0,
-                                        padding: const EdgeInsets.all(15.0),
-                                        decoration: BoxDecoration(
-                                          borderRadius:
-                                              BorderRadius.circular(50.0),
-                                          color: const Color.fromRGBO(
-                                              221, 212, 251, 1),
-                                          image: DecorationImage(
-                                            image: NetworkImage(
-                                                widget.profilePhoto),
-                                            fit: BoxFit.cover,
+                                    ? Hero(
+                                        tag: "profilePhoto",
+                                        child: Container(
+                                          width: 60.0,
+                                          height: 60.0,
+                                          padding: const EdgeInsets.all(15.0),
+                                          decoration: BoxDecoration(
+                                            borderRadius:
+                                                BorderRadius.circular(50.0),
+                                            color:
+                                                widget.profileBackgroundColor,
+                                            image: DecorationImage(
+                                              image: NetworkImage(
+                                                  widget.profilePhoto),
+                                              fit: BoxFit.cover,
+                                            ),
                                           ),
                                         ),
                                       )
@@ -325,125 +326,18 @@ class _ProfileEditViewState extends BaseState<ProfileEditView> {
                         const SizedBox(height: 15.0),
                         ProfileButton(
                           onTap: () {
-                            showDialog(
+                            showModalBottomSheet(
+                              isDismissible: false,
+                              isScrollControlled: true,
                               context: context,
                               builder: (BuildContext context) {
-                                double width =
-                                    MediaQuery.of(context).size.width;
-                                double height =
-                                    MediaQuery.of(context).size.height;
-                                return Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 24.0),
-                                  child: Stack(
-                                    children: [
-                                      Padding(
-                                        padding:
-                                            const EdgeInsets.only(bottom: 90.0),
-                                        child: Container(
-                                          decoration: BoxDecoration(
-                                            color: const Color.fromRGBO(
-                                                245, 245, 245, 0.7),
-                                            borderRadius:
-                                                BorderRadius.circular(15.0),
-                                          ),
-                                          child: ListView.builder(
-                                            physics:
-                                                const ClampingScrollPhysics(),
-                                            shrinkWrap: true,
-                                            addAutomaticKeepAlives: false,
-                                            addRepaintBoundaries: false,
-                                            itemCount: widget.languages.length,
-                                            itemBuilder: (context, index) {
-                                              return Material(
-                                                child: InkWell(
-                                                  onTap: () {
-                                                    viewModel
-                                                            .selectedLanguageId =
-                                                        widget.languages[index]
-                                                            .id!;
-
-                                                    Navigator.pop(context);
-                                                  },
-                                                  child: selectLanguageButton(
-                                                    context,
-                                                    width,
-                                                    height,
-                                                    text: widget
-                                                        .languages[index]
-                                                        .title!,
-                                                    borderRadius:
-                                                        BorderRadius.only(
-                                                      topLeft: Radius.circular(
-                                                          widget.languages[index]
-                                                                      .id ==
-                                                                  1
-                                                              ? 10.0
-                                                              : 0.0),
-                                                      topRight: Radius.circular(
-                                                          widget.languages[index]
-                                                                      .id ==
-                                                                  1
-                                                              ? 10.0
-                                                              : 0.0),
-                                                      bottomLeft:
-                                                          Radius.circular(widget
-                                                                      .languages[
-                                                                          index]
-                                                                      .id ==
-                                                                  14
-                                                              ? 10.0
-                                                              : 0.0),
-                                                      bottomRight:
-                                                          Radius.circular(widget
-                                                                      .languages[
-                                                                          index]
-                                                                      .id ==
-                                                                  14
-                                                              ? 10.0
-                                                              : 0.0),
-                                                    ),
-                                                  ),
-                                                ),
-                                              );
-                                            },
-                                          ),
-                                        ),
-                                      ),
-                                      Positioned(
-                                        left: 0.0,
-                                        right: 0.0,
-                                        bottom: 20.0,
-                                        child: SizedBox(
-                                          height: height * 0.07,
-                                          width: width - 16.0,
-                                          child: ElevatedButton(
-                                            style: ElevatedButton.styleFrom(
-                                                backgroundColor: ColorConstant
-                                                    .instance.additionalWhite,
-                                                shape: RoundedRectangleBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(
-                                                          10.0),
-                                                )),
-                                            onPressed: () {
-                                              Navigator.pop(context);
-                                            },
-                                            child: Text(
-                                              LocaleKeys.cancel.tr(),
-                                              style: currentTextTheme.headline1
-                                                  ?.copyWith(
-                                                fontSize: 20.0,
-                                                fontWeight: FontWeight.w600,
-                                                color: ColorConstant
-                                                    .instance.greyScale900,
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
+                                return Consumer<ProfileViewModel>(
+                                  builder: (context, state, child) {
+                                    return FractionallySizedBox(
+                                      heightFactor: 0.8,
+                                      child: languages(context),
+                                    );
+                                  },
                                 );
                               },
                             );
@@ -452,6 +346,9 @@ class _ProfileEditViewState extends BaseState<ProfileEditView> {
                           text: LocaleKeys.language.tr(),
                           isEnglish: true,
                           isDivider: false,
+                          language: viewModel.selectedLanguage == ""
+                              ? widget.nativeLanguage
+                              : viewModel.selectedLanguage,
                         ),
                         Divider(
                           thickness: 1.0,
@@ -482,6 +379,106 @@ class _ProfileEditViewState extends BaseState<ProfileEditView> {
             ),
           );
         },
+      ),
+    );
+  }
+
+  SingleChildScrollView languages(BuildContext context) {
+    return SingleChildScrollView(
+      physics: const ClampingScrollPhysics(),
+      child: Container(
+        width: width(1.0),
+        decoration: BoxDecoration(
+          color: ColorConstant.instance.additionalWhite,
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(20.0),
+            topRight: Radius.circular(20.0),
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              const SizedBox(height: 15.0),
+              Align(
+                alignment: Alignment.centerRight,
+                child: CircleAvatar(
+                  radius: 15.0,
+                  backgroundColor: ColorConstant.instance.greyScale300,
+                  child: IconButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                    icon: Icon(
+                      Icons.close,
+                      color: ColorConstant.instance.greyScale900,
+                      size: 15.0,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24.0),
+              Text(
+                LocaleKeys.all_lang.tr(),
+                style: currentTextTheme.headline3?.copyWith(
+                  fontWeight: FontWeight.w500,
+                  color: ColorConstant.instance.greyScale600,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 15.0),
+              ListView.builder(
+                shrinkWrap: true,
+                physics: const ClampingScrollPhysics(),
+                itemCount: viewModel.languages.length,
+                itemBuilder: (context, index) {
+                  return Consumer<ProfileViewModel>(
+                    builder: (context, state, child) {
+                      return Column(
+                        children: [
+                          LanguageButton(
+                            image: viewModel.languages[index].flag.toString(),
+                            languageId: index + 1,
+                            selectedIndex: state.selectedIndex,
+                            onTap: () {
+                              viewModel.selectedLanguageId =
+                                  viewModel.languages[index].id!;
+                              viewModel.selectedLanguageCode =
+                                  viewModel.languages[index].code!;
+
+                              state.changeCheckboxStatus(index: index);
+                              state.changeBottomSheet(true);
+
+                              viewModel.selectedLanguage =
+                                  viewModel.languages[index].title.toString();
+                              Navigator.pop(context);
+                            },
+                            widthValue: width(1.0),
+                            heightValue: height(0.07),
+                            backgroundColor:
+                                ColorConstant.instance.additionalWhite,
+                            borderRadius: 66.0,
+                            text: viewModel.languages[index].title.toString(),
+                            textStyle: currentTextTheme.headline3?.copyWith(
+                                    fontWeight: FontWeight.w400,
+                                    color:
+                                        ColorConstant.instance.greyScale900) ??
+                                const TextStyle(),
+                            onChangedCheckBox: (_) {},
+                          ),
+                          const SizedBox(height: 15.0),
+                        ],
+                      );
+                    },
+                  );
+                },
+              ),
+              const SizedBox(height: 30.0),
+            ],
+          ),
+        ),
       ),
     );
   }

@@ -1,5 +1,6 @@
 // ignore_for_file: no_leading_underscores_for_local_identifiers, use_build_context_synchronously
 
+import 'package:chatbot/core/utils/page_transition.dart';
 import 'package:chatbot/product/auth/login/service/login_service.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -19,6 +20,17 @@ class LoginViewModel extends ChangeNotifier {
   LoginService service = LoginService();
 
   bool isObscure = true;
+  bool isActivePage = false;
+
+  setActivePage() {
+    Future.delayed(
+      const Duration(milliseconds: 500),
+      () {
+        isActivePage = true;
+        notifyListeners();
+      },
+    );
+  }
 
   startFocusNode() {
     emailFocusNode.unfocus();
@@ -40,8 +52,7 @@ class LoginViewModel extends ChangeNotifier {
       await prefs.setString(
           PreferencesKeys.TOKEN.toString(), response.data!.token!);
 
-      Navigator.push(
-          context, MaterialPageRoute(builder: (context) => BottomBarView()));
+      Navigator.of(context).pushReplacement(createRoute(page: BottomBarView()));
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Wrong email or password')),

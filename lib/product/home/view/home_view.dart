@@ -6,6 +6,8 @@ import 'package:chatbot/core/constants/color_constant.dart';
 import 'package:chatbot/core/constants/icon_constant.dart';
 import 'package:chatbot/core/language/locale_keys.g.dart';
 import 'package:chatbot/core/view/base/base_stateless.dart';
+import 'package:chatbot/product/bottom_bar/view/bottom_bar_view.dart';
+import 'package:chatbot/product/bottom_bar/viewmodel/bottom_bar_view_model.dart';
 import 'package:chatbot/product/home/viewmodel/home_view_model.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -30,6 +32,7 @@ class HomeView extends BaseStateless {
 
   @override
   Widget build(BuildContext context) {
+    Provider.of<HomeViewModel>(context, listen: false).setActivePage();
     setFirstLogin();
     return Scaffold(
       backgroundColor: ColorConstant.instance.additionalWhite,
@@ -413,21 +416,30 @@ class HomeView extends BaseStateless {
     );
   }
 
-  Container lessonCard(BuildContext context) {
-    return Container(
-      width: width(context: context, value: 1.0),
-      decoration: BoxDecoration(
-        color: ColorConstant.instance.greyScale100,
-        borderRadius: BorderRadius.circular(20.0),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          lessonCardTop(context),
-          viewModel.isFirst ? lessonCardContent(context) : const Center(),
-        ],
-      ),
+  Widget lessonCard(BuildContext context) {
+    return Consumer<HomeViewModel>(
+      builder: (context, state, child) {
+        return AnimatedPadding(
+          duration: const Duration(milliseconds: 500),
+          curve: Curves.easeInOut,
+          padding: EdgeInsets.only(top: state.isActivePage ? 0.0 : 50.0),
+          child: Container(
+            width: width(context: context, value: 1.0),
+            decoration: BoxDecoration(
+              color: ColorConstant.instance.greyScale100,
+              borderRadius: BorderRadius.circular(20.0),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                lessonCardTop(context),
+                viewModel.isFirst ? lessonCardContent(context) : const Center(),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -570,106 +582,124 @@ class HomeView extends BaseStateless {
     );
   }
 
-  Row customAppBar(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Row(
+  Widget customAppBar(BuildContext context) {
+    return Consumer<HomeViewModel>(
+      builder: (context, state, child) {
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Padding(
-              padding: const EdgeInsets.only(left: 24.0),
-              child: Container(
-                width: 55.0,
-                height: 55.0,
-                padding: const EdgeInsets.all(5.0),
-                decoration: BoxDecoration(
-                    boxShadow: [
-                      BoxShadow(
-                        color: ColorConstant.instance.greyScale300,
-                        blurRadius: 10.0,
-                        spreadRadius: 1.0,
-                        offset: const Offset(3, 3),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                InkWell(
+                  onTap: () {
+                    Provider.of<BottomBarViewModel>(context, listen: false)
+                        .selectedIndex = 2;
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => BottomBarView()));
+                  },
+                  child: AnimatedPadding(
+                    duration: const Duration(milliseconds: 500),
+                    curve: Curves.easeInOut,
+                    padding:
+                        EdgeInsets.only(left: state.isActivePage ? 24.0 : 0.0),
+                    child: Container(
+                      width: 55.0,
+                      height: 55.0,
+                      padding: const EdgeInsets.all(5.0),
+                      decoration: BoxDecoration(
+                          boxShadow: [
+                            BoxShadow(
+                              color: ColorConstant.instance.greyScale300,
+                              blurRadius: 10.0,
+                              spreadRadius: 1.0,
+                              offset: const Offset(3, 3),
+                            ),
+                          ],
+                          color: Color.fromRGBO(
+                            viewModel.profileModel.data!.user!.color![0],
+                            viewModel.profileModel.data!.user!.color![1],
+                            viewModel.profileModel.data!.user!.color![2],
+                            1,
+                          ),
+                          borderRadius: BorderRadius.circular(50.0),
+                          border: Border.all(
+                            width: 1.0,
+                            color: ColorConstant.instance.additionalWhite,
+                          )),
+                      child: Container(
+                        width: 20.0,
+                        height: 20.0,
+                        padding: const EdgeInsets.all(15.0),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(50.0),
+                          image: DecorationImage(
+                            image: NetworkImage(viewModel
+                                .profileModel.data!.user!.profilePhoto!),
+                            fit: BoxFit.cover,
+                          ),
+                        ),
                       ),
-                    ],
-                    color: Color.fromRGBO(
-                      viewModel.profileModel.data!.user!.color![0],
-                      viewModel.profileModel.data!.user!.color![1],
-                      viewModel.profileModel.data!.user!.color![2],
-                      1,
                     ),
-                    borderRadius: BorderRadius.circular(50.0),
-                    border: Border.all(
-                      width: 1.0,
-                      color: ColorConstant.instance.additionalWhite,
-                    )),
-                child: Container(
-                  width: 20.0,
-                  height: 20.0,
-                  padding: const EdgeInsets.all(15.0),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(50.0),
-                    image: DecorationImage(
-                      image: NetworkImage(
-                          viewModel.profileModel.data!.user!.profilePhoto!),
-                      fit: BoxFit.cover,
+                  ),
+                ),
+                const SizedBox(width: 10.0),
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Hi ${viewModel.profileModel.data!.user!.name!}'
+                          .toUpperCase(),
+                      style: currentTextTheme(context).headline6?.copyWith(
+                            fontWeight: FontWeight.w400,
+                            color: ColorConstant.instance.greyScale600,
+                          ),
                     ),
+                    Text(
+                      LocaleKeys.welcome.tr(),
+                      style: currentTextTheme(context).headline3?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: ColorConstant.instance.greyScale900,
+                          ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            Padding(
+              padding: const EdgeInsets.only(right: 24.0),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 500),
+                width: state.isActivePage ? 40.0 : 10.0,
+                height: state.isActivePage ? 40.0 : 10.0,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(50.0),
+                  color: ColorConstant.instance.greyScale900,
+                ),
+                child: IconButton(
+                  onPressed: () {
+                    var randomNumber = Random();
+                    int index = 0;
+                    for (var i = 1; i < viewModel.topics.length; i++) {
+                      index = randomNumber.nextInt(viewModel.topics.length);
+                    }
+
+                    topicDialog(context, index);
+                  },
+                  icon: Icon(
+                    Icons.add,
+                    color: ColorConstant.instance.additionalWhite,
                   ),
                 ),
               ),
             ),
-            const SizedBox(width: 10.0),
-            Column(
-              mainAxisAlignment: MainAxisAlignment.start,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Hi ${viewModel.profileModel.data!.user!.name!}'
-                      .toUpperCase(),
-                  style: currentTextTheme(context).headline6?.copyWith(
-                        fontWeight: FontWeight.w400,
-                        color: ColorConstant.instance.greyScale600,
-                      ),
-                ),
-                Text(
-                  LocaleKeys.welcome.tr(),
-                  style: currentTextTheme(context).headline3?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: ColorConstant.instance.greyScale900,
-                      ),
-                ),
-              ],
-            ),
           ],
-        ),
-        Padding(
-          padding: const EdgeInsets.only(right: 24.0),
-          child: Container(
-            width: 40.0,
-            height: 40.0,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(50.0),
-              color: ColorConstant.instance.greyScale900,
-            ),
-            child: IconButton(
-              onPressed: () {
-                var randomNumber = Random();
-                int index = 0;
-                for (var i = 1; i < viewModel.topics.length; i++) {
-                  index = randomNumber.nextInt(viewModel.topics.length);
-                }
-
-                topicDialog(context, index);
-              },
-              icon: Icon(
-                Icons.add,
-                color: ColorConstant.instance.additionalWhite,
-              ),
-            ),
-          ),
-        ),
-      ],
+        );
+      },
     );
   }
 }

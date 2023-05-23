@@ -18,6 +18,18 @@ class ConversationViewModel extends ChangeNotifier {
 
   Conversation conversation = Conversation();
 
+  bool isActivePage = false;
+
+  setActivePage() {
+    Future.delayed(
+      const Duration(milliseconds: 500),
+      () {
+        isActivePage = true;
+        notifyListeners();
+      },
+    );
+  }
+
   Future getAllConversation() async {
     final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
     final SharedPreferences prefs = await _prefs;

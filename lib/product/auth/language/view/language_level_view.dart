@@ -1,272 +1,205 @@
 // ignore_for_file: use_key_in_widget_constructors, must_be_immutable
 
-import 'package:chatbot/core/view/base/base_stateless.dart';
-import 'package:chatbot/core/view/widget/button/language_level_button.dart';
+import 'package:chatbot/core/constants/color_constant.dart';
+import 'package:chatbot/core/view/base/base_state.dart';
+import 'package:chatbot/core/view/widget/button/app_button.dart';
 import 'package:chatbot/product/auth/language/viewmodel/language_view_model.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:skeletons/skeletons.dart';
 
-import '../../../../core/constants/color_constant.dart';
 import '../../../../core/language/locale_keys.g.dart';
-import '../../../../core/view/widget/button/app_button.dart';
 
-class LanguageLevelView extends BaseStateless {
-  LanguageViewModel viewModel = LanguageViewModel();
-
+class LanguageLevelView extends StatefulWidget {
   final String email;
   final String password;
   final String name;
-  final String nativeId;
-  final String learnId;
-  final String learnLanguage;
-
-  LanguageLevelView({
+  final String languageCode;
+  const LanguageLevelView({
     required this.email,
     required this.password,
     required this.name,
-    required this.nativeId,
-    required this.learnId,
-    required this.learnLanguage,
+    required this.languageCode,
   });
 
   @override
+  State<LanguageLevelView> createState() => _LanguageLevelViewState();
+}
+
+class _LanguageLevelViewState extends BaseState<LanguageLevelView>
+    with TickerProviderStateMixin {
+  LanguageViewModel viewModel = LanguageViewModel();
+
+  late final AnimationController _controller = AnimationController(
+    duration: const Duration(seconds: 1),
+    vsync: this,
+  )..repeat(reverse: true);
+
+  @override
   Widget build(BuildContext context) {
+    Provider.of<LanguageViewModel>(context, listen: false).setActiveLevelPage();
     return Scaffold(
       backgroundColor: ColorConstant.instance.additionalWhite,
-      appBar: AppBar(
-        toolbarHeight: 40.0,
-        leadingWidth: 50.0,
-        titleSpacing: 0,
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 10.0),
-          child: Container(
-            decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(6.0),
-                color: ColorConstant.instance.greyScale100),
-            child: Center(
-              child: IconButton(
-                padding: const EdgeInsets.all(0.0),
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-                icon: Icon(
-                  Icons.arrow_back_ios,
-                  color: ColorConstant.instance.greyScale900,
-                  size: 20.0,
-                ),
-              ),
+      body: Consumer<LanguageViewModel>(
+        builder: (context, state, child) {
+          return AnimatedPadding(
+            duration: const Duration(milliseconds: 500),
+            curve: Curves.easeInOut,
+            padding: EdgeInsets.symmetric(
+              horizontal: 24.0,
+              vertical: state.isActiveLevelPage ? 44.0 : 0.0,
             ),
-          ),
-        ),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-      ),
-      body: SingleChildScrollView(
-        physics: const ClampingScrollPhysics(),
-        child: FutureBuilder(
-          future: viewModel.getLanguageLevels(),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return skeletonLoading(context);
-            } else if (snapshot.connectionState == ConnectionState.done) {
-              return languages(context);
-            } else {
-              return const Text("Error");
-            }
-          },
-        ),
-      ),
-    );
-  }
-
-  Padding skeletonLoading(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24.0),
-      child: SingleChildScrollView(
-        physics: const NeverScrollableScrollPhysics(),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 60.0),
-              child: SkeletonParagraph(
-                style: const SkeletonParagraphStyle(
-                  lines: 1,
-                ),
-              ),
-            ),
-            const SizedBox(height: 5.0),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 30.0),
-              child: SkeletonParagraph(
-                style: const SkeletonParagraphStyle(
-                  lines: 2,
-                ),
-              ),
-            ),
-            const SizedBox(height: 20.0),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: SkeletonParagraph(
-                style: SkeletonParagraphStyle(
-                  lines: 1,
-                  lineStyle: SkeletonLineStyle(
-                    width: width(context: context, value: 0.2),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 10.0),
-            ListView.builder(
-              shrinkWrap: true,
-              itemCount: 12,
-              physics: const NeverScrollableScrollPhysics(),
-              itemBuilder: (context, index) {
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 15.0),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        flex: 3,
-                        child: SkeletonParagraph(
-                          style: const SkeletonParagraphStyle(
-                            lines: 1,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                const Expanded(child: SizedBox()),
+                AnimatedBuilder(
+                    animation: _controller,
+                    builder: (context, child) {
+                      return Transform.translate(
+                        offset: Offset(0, 30 * _controller.value),
+                        child: Center(
+                          child: Image.network(
+                            "https://cdn.icon-icons.com/icons2/1371/PNG/512/robot02_90810.png",
+                            width: 150.0,
+                            height: 150.0,
                           ),
                         ),
-                      ),
-                      const Expanded(
-                        child: SkeletonAvatar(
-                          style: SkeletonAvatarStyle(
-                            width: 35.0,
-                            height: 35.0,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                      )
-                    ],
-                  ),
-                );
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Padding languages(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          Align(
-            alignment: Alignment.center,
-            child: Text(
-              LocaleKeys.had_very.tr(),
-              style: currentTextTheme(context).headline3?.copyWith(
-                    fontWeight: FontWeight.w500,
-                    color: ColorConstant.instance.greyScale600,
-                  ),
-            ),
-          ),
-          const SizedBox(height: 4.0),
-          Align(
-            alignment: Alignment.center,
-            child: Text(
-              'How would you rate your level of $learnLanguage proficiency?',
-              style: currentTextTheme(context).headline1?.copyWith(
-                    fontWeight: FontWeight.w500,
+                      );
+                    }),
+                const SizedBox(height: 20.0),
+                Text(
+                  LocaleKeys.welcome_stranger.tr(),
+                  style: currentTextTheme.headline1?.copyWith(
                     color: ColorConstant.instance.greyScale900,
                   ),
-              textAlign: TextAlign.center,
-            ),
-          ),
-          const SizedBox(height: 20.0),
-          ListView.builder(
-            shrinkWrap: true,
-            physics: const ClampingScrollPhysics(),
-            itemCount: viewModel.languageLevels.length,
-            itemBuilder: (context, index) {
-              return Consumer<LanguageViewModel>(
-                builder: (context, state, child) {
-                  return Column(
-                    children: [
-                      LanguageLevelButton(
-                        languageId: viewModel.languageLevels[index].id!,
-                        selectedIndex: state.selectedLevelIndex,
-                        onTap: () {
-                          viewModel.selectedLanguageLevelId =
-                              viewModel.languageLevels[index].id!;
-                          state.changeCheckboxStatusLevels(index: index);
-                          viewModel.selectedLevelIndex = index;
-                        },
-                        widthValue: width(context: context, value: 1.0),
-                        heightValue: height(context: context, value: 0.07),
-                        backgroundColor: ColorConstant.instance.additionalWhite,
-                        borderRadius: 66.0,
-                        text: viewModel.languageLevels[index].title!,
-                        textStyle: currentTextTheme(context)
-                                .headline3
-                                ?.copyWith(
-                                    fontWeight: FontWeight.w400,
-                                    color:
-                                        ColorConstant.instance.greyScale900) ??
-                            const TextStyle(),
-                        onChangedCheckBox: (_) {},
-                      ),
-                      const SizedBox(height: 15.0),
-                    ],
-                  );
-                },
-              );
-            },
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 40.0),
-            child: AppButton(
-              onTap: () async {
-                // mainViewModel.languageLevelId =
-                //     viewModel.selectedLanguageLevelId;
-
-                if (viewModel.selectedLanguageLevelId != -1) {
-                  await viewModel.register({
-                    "email": email,
-                    "password": password,
-                    "name": name,
-                    "native_language_id": nativeId.toString(),
-                    "learn_language_id": learnId.toString(),
-                    "learn_language_proficiency_id":
-                        viewModel.selectedLanguageLevelId.toString(),
-                  }, context);
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        LocaleKeys.language_level.tr(),
-                      ),
+                ),
+                const SizedBox(height: 2.0),
+                Text(LocaleKeys.help_us.tr(),
+                    style: currentTextTheme.headline3?.copyWith(
+                      color: ColorConstant.instance.greyScale900,
                     ),
-                  );
-                }
-              },
-              widthValue: width(context: context, value: 1.0),
-              heightValue: height(context: context, value: 0.07),
-              backgroundColor: ColorConstant.instance.greyScale900,
-              borderRadius: 66.0,
-              text: LocaleKeys.next.tr(),
-              textStyle: currentTextTheme(context).headline3?.copyWith(
+                    textAlign: TextAlign.center),
+                const Expanded(child: SizedBox()),
+                Consumer<LanguageViewModel>(
+                  builder: (context, state, child) {
+                    return Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Text(
+                          state.sliderValue == 0
+                              ? 'A1'
+                              : state.sliderValue == 1
+                                  ? "A2"
+                                  : state.sliderValue == 2
+                                      ? "B1"
+                                      : state.sliderValue == 3
+                                          ? "B2"
+                                          : state.sliderValue == 4
+                                              ? "C1"
+                                              : "C2",
+                          style: currentTextTheme.headline1?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: ColorConstant.instance.greyScale900),
+                        ),
+                        const SizedBox(height: 2.0),
+                        SizedBox(
+                            height: height(0.09),
+                            child: Align(
+                              alignment: Alignment.topCenter,
+                              child: state.switchTextWidget(
+                                  state.sliderValue.toInt(),
+                                  context: context),
+                            )),
+                      ],
+                    );
+                  },
+                ),
+                SliderTheme(
+                  data: SliderTheme.of(context).copyWith(
+                    trackHeight: 10.0,
+                    trackShape: const RoundedRectSliderTrackShape(),
+                    activeTrackColor: ColorConstant.instance.greyScale700,
+                    inactiveTrackColor: ColorConstant.instance.greyScale300,
+                    thumbShape: const RoundSliderThumbShape(
+                      enabledThumbRadius: 14.0,
+                      pressedElevation: 8.0,
+                    ),
+                    thumbColor: ColorConstant.instance.greyScale900,
+                    overlayColor:
+                        ColorConstant.instance.greyScale800.withOpacity(0.2),
+                    overlayShape:
+                        const RoundSliderOverlayShape(overlayRadius: 32.0),
+                    tickMarkShape: const RoundSliderTickMarkShape(),
+                    activeTickMarkColor: ColorConstant.instance.additionalWhite,
+                    inactiveTickMarkColor: Colors.white,
+                    valueIndicatorShape: const RoundSliderOverlayShape(),
+                    valueIndicatorColor: Colors.black,
+                    valueIndicatorTextStyle: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 20.0,
+                    ),
+                  ),
+                  child: Consumer<LanguageViewModel>(
+                    builder: (context, state, child) {
+                      return SizedBox(
+                        width: double.maxFinite,
+                        child: Slider(
+                          divisions: 5,
+                          max: 5,
+                          label: state.sliderValue == 0
+                              ? 'A1'
+                              : state.sliderValue == 1
+                                  ? "A2"
+                                  : state.sliderValue == 2
+                                      ? "B1"
+                                      : state.sliderValue == 3
+                                          ? "B2"
+                                          : state.sliderValue == 4
+                                              ? "C1"
+                                              : "C2",
+                          value: state.sliderValue,
+                          onChanged: (value) => state.changeSliderValue(value),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                const Expanded(child: SizedBox()),
+                AnimatedPadding(
+                  duration: const Duration(milliseconds: 500),
+                  curve: Curves.easeInOut,
+                  padding: EdgeInsets.symmetric(
+                      horizontal: state.isActiveLevelPage ? 16.0 : 0.0),
+                  child: AppButton(
+                    widthValue: width(1.0),
+                    heightValue: height(0.07),
+                    backgroundColor: ColorConstant.instance.greyScale900,
+                    borderRadius: 66.0,
+                    text: LocaleKeys.next.tr(),
+                    textStyle: currentTextTheme.headline3!.copyWith(
+                      color: ColorConstant.instance.additionalWhite,
                       fontWeight: FontWeight.w400,
-                      color: ColorConstant.instance.additionalWhite) ??
-                  const TextStyle(),
+                    ),
+                    onTap: () async {
+                      await viewModel.register({
+                        "email": widget.email,
+                        "password": widget.password,
+                        "name": widget.name,
+                        "native_language_code": widget.languageCode,
+                        // "learn_language_id": learnId.toString(),
+                        "learn_language_proficiency_cefr":
+                            state.learnLanguageProficiencyCefr,
+                      }, context);
+                    },
+                  ),
+                ),
+              ],
             ),
-          ),
-        ],
+          );
+        },
       ),
     );
   }

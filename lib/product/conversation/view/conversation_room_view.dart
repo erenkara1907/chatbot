@@ -238,8 +238,9 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
                       padding: const EdgeInsets.only(bottom: 10.0),
                       child: SizedBox(
                         width: width(1.0),
-                        height: height(0.075),
+                        // height: height(0.075),
                         child: TextField(
+                          maxLines: null,
                           enabled: chatProvider.isActive == 0 ? false : true,
                           controller: sendTextController,
                           focusNode: focusNode,
@@ -649,14 +650,13 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 24.0,
+                    vertical: 24.0,
                   ),
                   child: FutureBuilder(
                     future: viewModel.translate(
                       conversationId: widget.conversationId,
                       messageId: state.chatList[index].id,
-                      translateTitle: viewModel.nativeLanguage == ''
-                          ? viewModel.nativePopularLanguage
-                          : viewModel.nativeLanguage,
+                      translateTitle: viewModel.nativeLanguage,
                     ),
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
@@ -847,99 +847,6 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
                                                         const SizedBox(
                                                             height: 24.0),
                                                         Text(
-                                                          LocaleKeys
-                                                              .popular_lang
-                                                              .tr(),
-                                                          style:
-                                                              currentTextTheme
-                                                                  .headline3
-                                                                  ?.copyWith(
-                                                            fontWeight:
-                                                                FontWeight.w500,
-                                                            color: ColorConstant
-                                                                .instance
-                                                                .greyScale600,
-                                                          ),
-                                                          textAlign:
-                                                              TextAlign.center,
-                                                        ),
-                                                        const SizedBox(
-                                                            height: 15.0),
-                                                        ListView.builder(
-                                                          shrinkWrap: true,
-                                                          physics:
-                                                              const ClampingScrollPhysics(),
-                                                          itemCount: viewModel
-                                                              .popularLanguageIds
-                                                              .length,
-                                                          itemBuilder:
-                                                              (context, index) {
-                                                            return Consumer<
-                                                                ConversationRoomViewModel>(
-                                                              builder: (context,
-                                                                  state,
-                                                                  child) { 
-                                                                return Column(
-                                                                  children: [
-                                                                    LanguageButton(
-                                                                      image: viewModel
-                                                                              .popularLanguageImages[
-                                                                          index],
-                                                                      languageId: index + 1,
-                                                                      selectedIndex:
-                                                                          state
-                                                                              .selectedPopularIndex,
-                                                                      onTap:
-                                                                          () {
-                                                                        viewModel
-                                                                            .selectedPopularLanguageId = viewModel
-                                                                                .popularLanguageIds[
-                                                                            index];
-                                                                        state.changeCheckboxStatusPopular(
-                                                                            index:
-                                                                                index);
-                                                                        viewModel.selectedPopularIndex =
-                                                                            index;
-                                                                        viewModel
-                                                                            .nativePopularLanguage = viewModel
-                                                                                .popularLanguageTitles[
-                                                                            index];
-                                                                        viewModel.nativeLanguage =
-                                                                            '';
-                                                                      },
-                                                                      widthValue:
-                                                                          width(
-                                                                              1.0),
-                                                                      heightValue:
-                                                                          height(
-                                                                              0.07),
-                                                                      backgroundColor: ColorConstant
-                                                                          .instance
-                                                                          .additionalWhite,
-                                                                      borderRadius:
-                                                                          66.0,
-                                                                      text: viewModel
-                                                                              .popularLanguageTitles[
-                                                                          index],
-                                                                      textStyle: currentTextTheme.headline3?.copyWith(
-                                                                              fontWeight: FontWeight.w400,
-                                                                              color: ColorConstant.instance.greyScale900) ??
-                                                                          const TextStyle(),
-                                                                      onChangedCheckBox:
-                                                                          (_) {},
-                                                                    ),
-                                                                    SizedBox(
-                                                                        height: viewModel.popularLanguageTitles[index] ==
-                                                                                "Turkish"
-                                                                            ? 0.0
-                                                                            : 15.0),
-                                                                  ],
-                                                                );
-                                                              },
-                                                            );
-                                                          },
-                                                        ),
-                                                        Text(
                                                           LocaleKeys.all_lang
                                                               .tr(),
                                                           style:
@@ -977,7 +884,9 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
                                                                           .languages[
                                                                               index]
                                                                           .flag!,
-                                                                      languageId: index + 1,
+                                                                      languageId:
+                                                                          index +
+                                                                              1,
                                                                       selectedIndex:
                                                                           state
                                                                               .selectedIndex,
@@ -986,6 +895,9 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
                                                                         viewModel.selectedLanguageId = viewModel
                                                                             .languages[index]
                                                                             .id!;
+                                                                        viewModel.selectedLanguageCode = viewModel
+                                                                            .languages[index]
+                                                                            .code!;
                                                                         state.changeCheckboxStatus(
                                                                             index:
                                                                                 index);
@@ -994,8 +906,6 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
                                                                         viewModel.nativeLanguage = viewModel
                                                                             .languages[index]
                                                                             .title!;
-                                                                        viewModel.nativePopularLanguage =
-                                                                            '';
                                                                       },
                                                                       widthValue:
                                                                           width(
@@ -1038,16 +948,10 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
                                         );
                                       },
                                       child: Text(
-                                        viewModel.nativeLanguage == '' &&
-                                                viewModel
-                                                        .nativePopularLanguage ==
-                                                    ''
+                                        viewModel.nativeLanguage == ''
                                             ? state.conversationModel
                                                 .nativeLanguage!.title!
-                                            : viewModel.nativeLanguage == ''
-                                                ? viewModel
-                                                    .nativePopularLanguage
-                                                : viewModel.nativeLanguage,
+                                            : viewModel.nativeLanguage,
                                         style: currentTextTheme.headline3
                                             ?.copyWith(
                                           fontSize: 14.0,

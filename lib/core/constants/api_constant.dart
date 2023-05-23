@@ -1,4 +1,4 @@
-String baseUrl = "https://talkios.rondigital.ai/api/v1";
+String baseUrl = "https://dev-talkios.rondigital.ai/api/v1";
 
 class ApiConstant {
   static ApiConstant? _instance;
@@ -16,9 +16,9 @@ class ApiConstant {
   // Profile
   String profilUrl = "$baseUrl/profile";
 
-  // Language
-  String languageInfoUrl = "$baseUrl/languages";
-  String languageLevelsUrl = "$baseUrl/language-proficiency-levels";
+  // // Language
+  // String languageInfoUrl = "$baseUrl/languages";
+  // String languageLevelsUrl = "$baseUrl/language-proficiency-levels";
 
   // Topic
   String topicsUrl = "$baseUrl/topics";

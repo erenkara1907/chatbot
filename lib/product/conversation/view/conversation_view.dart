@@ -1,5 +1,6 @@
 // ignore_for_file: use_key_in_widget_constructors, must_be_immutable, use_build_context_synchronously
 
+import 'package:auto_animated/auto_animated.dart';
 import 'package:chatbot/core/constants/color_constant.dart';
 import 'package:chatbot/core/language/locale_keys.g.dart';
 import 'package:chatbot/core/view/base/base_stateless.dart';
@@ -16,6 +17,7 @@ class ConversationView extends BaseStateless {
   HomeViewModel viewModel = HomeViewModel();
   @override
   Widget build(BuildContext context) {
+    Provider.of<ConversationViewModel>(context, listen: false).setActivePage();
     return DefaultTabController(
       length: 2,
       child: Scaffold(
@@ -31,87 +33,87 @@ class ConversationView extends BaseStateless {
                 ),
           ),
         ),
-        body: Consumer<ConversationViewModel>(
-          builder: (context, state, child) {
-            return FutureBuilder(
-              future: state.getAllConversation(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                    child: ListView.builder(
-                      shrinkWrap: true,
-                      itemCount: 8,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemBuilder: (context, index) {
-                        return Row(
-                          children: [
-                            const SkeletonAvatar(
-                              style: SkeletonAvatarStyle(
-                                width: 35.0,
-                                height: 35.0,
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  SkeletonParagraph(
-                                    style: SkeletonParagraphStyle(
-                                      lines: 1,
-                                      lineStyle: SkeletonLineStyle(
-                                        maxLength:
-                                            width(context: context, value: 0.2),
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 5.0),
-                                  SkeletonParagraph(
-                                    style: const SkeletonParagraphStyle(
-                                      lines: 2,
-                                    ),
-                                  )
-                                ],
-                              ),
-                            )
-                          ],
-                        );
-                      },
-                    ),
-                  );
-                } else if (snapshot.connectionState == ConnectionState.done) {
-                  return Padding(
-                    padding: const EdgeInsets.only(
-                      bottom: 80.0,
-                    ),
-                    child: Column(
+        body: FutureBuilder(
+          future: Provider.of<ConversationViewModel>(context, listen: false)
+              .getAllConversation(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: 8,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemBuilder: (context, index) {
+                    return Row(
                       children: [
-                        TabBar(
-                          isScrollable: true,
-                          indicatorSize: TabBarIndicatorSize.label,
-                          indicatorColor: ColorConstant.instance.greyScale900,
-                          labelStyle:
-                              currentTextTheme(context).headline4?.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                    color: const Color.fromRGBO(15, 23, 42, 1),
-                                  ),
-                          unselectedLabelStyle:
-                              currentTextTheme(context).headline4?.copyWith(
-                                    fontWeight: FontWeight.w400,
-                                    color: const Color.fromRGBO(15, 23, 42, 1),
-                                  ),
-                          tabs: const [
-                            Tab(
-                              text: 'Messages',
-                            ),
-                            Tab(
-                              text: 'Completed Messages',
-                            )
-                          ],
+                        const SkeletonAvatar(
+                          style: SkeletonAvatarStyle(
+                            width: 35.0,
+                            height: 35.0,
+                            shape: BoxShape.circle,
+                          ),
                         ),
                         Expanded(
-                          child: TabBarView(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              SkeletonParagraph(
+                                style: SkeletonParagraphStyle(
+                                  lines: 1,
+                                  lineStyle: SkeletonLineStyle(
+                                    maxLength:
+                                        width(context: context, value: 0.2),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 5.0),
+                              SkeletonParagraph(
+                                style: const SkeletonParagraphStyle(
+                                  lines: 2,
+                                ),
+                              )
+                            ],
+                          ),
+                        )
+                      ],
+                    );
+                  },
+                ),
+              );
+            } else if (snapshot.connectionState == ConnectionState.done) {
+              return Padding(
+                padding: const EdgeInsets.only(
+                  bottom: 80.0,
+                ),
+                child: Column(
+                  children: [
+                    TabBar(
+                      isScrollable: true,
+                      indicatorSize: TabBarIndicatorSize.label,
+                      indicatorColor: ColorConstant.instance.greyScale900,
+                      labelStyle: currentTextTheme(context).headline4?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: const Color.fromRGBO(15, 23, 42, 1),
+                          ),
+                      unselectedLabelStyle:
+                          currentTextTheme(context).headline4?.copyWith(
+                                fontWeight: FontWeight.w400,
+                                color: const Color.fromRGBO(15, 23, 42, 1),
+                              ),
+                      tabs: const [
+                        Tab(
+                          text: 'Messages',
+                        ),
+                        Tab(
+                          text: 'Completed Messages',
+                        )
+                      ],
+                    ),
+                    Expanded(
+                      child: Consumer<ConversationViewModel>(
+                        builder: (context, state, child) {
+                          return TabBarView(
                             children: [
                               state.conversationModel.isNotEmpty
                                   ? messages(state)
@@ -120,16 +122,16 @@ class ConversationView extends BaseStateless {
                                   ? completedMessages(state)
                                   : noMCompleteessage(context),
                             ],
-                          ),
-                        ),
-                      ],
+                          );
+                        },
+                      ),
                     ),
-                  );
-                } else {
-                  return const Text('error');
-                }
-              },
-            );
+                  ],
+                ),
+              );
+            } else {
+              return const Text('error');
+            }
           },
         ),
       ),
@@ -462,115 +464,149 @@ class ConversationView extends BaseStateless {
     );
   }
 
+  Widget Function(
+    BuildContext context,
+    int index,
+    Animation<double> animation,
+  ) animationItemBuilder(
+    Widget Function(int index, BuildContext context) child, {
+    EdgeInsets padding = EdgeInsets.zero,
+  }) =>
+      (
+        BuildContext context,
+        int index,
+        Animation<double> animation,
+      ) =>
+          FadeTransition(
+            opacity: Tween<double>(
+              begin: 0,
+              end: 1,
+            ).animate(animation),
+            child: SlideTransition(
+              position: Tween<Offset>(
+                begin: const Offset(0, -0.1),
+                end: Offset.zero,
+              ).animate(animation),
+              child: Padding(
+                padding: padding,
+                child: child(index, context),
+              ),
+            ),
+          );
+
   Padding messages(ConversationViewModel state) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 20.0),
-      child: ListView.builder(
+      child: LiveList(
+        itemBuilder: animationItemBuilder(
+          (index, context) {
+            return Padding(
+              padding: const EdgeInsets.only(
+                top: 25.0,
+              ),
+              child: Column(
+                children: [
+                  SizedBox(
+                    width: width(context: context, value: 1.0),
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        elevation: 0,
+                        backgroundColor: ColorConstant.instance.additionalWhite,
+                      ),
+                      onPressed: () async {
+                        // await state.getAllMessages(
+                        //     conversationId: state.conversationModel[index].id!);
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ConversationRoomView(
+                              // messages: state.messages,
+                              conversationId:
+                                  state.conversationModel[index].id!,
+                            ),
+                          ),
+                        );
+                      },
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SizedBox(
+                            width: 40.0,
+                            height: 40.0,
+                            child: Image.network(
+                              state.conversationModel[index].topic!.icon!,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                          const SizedBox(width: 12.0),
+                          Column(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: [
+                              SizedBox(
+                                width: width(context: context, value: 0.7),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      state.conversationModel[index].topic!
+                                          .title!,
+                                      style: currentTextTheme(context)
+                                          .headline3
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.w600,
+                                            color: ColorConstant
+                                                .instance.greyScale900,
+                                          ),
+                                    ),
+                                    Icon(
+                                      Icons.arrow_forward_ios,
+                                      color:
+                                          ColorConstant.instance.greyScale900,
+                                      size: 12.0,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              SizedBox(
+                                width: width(context: context, value: 0.7),
+                                child: Text(
+                                  state.conversationModel[index].lastMessage!,
+                                  style: currentTextTheme(context)
+                                      .headline3
+                                      ?.copyWith(
+                                        fontWeight: FontWeight.w400,
+                                        color:
+                                            ColorConstant.instance.greyScale600,
+                                      ),
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 2,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                    child: Divider(
+                      thickness: 1.0,
+                      color: ColorConstant.instance.greyScale300,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
         itemCount: state.conversationModel.length,
         shrinkWrap: true,
         physics: const ClampingScrollPhysics(),
         addAutomaticKeepAlives: false,
         addRepaintBoundaries: false,
-        itemBuilder: (context, index) {
-          return Padding(
-            padding: const EdgeInsets.only(
-              top: 25.0,
-            ),
-            child: Column(
-              children: [
-                SizedBox(
-                  width: width(context: context, value: 1.0),
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      elevation: 0,
-                      backgroundColor: ColorConstant.instance.additionalWhite,
-                    ),
-                    onPressed: () async {
-                      // await state.getAllMessages(
-                      //     conversationId: state.conversationModel[index].id!);
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => ConversationRoomView(
-                            // messages: state.messages,
-                            conversationId: state.conversationModel[index].id!,
-                          ),
-                        ),
-                      );
-                    },
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        SizedBox(
-                          width: 40.0,
-                          height: 40.0,
-                          child: Image.network(
-                            state.conversationModel[index].topic!.icon!,
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                        const SizedBox(width: 12.0),
-                        Column(
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          children: [
-                            SizedBox(
-                              width: width(context: context, value: 0.7),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    state
-                                        .conversationModel[index].topic!.title!,
-                                    style: currentTextTheme(context)
-                                        .headline3
-                                        ?.copyWith(
-                                          fontWeight: FontWeight.w600,
-                                          color: ColorConstant
-                                              .instance.greyScale900,
-                                        ),
-                                  ),
-                                  Icon(
-                                    Icons.arrow_forward_ios,
-                                    color: ColorConstant.instance.greyScale900,
-                                    size: 12.0,
-                                  ),
-                                ],
-                              ),
-                            ),
-                            SizedBox(
-                              width: width(context: context, value: 0.7),
-                              child: Text(
-                                state.conversationModel[index].lastMessage!,
-                                style: currentTextTheme(context)
-                                    .headline3
-                                    ?.copyWith(
-                                      fontWeight: FontWeight.w400,
-                                      color:
-                                          ColorConstant.instance.greyScale600,
-                                    ),
-                                overflow: TextOverflow.ellipsis,
-                                maxLines: 2,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                  child: Divider(
-                    thickness: 1.0,
-                    color: ColorConstant.instance.greyScale300,
-                  ),
-                ),
-              ],
-            ),
-          );
-        },
       ),
     );
   }

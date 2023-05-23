@@ -2,6 +2,7 @@
 
 import 'package:chatbot/core/view/base/base_stateless.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 
 import '../../../constants/color_constant.dart';
 
@@ -56,7 +57,7 @@ class LanguageButton extends BaseStateless {
           children: [
             Row(
               children: [
-                Image.network(
+                SvgPicture.asset(
                   image,
                   width: 32.0,
                   height: 32.0,

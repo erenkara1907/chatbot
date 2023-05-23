@@ -3,7 +3,6 @@
 import 'dart:async';
 
 import 'package:chatbot/product/auth/language/model/language_model.dart';
-import 'package:chatbot/product/auth/language/service/language_service.dart';
 import 'package:chatbot/product/conversation/model/translate_model.dart';
 import 'package:chatbot/product/conversation/service/conversation_service.dart';
 import 'package:chatbot/product/profile/model/profile_model.dart';
@@ -11,6 +10,7 @@ import 'package:chatbot/product/profile/service/profile_service.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../core/constants/icon_constant.dart';
 import '../../../core/enum/preference_keys.dart';
 import '../model/chat_model.dart';
 import '../model/conversation_room_model.dart';
@@ -19,7 +19,7 @@ import '../model/rate_model.dart';
 class ConversationRoomViewModel extends ChangeNotifier {
   ConversationService service = ConversationService();
   ProfileService profileService = ProfileService();
-  LanguageService languageService = LanguageService();
+  // LanguageService languageService = LanguageService();
 
   TextEditingController sendMessageController = TextEditingController();
 
@@ -36,19 +36,69 @@ class ConversationRoomViewModel extends ChangeNotifier {
   int isActive = 0;
   bool isData = false;
 
-  List<Languages> languages = [];
-  List<String> popularLanguageTitles = [];
-  List<String> popularLanguageImages = [];
-  List<int> popularLanguageIds = [];
+  List<LanguageModel> languages = [
+    LanguageModel(
+      id: 1,
+      code: "en",
+      title: "English",
+      flag: IconConstant.instance.flagEnglish,
+    ),
+    LanguageModel(
+      id: 2,
+      code: "tr",
+      title: "Turkish",
+      flag: IconConstant.instance.flagTurkish,
+    ),
+    LanguageModel(
+      id: 3,
+      code: "de",
+      title: "German",
+      flag: IconConstant.instance.flagDeutsch,
+    ),
+    LanguageModel(
+      id: 4,
+      code: "ch",
+      title: "Chinese",
+      flag: IconConstant.instance.flagChinese,
+    ),
+    LanguageModel(
+      id: 5,
+      code: "fr",
+      title: "French",
+      flag: IconConstant.instance.flagFrench,
+    ),
+    LanguageModel(
+      id: 6,
+      code: "pt",
+      title: "Portuguese",
+      flag: IconConstant.instance.flagPortoguese,
+    ),
+    LanguageModel(
+      id: 7,
+      code: "ru",
+      title: "Russian",
+      flag: IconConstant.instance.flagRussian,
+    ),
+    LanguageModel(
+      id: 8,
+      code: "es",
+      title: "Spanish",
+      flag: IconConstant.instance.flagSpanish,
+    ),
+  ];
+  // List<String> popularLanguageTitles = [];
+  // List<String> popularLanguageImages = [];
+  // List<int> popularLanguageIds = [];
 
   int selectedIndex = -1;
-  int selectedPopularIndex = -1;
+  // int selectedPopularIndex = -1;
 
   int selectedLanguageId = -1;
-  int selectedPopularLanguageId = -1;
+  String selectedLanguageCode = "en";
+  // int selectedPopularLanguageId = -1;
 
   String nativeLanguage = '';
-  String nativePopularLanguage = '';
+  // String nativePopularLanguage = '';
 
   // ignore: unused_field
   // StreamController? _streamController;
@@ -106,26 +156,26 @@ class ConversationRoomViewModel extends ChangeNotifier {
     }
   }
 
-  Future getLanguages() async {
-    final model = await languageService.getLanguages();
+  // Future getLanguages() async {
+  //   final model = await languageService.getLanguages();
 
-    if (model.result == true) {
-      for (var i = 0; i < model.data!.languages!.length; i++) {
-        if (model.data!.languages![i].isPopular == 1) {
-          if (popularLanguageTitles.length != 4) {
-            popularLanguageTitles.add(model.data!.languages![i].title!);
-            popularLanguageIds.add(model.data!.languages![i].id!);
-            popularLanguageImages.add(model.data!.languages![i].flag!);
-          }
-        } else {
-          languages.clear();
-          languages.addAll(model.data!.languages!);
-        }
-      }
-      languages.clear();
-      languages.addAll(model.data!.languages!);
-    }
-  }
+  //   if (model.result == true) {
+  //     for (var i = 0; i < model.data!.languages!.length; i++) {
+  //       if (model.data!.languages![i].isPopular == 1) {
+  //         if (popularLanguageTitles.length != 4) {
+  //           popularLanguageTitles.add(model.data!.languages![i].title!);
+  //           popularLanguageIds.add(model.data!.languages![i].id!);
+  //           popularLanguageImages.add(model.data!.languages![i].flag!);
+  //         }
+  //       } else {
+  //         languages.clear();
+  //         languages.addAll(model.data!.languages!);
+  //       }
+  //     }
+  //     languages.clear();
+  //     languages.addAll(model.data!.languages!);
+  //   }
+  // }
 
   Future sendToBackendRateId(
     BuildContext context, {
@@ -146,16 +196,15 @@ class ConversationRoomViewModel extends ChangeNotifier {
   }
 
   changeCheckboxStatus({required int index}) {
-    selectedPopularIndex = -1;
     selectedIndex = index;
     notifyListeners();
   }
 
-  changeCheckboxStatusPopular({required int index}) {
-    selectedIndex = -1;
-    selectedPopularIndex = index;
-    notifyListeners();
-  }
+  // changeCheckboxStatusPopular({required int index}) {
+  //   selectedIndex = -1;
+  //   selectedPopularIndex = index;
+  //   notifyListeners();
+  // }
 
   Future getAllMessages({required int conversationId}) async {
     isData = true;
@@ -186,8 +235,6 @@ class ConversationRoomViewModel extends ChangeNotifier {
       endChat = response.data!.messages!.last.endConversation!;
 
       isActive = response.data!.conversation!.isActive!;
-
-
 
       conversationCompleteCount =
           response.data!.conversation!.conversationCompletionCount!;
@@ -233,7 +280,7 @@ class ConversationRoomViewModel extends ChangeNotifier {
     String token = prefs.getString(PreferencesKeys.TOKEN.toString())!;
 
     final profileResponse = await profileService.getProfileInfo(token);
-    await getLanguages();
+    // await getLanguages();
 
     if (profileResponse.result == true) {
       final response = await service.translate(

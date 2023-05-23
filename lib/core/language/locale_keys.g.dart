@@ -1,6 +1,6 @@
 // DO NOT EDIT. This is code generated via package:easy_localization/generate.dart
 
-abstract class LocaleKeys {
+abstract class  LocaleKeys {
   static const hi = 'hi';
   static const endChat = 'endChat';
   static const no_message = 'no_message';
@@ -40,13 +40,6 @@ abstract class LocaleKeys {
   static const what_learn_language = 'what_learn_language';
   static const great = 'great';
   static const had_very = 'had_very';
-  static const how_would = 'how_would';
-  static const a1 = 'a1';
-  static const a2 = 'a2';
-  static const b1 = 'b1';
-  static const b2 = 'b2';
-  static const c1 = 'c1';
-  static const c2 = 'c2';
   static const lets_go = 'lets_go';
   static const start_learn = 'start_learn';
   static const first_lesson = 'first_lesson';
@@ -85,4 +78,16 @@ abstract class LocaleKeys {
   static const fifth_topic = 'fifth_topic';
   static const congratulations = 'congratulations';
   static const congratulations_content = 'congratulations_content';
+  static const onboard_one = 'onboard_one';
+  static const onboard_two = 'onboard_two';
+  static const onboard_three = 'onboard_three';
+  static const welcome_stranger = 'welcome_stranger';
+  static const help_us = 'help_us';
+  static const a1 = 'a1';
+  static const a2 = 'a2';
+  static const b1 = 'b1';
+  static const b2 = 'b2';
+  static const c1 = 'c1';
+  static const c2 = 'c2';
+
 }
