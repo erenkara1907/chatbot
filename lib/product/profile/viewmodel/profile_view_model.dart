@@ -46,6 +46,11 @@ class ProfileViewModel extends ChangeNotifier {
 
   bool isUpdating = false;
 
+  setUpdating() {
+    isUpdating = !isUpdating;
+    notifyListeners();
+  }
+
   String avatarUrl = '';
 
   List<LanguageModel> languages = [
@@ -69,7 +74,7 @@ class ProfileViewModel extends ChangeNotifier {
     ),
     LanguageModel(
       id: 4,
-      code: "ch",
+      code: "zh",
       title: "Chinese",
       flag: IconConstant.instance.flagChinese,
     ),
@@ -123,10 +128,16 @@ class ProfileViewModel extends ChangeNotifier {
     );
   }
 
-  selectAvatar() {
-    isSelectAvatar = true;
+  setPhotoLoaded() {
+    isPhotoLoaded = true;
+
     notifyListeners();
   }
+
+  // selectAvatar() {
+  //   isSelectAvatar = true;
+  //   notifyListeners();
+  // }
 
   Future deleteAccount(BuildContext context) async {
     final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
@@ -175,11 +186,9 @@ class ProfileViewModel extends ChangeNotifier {
     final response = await service.uploadFile(token, imageFile!);
 
     if (response.result == true) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Profil fotoğrafı başarıyla güncellendi'),
-        ),
-      );
+      isPhotoLoaded = true;
+      Navigator.pushReplacement(
+          context, MaterialPageRoute(builder: (context) => BottomBarView()));
       // await service.updateProfile(
       //   token,
       //   {
@@ -194,13 +203,7 @@ class ProfileViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  checkIsUpdate() {
-    isUpdating = !isUpdating;
-    notifyListeners();
-  }
-
   Future updateProfile(BuildContext context, Map<String, dynamic> user) async {
-    checkIsUpdate();
     final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
     final SharedPreferences prefs = await _prefs;
 
@@ -212,7 +215,7 @@ class ProfileViewModel extends ChangeNotifier {
     );
 
     if (response.result == true) {
-      checkIsUpdate();
+      isPhotoLoaded = true;
       Navigator.pushReplacement(
           context, MaterialPageRoute(builder: (context) => BottomBarView()));
     } else {

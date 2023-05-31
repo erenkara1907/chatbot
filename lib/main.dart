@@ -2,6 +2,7 @@
 
 import 'package:chatbot/core/enum/preference_keys.dart';
 import 'package:chatbot/core/language/localization_init.dart';
+import 'package:chatbot/core/utils/tts.dart';
 import 'package:chatbot/core/view/theme/theme.dart';
 import 'package:chatbot/product/auth/language/viewmodel/language_view_model.dart';
 import 'package:chatbot/product/auth/login/view/login_view.dart';
@@ -35,6 +36,7 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (context) => HomeViewModel()),
         ChangeNotifierProvider(create: (context) => ConversationViewModel()),
         ChangeNotifierProvider(create: (context) => LoginViewModel()),
+        ChangeNotifierProvider(create: (context) => TextToSpeechViewModel()),
         ChangeNotifierProvider(
             create: (context) => ConversationRoomViewModel()),
       ],

@@ -25,6 +25,13 @@ class HomeViewModel extends ChangeNotifier {
   bool barrierDismissible = true;
   bool isActivePage = false;
 
+  bool isBig = false;
+
+  setIsBig() {
+    isBig = !isBig;
+    notifyListeners();
+  }
+
   setActivePage() {
     Future.delayed(
       const Duration(milliseconds: 1500),

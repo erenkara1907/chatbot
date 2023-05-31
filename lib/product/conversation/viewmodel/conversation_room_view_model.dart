@@ -103,6 +103,19 @@ class ConversationRoomViewModel extends ChangeNotifier {
   // ignore: unused_field
   // StreamController? _streamController;
 
+  bool isTapped = false;
+  bool isComplete = false;
+
+  setIsComplete() {
+    isComplete = !isComplete;
+    notifyListeners();
+  }
+
+  setTapped() {
+    isTapped = !isTapped;
+    notifyListeners();
+  }
+
   startFocusNode() {
     sendMessageFocusNode.unfocus();
   }

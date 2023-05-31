@@ -64,6 +64,8 @@ class _ProfileEditViewState extends BaseState<ProfileEditView> {
         actions: [
           TextButton(
             onPressed: () async {
+              Provider.of<ProfileViewModel>(context, listen: false)
+                  .setUpdating();
               viewModel.isSelectAvatar
                   ? await viewModel.updateProfile(
                       context,
@@ -100,17 +102,26 @@ class _ProfileEditViewState extends BaseState<ProfileEditView> {
                                 },
                     )
                   : await viewModel.uploadFile(context);
+              Provider.of<ProfileViewModel>(context, listen: false)
+                  .setUpdating();
             },
             child: Consumer<ProfileViewModel>(
               builder: (context, state, child) {
                 if (state.isUpdating) {
-                  return const CircularProgressIndicator();
+                  return Center(
+                      child: SizedBox(
+                    width: 20.0,
+                    height: 20.0,
+                    child: CircularProgressIndicator(
+                      color: ColorConstant.instance.greyScale900,
+                    ),
+                  ));
                 } else {
                   return Text(
                     'Save',
                     style: currentTextTheme.headline4?.copyWith(
                       fontWeight: FontWeight.w400,
-                      color: ColorConstant.instance.additionalGreen,
+                      color: ColorConstant.instance.greyScale900,
                     ),
                   );
                 }
@@ -150,6 +161,7 @@ class _ProfileEditViewState extends BaseState<ProfileEditView> {
       ),
       body: Consumer<ProfileViewModel>(
         builder: (context, state, child) {
+          print("photo : ${state.isPhotoLoaded}");
           return Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24.0),
             child: SingleChildScrollView(
@@ -255,7 +267,10 @@ class _ProfileEditViewState extends BaseState<ProfileEditView> {
                                       viewModel.imageFile =
                                           File(state.image!.path);
                                     } else {
-                                      state.selectAvatar();
+                                      Provider.of<ProfileViewModel>(context,
+                                              listen: false)
+                                          .setPhotoLoaded();
+                                      viewModel.isSelectAvatar = true;
                                       viewModel.selectedAvatarId =
                                           widget.avatars[index].id!;
                                       viewModel.avatarUrl =

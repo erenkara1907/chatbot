@@ -303,20 +303,22 @@ class LanguageViewModel extends ChangeNotifier {
       Navigator.push(
           context, MaterialPageRoute(builder: (context) => BottomBarView()));
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('The email has already been taken')),
-      );
-
       selectedIndex = -1;
       learnLanguageProficiencyCefr = "A1";
       sliderValue = 0;
 
-      Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(
-            builder: (context) => RegisterView(),
-          ),
-          (route) => false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(response.validationError!.email![0]),
+        ),
+      );
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => RegisterView(),
+        ),
+      );
     }
   }
 }

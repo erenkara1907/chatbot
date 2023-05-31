@@ -115,10 +115,10 @@ class ConversationView extends BaseStateless {
                         builder: (context, state, child) {
                           return TabBarView(
                             children: [
-                              state.conversationModel.isNotEmpty
+                              state.conversationModelTemp.isNotEmpty
                                   ? messages(state)
                                   : noMessage(context),
-                              state.completedMessages.isNotEmpty
+                              state.completedMessageTemp.isNotEmpty
                                   ? completedMessages(state)
                                   : noMCompleteessage(context),
                             ],
@@ -496,7 +496,7 @@ class ConversationView extends BaseStateless {
 
   Padding messages(ConversationViewModel state) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 20.0),
+      padding: const EdgeInsets.only(bottom: 20.0, right: 16.0, left: 16.0),
       child: LiveList(
         itemBuilder: animationItemBuilder(
           (index, context) {
@@ -522,7 +522,7 @@ class ConversationView extends BaseStateless {
                             builder: (context) => ConversationRoomView(
                               // messages: state.messages,
                               conversationId:
-                                  state.conversationModel[index].id!,
+                                  state.conversationModelTemp[index].id!,
                             ),
                           ),
                         );
@@ -535,7 +535,7 @@ class ConversationView extends BaseStateless {
                             width: 40.0,
                             height: 40.0,
                             child: Image.network(
-                              state.conversationModel[index].topic!.icon!,
+                              state.conversationModelTemp[index].topic!.icon!,
                               fit: BoxFit.cover,
                             ),
                           ),
@@ -550,7 +550,7 @@ class ConversationView extends BaseStateless {
                                       MainAxisAlignment.spaceBetween,
                                   children: [
                                     Text(
-                                      state.conversationModel[index].topic!
+                                      state.conversationModelTemp[index].topic!
                                           .title!,
                                       style: currentTextTheme(context)
                                           .headline3
@@ -572,7 +572,8 @@ class ConversationView extends BaseStateless {
                               SizedBox(
                                 width: width(context: context, value: 0.7),
                                 child: Text(
-                                  state.conversationModel[index].lastMessage!,
+                                  state.conversationModelTemp[index]
+                                      .lastMessage!,
                                   style: currentTextTheme(context)
                                       .headline3
                                       ?.copyWith(
@@ -602,7 +603,7 @@ class ConversationView extends BaseStateless {
             );
           },
         ),
-        itemCount: state.conversationModel.length,
+        itemCount: state.conversationModelTemp.length,
         shrinkWrap: true,
         physics: const ClampingScrollPhysics(),
         addAutomaticKeepAlives: false,
@@ -611,111 +612,121 @@ class ConversationView extends BaseStateless {
     );
   }
 
-  ListView completedMessages(ConversationViewModel state) {
-    return ListView.builder(
-      itemCount: state.completedMessages.length,
-      shrinkWrap: true,
-      physics: const ClampingScrollPhysics(),
-      addAutomaticKeepAlives: false,
-      addRepaintBoundaries: false,
-      itemBuilder: (context, index) {
-        return Padding(
-          padding: const EdgeInsets.only(
-            bottom: 20.0,
-            top: 25.0,
-          ),
-          child: Column(
-            children: [
-              SizedBox(
-                width: width(context: context, value: 1.0),
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    elevation: 0,
-                    backgroundColor: ColorConstant.instance.additionalWhite,
-                  ),
-                  onPressed: () async {
-                    // await state.getAllMessages(
-                    //     conversationId: state.conversationModel[index].id!);
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ConversationRoomView(
-                          // messages: state.messages,
-                          conversationId: state.completedMessages[index].id!,
-                        ),
+  Widget completedMessages(ConversationViewModel state) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 20.0, left: 16.0, right: 16.0),
+      child: LiveList(
+        itemBuilder: animationItemBuilder(
+          (index, context) {
+            return Padding(
+              padding: const EdgeInsets.only(
+                top: 25.0,
+              ),
+              child: Column(
+                children: [
+                  SizedBox(
+                    width: width(context: context, value: 1.0),
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        elevation: 0,
+                        backgroundColor: ColorConstant.instance.additionalWhite,
                       ),
-                    );
-                  },
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SizedBox(
-                        width: 40.0,
-                        height: 40.0,
-                        child: Image.network(
-                          state.completedMessages[index].topic!.icon!,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                      const SizedBox(width: 12.0),
-                      Column(
+                      onPressed: () async {
+                        // await state.getAllMessages(
+                        //     conversationId: state.conversationModel[index].id!);
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ConversationRoomView(
+                              // messages: state.messages,
+                              conversationId:
+                                  state.completedMessageTemp[index].id!,
+                            ),
+                          ),
+                        );
+                      },
+                      child: Row(
                         mainAxisAlignment: MainAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           SizedBox(
-                            width: width(context: context, value: 0.7),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  state.completedMessages[index].topic!.title!,
+                            width: 40.0,
+                            height: 40.0,
+                            child: Image.network(
+                              state.completedMessageTemp[index].topic!.icon!,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                          const SizedBox(width: 12.0),
+                          Column(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: [
+                              SizedBox(
+                                width: width(context: context, value: 0.7),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      state.completedMessageTemp[index].topic!
+                                          .title!,
+                                      style: currentTextTheme(context)
+                                          .headline3
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.w600,
+                                            color: ColorConstant
+                                                .instance.greyScale900,
+                                          ),
+                                    ),
+                                    Icon(
+                                      Icons.arrow_forward_ios,
+                                      color:
+                                          ColorConstant.instance.greyScale900,
+                                      size: 12.0,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              SizedBox(
+                                width: width(context: context, value: 0.7),
+                                child: Text(
+                                  state
+                                      .completedMessageTemp[index].lastMessage!,
                                   style: currentTextTheme(context)
                                       .headline3
                                       ?.copyWith(
-                                        fontWeight: FontWeight.w600,
+                                        fontWeight: FontWeight.w400,
                                         color:
-                                            ColorConstant.instance.greyScale900,
+                                            ColorConstant.instance.greyScale600,
                                       ),
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 2,
                                 ),
-                                Icon(
-                                  Icons.arrow_forward_ios,
-                                  color: ColorConstant.instance.greyScale900,
-                                  size: 12.0,
-                                ),
-                              ],
-                            ),
-                          ),
-                          SizedBox(
-                            width: width(context: context, value: 0.7),
-                            child: Text(
-                              state.completedMessages[index].lastMessage!,
-                              style: currentTextTheme(context)
-                                  .headline3
-                                  ?.copyWith(
-                                    fontWeight: FontWeight.w400,
-                                    color: ColorConstant.instance.greyScale600,
-                                  ),
-                              overflow: TextOverflow.ellipsis,
-                              maxLines: 2,
-                            ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
-                    ],
+                    ),
                   ),
-                ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                    child: Divider(
+                      thickness: 1.0,
+                      color: ColorConstant.instance.greyScale300,
+                    ),
+                  ),
+                ],
               ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                child: Divider(
-                  thickness: 1.0,
-                  color: ColorConstant.instance.greyScale300,
-                ),
-              ),
-            ],
-          ),
-        );
-      },
+            );
+          },
+        ),
+        itemCount: state.completedMessageTemp.length,
+        shrinkWrap: true,
+        physics: const ClampingScrollPhysics(),
+        addAutomaticKeepAlives: false,
+        addRepaintBoundaries: false,
+      ),
     );
   }
 }

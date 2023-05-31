@@ -1,12 +1,16 @@
 class RegisterModel {
   bool? result;
   Data? data;
+  ValidationError? validationError;
 
-  RegisterModel({this.result, this.data});
+  RegisterModel({this.result, this.data, this.validationError});
 
   RegisterModel.fromJson(Map<String, dynamic> json) {
     result = json['result'];
     data = json['data'] != null ? Data.fromJson(json['data']) : null;
+    validationError = json['validation_error'] != null
+        ? ValidationError.fromJson(json['validation_error'])
+        : null;
   }
 
   Map<String, dynamic> toJson() {
@@ -15,6 +19,22 @@ class RegisterModel {
     if (this.data != null) {
       data['data'] = this.data!.toJson();
     }
+    return data;
+  }
+}
+
+class ValidationError {
+  List<String>? email;
+
+  ValidationError({this.email});
+
+  ValidationError.fromJson(Map<String, dynamic> json) {
+    email = json['email'].cast<String>();
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['email'] = email;
     return data;
   }
 }

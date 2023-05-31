@@ -12,9 +12,12 @@ import '../model/conversation_model.dart';
 class ConversationViewModel extends ChangeNotifier {
   ConversationService service = ConversationService();
 
-  List<Conversations> conversationModel = [];
+  // List<Conversations> conversationModel = [];
   List<Messages> messages = [];
-  List<Conversations> completedMessages = [];
+  // List<Conversations> completedMessages = [];
+
+  List<Conversations> completedMessageTemp = [];
+  List<Conversations> conversationModelTemp = [];
 
   Conversation conversation = Conversation();
 
@@ -39,13 +42,13 @@ class ConversationViewModel extends ChangeNotifier {
     final response = await service.getConversations(token);
 
     if (response.result == true) {
+      completedMessageTemp.clear();
+      conversationModelTemp.clear();
       for (var i = 0; i < response.data!.conversations!.length; i++) {
         if (response.data!.conversations![i].isActive == 0) {
-          completedMessages.clear();
-          completedMessages.addAll(response.data!.conversations!);
+          completedMessageTemp.add(response.data!.conversations![i]);
         } else {
-          conversationModel.clear();
-          conversationModel.addAll(response.data!.conversations!);
+          conversationModelTemp.add(response.data!.conversations![i]);
         }
       }
     }

@@ -86,7 +86,7 @@ class LoginView extends BaseStateless {
                                   controller: viewModel.emailController,
                                   focusNode: viewModel.emailFocusNode,
                                 ),
-                                const SizedBox(height: 10.0),
+                                const SizedBox(height: 3.0),
                                 Consumer<LoginViewModel>(
                                   builder: (context, state, child) {
                                     return AppFormField(
@@ -125,7 +125,7 @@ class LoginView extends BaseStateless {
                               ],
                             ),
                           ),
-                          const SizedBox(height: 15.0),
+                          const SizedBox(height: 8.0),
                           Padding(
                             padding:
                                 const EdgeInsets.symmetric(horizontal: 21.0),
