@@ -190,7 +190,7 @@ class HomeView extends BaseStateless {
               },
             ),
             FutureBuilder(
-              future: viewModel.getTopics(),
+              future: viewModel.getScenarioAndCategories(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return Center(
@@ -201,21 +201,211 @@ class HomeView extends BaseStateless {
                 } else if (snapshot.connectionState == ConnectionState.done) {
                   return Padding(
                     padding: const EdgeInsets.only(
-                        bottom: 80.0, left: 24.0, right: 24.0),
-                    child: GridView.builder(
-                      shrinkWrap: true,
-                      itemCount: viewModel.topics.length,
-                      physics: const ClampingScrollPhysics(),
-                      scrollDirection: Axis.vertical,
-                      gridDelegate:
-                          const SliverGridDelegateWithMaxCrossAxisExtent(
-                        maxCrossAxisExtent: 200,
-                        crossAxisSpacing: 20,
-                        mainAxisSpacing: 20,
-                      ),
-                      itemBuilder: (context, index) {
-                        return topicCard(context, index);
-                      },
+                        bottom: 70.0, left: 24.0, right: 24.0),
+                    child: Column(
+                      children: [
+                        Consumer<HomeViewModel>(
+                          builder: (context, state, child) {
+                            return SizedBox(
+                              height: 80.0,
+                              child: ListView.builder(
+                                addAutomaticKeepAlives: false,
+                                addRepaintBoundaries: false,
+                                physics: const ClampingScrollPhysics(),
+                                scrollDirection: Axis.horizontal,
+                                itemCount: viewModel.categories.length,
+                                itemBuilder: (context, index) {
+                                  return Padding(
+                                    padding: const EdgeInsets.only(right: 8.0),
+                                    child: InkWell(
+                                      onTap: () {
+                                        state.selectedCategory =
+                                            viewModel.categories[index].id!;
+                                        state.selectCategory(
+                                            viewModel.scenarios);
+                                      },
+                                      child: Container(
+                                        width: width(
+                                            context: context, value: 0.20),
+                                        decoration: BoxDecoration(
+                                          borderRadius:
+                                              BorderRadius.circular(8.0),
+                                          color: state.selectedCategory ==
+                                                  viewModel.categories[index].id
+                                              ? const Color.fromRGBO(
+                                                  190, 240, 200, 1)
+                                              : ColorConstant
+                                                  .instance.greyScale50,
+                                          border: Border.all(
+                                            color: state.selectedCategory ==
+                                                    viewModel
+                                                        .categories[index].id
+                                                ? const Color.fromRGBO(
+                                                    0, 211, 148, 1)
+                                                : ColorConstant
+                                                    .instance.greyScale400,
+                                          ),
+                                        ),
+                                        child: Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.center,
+                                          children: [
+                                            Image.network(
+                                              viewModel.categories[index].icon!,
+                                              width: 32.0,
+                                              height: 32.0,
+                                            ),
+                                            const SizedBox(height: 12.0),
+                                            Text(
+                                              viewModel
+                                                  .categories[index].title!,
+                                              style: currentTextTheme(context)
+                                                  .subtitle2
+                                                  ?.copyWith(
+                                                    fontWeight: FontWeight.w500,
+                                                    color: ColorConstant
+                                                        .instance.greyScale900,
+                                                  ),
+                                            )
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 24.0),
+                        Consumer<HomeViewModel>(
+                          builder: (context, state, child) {
+                            return state.selectedCategory == 1
+                                ? ListView.builder(
+                                    shrinkWrap: true,
+                                    addAutomaticKeepAlives: false,
+                                    addRepaintBoundaries: false,
+                                    physics: const ClampingScrollPhysics(),
+                                    itemCount: viewModel.scenariosTemp.length,
+                                    itemBuilder: (context, index) {
+                                      return InkWell(
+                                        onTap: () {
+                                          scenarioDialog(context, index);
+                                        },
+                                        child: Padding(
+                                          padding: const EdgeInsets.only(
+                                              bottom: 20.0),
+                                          child: Container(
+                                            width: width(
+                                                context: context, value: 1.0),
+                                            decoration: BoxDecoration(
+                                              borderRadius:
+                                                  BorderRadius.circular(8.0),
+                                              color: ColorConstant
+                                                  .instance.greyScale50,
+                                              border: Border.all(
+                                                color: ColorConstant
+                                                    .instance.greyScale400,
+                                              ),
+                                            ),
+                                            child: Padding(
+                                              padding:
+                                                  const EdgeInsets.all(8.0),
+                                              child: Row(
+                                                children: [
+                                                  Image.network(
+                                                      viewModel
+                                                          .scenariosTemp[index]
+                                                          .icon!,
+                                                      width: 32.0,
+                                                      height: 32.0),
+                                                  const SizedBox(width: 21.0),
+                                                  Text(
+                                                    viewModel
+                                                        .scenariosTemp[index]
+                                                        .title!,
+                                                    style: currentTextTheme(
+                                                            context)
+                                                        .subtitle2
+                                                        ?.copyWith(
+                                                            fontWeight:
+                                                                FontWeight.w500,
+                                                            color: ColorConstant
+                                                                .instance
+                                                                .greyScale900),
+                                                  )
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  )
+                                : ListView.builder(
+                                    shrinkWrap: true,
+                                    addAutomaticKeepAlives: false,
+                                    addRepaintBoundaries: false,
+                                    physics: const ClampingScrollPhysics(),
+                                    itemCount: state.scenariosTemp.length,
+                                    itemBuilder: (context, index) {
+                                      return InkWell(
+                                        onTap: () {
+                                          scenarioDialog(context, index);
+                                        },
+                                        child: Padding(
+                                          padding: const EdgeInsets.only(
+                                              bottom: 20.0),
+                                          child: Container(
+                                            width: width(
+                                                context: context, value: 1.0),
+                                            decoration: BoxDecoration(
+                                              borderRadius:
+                                                  BorderRadius.circular(8.0),
+                                              color: ColorConstant
+                                                  .instance.greyScale50,
+                                              border: Border.all(
+                                                color: ColorConstant
+                                                    .instance.greyScale400,
+                                              ),
+                                            ),
+                                            child: Padding(
+                                              padding:
+                                                  const EdgeInsets.all(8.0),
+                                              child: Row(
+                                                children: [
+                                                  Image.network(
+                                                      state.scenariosTemp[index]
+                                                          .icon!,
+                                                      width: 32.0,
+                                                      height: 32.0),
+                                                  const SizedBox(width: 21.0),
+                                                  Text(
+                                                    state.scenariosTemp[index]
+                                                        .title!,
+                                                    style: currentTextTheme(
+                                                            context)
+                                                        .subtitle2
+                                                        ?.copyWith(
+                                                            fontWeight:
+                                                                FontWeight.w500,
+                                                            color: ColorConstant
+                                                                .instance
+                                                                .greyScale900),
+                                                  )
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  );
+                          },
+                        ),
+                      ],
                     ),
                   );
                 } else {
@@ -229,55 +419,7 @@ class HomeView extends BaseStateless {
     );
   }
 
-  Consumer topicCard(BuildContext context, int index) {
-    return Consumer<HomeViewModel>(
-      builder: (context, state, child) {
-        return InkWell(
-          onTap: () {
-            topicDialog(context, index,
-                stateModel: state, barrier: state.barrierDismissible);
-          },
-          child: Container(
-            width: width(context: context, value: 0.4),
-            height: height(context: context, value: 0.2),
-            decoration: BoxDecoration(
-                color: ColorConstant.instance.greyScale50,
-                borderRadius: BorderRadius.circular(16.0),
-                border: Border.all(
-                  width: 1.0,
-                  color: ColorConstant.instance.greyScale300,
-                )),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                vertical: 24.0,
-                horizontal: 21.0,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    viewModel.topics[index].title!,
-                    style: currentTextTheme(context).headline3?.copyWith(
-                          fontWeight: FontWeight.w500,
-                          color: ColorConstant.instance.greyScale900,
-                        ),
-                  ),
-                  Image.network(
-                    viewModel.topics[index].icon!,
-                    width: 50.0,
-                    height: 50.0,
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Future<dynamic> topicDialog(BuildContext context, int index,
+  Future<dynamic> scenarioDialog(BuildContext context, int index,
       {HomeViewModel? stateModel, bool? barrier}) {
     return showDialog(
       context: context,
@@ -287,75 +429,67 @@ class HomeView extends BaseStateless {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Container(
-                padding: const EdgeInsets.all(42.0),
-                width: width(context: context, value: 1.0),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16.0),
-                  color: ColorConstant.instance.additionalWhite,
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Align(
-                        alignment: Alignment.center,
-                        child: Image.network(viewModel.topics[index].icon!)),
-                    Align(
-                      alignment: Alignment.center,
-                      child: Text(
-                        viewModel.topics[index].title!,
-                        style: currentTextTheme(context).headline1?.copyWith(
-                              fontSize: 24.0,
-                              fontWeight: FontWeight.w600,
-                              color: ColorConstant.instance.greyScale900,
-                            ),
-                      ),
+              Consumer<HomeViewModel>(
+                builder: (context, state, child) {
+                  return Container(
+                    padding: const EdgeInsets.all(42.0),
+                    width: width(context: context, value: 1.0),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16.0),
+                      color: ColorConstant.instance.additionalWhite,
                     ),
-                    const SizedBox(height: 24.0),
-                    Text(
-                      viewModel.topics[index].description![0],
-                      style: currentTextTheme(context).headline4?.copyWith(
-                            fontWeight: FontWeight.w400,
-                            color: ColorConstant.instance.greyScale900,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Align(
+                          alignment: Alignment.center,
+                          child: Image.network(
+                            state.selectedCategory == 1
+                                ? viewModel.scenariosTemp[index].icon!
+                                : state.scenariosTemp[index].icon!,
                           ),
-                    ),
-                    const SizedBox(height: 15.0),
-                    ListView.builder(
-                      itemCount:
-                          viewModel.topics[index].description!.length - 1,
-                      addAutomaticKeepAlives: false,
-                      addRepaintBoundaries: false,
-                      shrinkWrap: true,
-                      physics: const ClampingScrollPhysics(),
-                      itemBuilder: (context, i) {
-                        return Text(
-                          viewModel.topics[index].description![i + 1],
+                        ),
+                        const SizedBox(height: 15.0),
+                        Align(
+                          alignment: Alignment.center,
+                          child: Text(
+                            state.selectedCategory == 1
+                                ? viewModel.scenariosTemp[index].title!
+                                : state.scenariosTemp[index].title!,
+                            style: currentTextTheme(context)
+                                .headline1
+                                ?.copyWith(
+                                  fontSize: 24.0,
+                                  fontWeight: FontWeight.w600,
+                                  color: ColorConstant.instance.greyScale900,
+                                ),
+                          ),
+                        ),
+                        const SizedBox(height: 24.0),
+                        Text(
+                          state.selectedCategory == 1
+                              ? viewModel.scenariosTemp[index].scenario!
+                              : state.scenariosTemp[index].scenario!,
                           style: currentTextTheme(context).headline4?.copyWith(
                                 fontWeight: FontWeight.w400,
                                 color: ColorConstant.instance.greyScale900,
                               ),
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 24.0),
-                    Consumer<HomeViewModel>(
-                      builder: (context, state, child) {
-                        return SizedBox(
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 15.0),
+                        const SizedBox(height: 24.0),
+                        SizedBox(
                           width: width(context: context, value: 1.0) - 132.0,
                           height: height(context: context, value: 0.07),
                           child: ElevatedButton(
                             onPressed: () {
-                              // viewModel.changeBarrierDismissible();
-                              // if (stateModel!.barrierDismissible == true) {
-                              //   stateModel.barrierDismissible = false;
-                              // }
-
                               state.chnageConversationStatus(false);
                               state.setFirstLogin();
                               final response = viewModel.createConversation(
                                 context,
-                                topicId: viewModel.topics[index].id!.toString(),
+                                scenarioId: state.scenariosTemp[index].id!
+                                    .toString(),
                               );
 
                               response.then((value) {
@@ -403,11 +537,11 @@ class HomeView extends BaseStateless {
                                     ),
                                   ),
                           ),
-                        );
-                      },
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  );
+                },
               ),
             ],
           ),
@@ -473,11 +607,11 @@ class HomeView extends BaseStateless {
               onPressed: () {
                 var randomNumber = Random();
                 int index = 0;
-                for (var i = 1; i < viewModel.topics.length; i++) {
-                  index = randomNumber.nextInt(viewModel.topics.length);
+                for (var i = 1; i < viewModel.scenarios.length; i++) {
+                  index = randomNumber.nextInt(viewModel.scenarios.length);
                 }
 
-                topicDialog(context, index);
+                scenarioDialog(context, index);
               },
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -684,11 +818,11 @@ class HomeView extends BaseStateless {
                   onPressed: () {
                     var randomNumber = Random();
                     int index = 0;
-                    for (var i = 1; i < viewModel.topics.length; i++) {
-                      index = randomNumber.nextInt(viewModel.topics.length);
+                    for (var i = 1; i < viewModel.scenarios.length; i++) {
+                      index = randomNumber.nextInt(viewModel.scenarios.length);
                     }
 
-                    topicDialog(context, index);
+                    scenarioDialog(context, index);
                   },
                   icon: Icon(
                     Icons.add,

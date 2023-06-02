@@ -21,13 +21,15 @@ class ConversationService {
   }
 
   Future<ConversationStoreModel> createConversation(String token,
-      {required String topicId}) async {
+      {required String scenarioId}) async {
     final response = await http
         .post(Uri.parse(ApiConstant.instance.conversationUrl), headers: {
       'Authorization': 'Bearer $token',
     }, body: {
-      'topic_id': topicId,
+      'scenario_id': scenarioId,
     });
+
+    print("response: ${response.body}");
 
     return ConversationStoreModel.fromJson(jsonDecode(response.body));
   }

@@ -31,4 +31,10 @@ class ApiConstant {
 
   // Rate
   String rateUrl = '$baseUrl/rates';
+
+  // Scenario
+  String scenarioUrl = '$baseUrl/scenarios';
+
+  // Category
+  String categoryUrl = '$baseUrl/categories';
 }

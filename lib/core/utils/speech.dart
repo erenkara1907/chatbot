@@ -21,8 +21,6 @@ class Speech {
 
     var status = await Permission.microphone.status;
 
-    print("available $status");
-
     if (isAvailable && status != PermissionStatus.denied) {
       _speech.listen(onResult: (value) => onResult(value.recognizedWords));
     } else {

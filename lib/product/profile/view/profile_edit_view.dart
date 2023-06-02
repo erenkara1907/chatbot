@@ -161,7 +161,6 @@ class _ProfileEditViewState extends BaseState<ProfileEditView> {
       ),
       body: Consumer<ProfileViewModel>(
         builder: (context, state, child) {
-          print("photo : ${state.isPhotoLoaded}");
           return Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24.0),
             child: SingleChildScrollView(

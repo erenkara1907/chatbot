@@ -1,5 +1,6 @@
 // ignore_for_file: prefer_final_fields, unused_field, must_be_immutable, use_build_context_synchronously, unused_element
 
+import 'package:audioplayers/audioplayers.dart';
 import 'package:avatar_glow/avatar_glow.dart';
 import 'package:chatbot/core/constants/color_constant.dart';
 import 'package:chatbot/core/constants/image_constant.dart';
@@ -51,7 +52,6 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
   late TextEditingController sendTextController;
   late ScrollController _listScrollController;
   late FocusNode focusNode;
-  bool isEnabledPermission = false;
 
   @override
   void initState() {
@@ -72,13 +72,28 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
     }
   }
 
-  Future<void> requestMicrophonePermission() async {
+  Future<void> requestMicrophonePermission(
+      {required bool isListeningVarible}) async {
     final status = await Permission.microphone.request();
     final isAvailable = await speechToText.initialize();
+    final player = AudioPlayer();
 
     if (status.isGranted && isAvailable) {
       // Kullanıcı izin verdi, devam edebilirsiniz.
-      isEnabledPermission = true;
+      HapticFeedback.mediumImpact();
+      await player.play(AssetSource("sound/sound_click.wav"));
+      setState(() {
+        isListening = isListeningVarible ? !isListening : false;
+        if (!isListening) {
+          speechToText.stop();
+        } else {
+          speechToText.listen(
+            onResult: (result) {
+              sendTextController.text = result.recognizedWords;
+            },
+          );
+        }
+      });
     } else if (status.isDenied || !isAvailable) {
       // Kullanıcı izni reddetti, kullanıcıyı bilgilendirebilirsiniz.
       showAlertDialog(context);
@@ -118,6 +133,7 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
 
   @override
   Widget build(BuildContext context) {
+    print("çalıştı");
     var chatProvider = Provider.of<ConversationRoomViewModel>(context);
 
     // widget.isFirst
@@ -439,6 +455,7 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
                                               onPressed: () async {
                                                 await sendMessage(
                                                     chatProvider: chatProvider);
+                                                sendTextController.clear();
                                               },
                                               icon: SvgPicture.asset(
                                                   IconConstant
@@ -493,29 +510,8 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
                                         const Duration(milliseconds: 100),
                                     showTwoGlows: true,
                                     child: GestureDetector(
-                                      onLongPressUp: () {
-                                        HapticFeedback.mediumImpact();
-                                        setState(() {
-                                          isListening = false;
-                                        });
-                                        speechToText.stop();
-                                      },
-                                      onLongPressDown: (_) {
-                                        if (isEnabledPermission) {
-                                          HapticFeedback.mediumImpact();
-                                          setState(() {
-                                            isListening = true;
-                                            speechToText.listen(
-                                              onResult: (result) {
-                                                sendTextController.text =
-                                                    result.recognizedWords;
-                                              },
-                                            );
-                                          });
-                                        }
-                                      },
-                                      onTap: () =>
-                                          requestMicrophonePermission(),
+                                      onTap: () => requestMicrophonePermission(
+                                          isListeningVarible: true),
                                       child: CircleAvatar(
                                         backgroundColor:
                                             ColorConstant.instance.greyScale900,
@@ -845,6 +841,8 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
 
   Future<void> sendMessage(
       {required ConversationRoomViewModel chatProvider}) async {
+    HapticFeedback.heavyImpact();
+    requestMicrophonePermission(isListeningVarible: false);
     if (_isTyping) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -875,6 +873,7 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
       _isTyping = true;
       chatProvider.addUserMessage(message: msg);
       sendTextController.clear();
+      print("Girdi");
       focusNode.unfocus();
 
       await chatProvider.sendMessageAndGetAnswers(

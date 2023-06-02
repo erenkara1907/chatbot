@@ -243,7 +243,7 @@ class ConversationView extends BaseStateless {
                           ),
                           const SizedBox(height: 24.0),
                           FutureBuilder(
-                            future: viewModel.getTopics(),
+                            future: viewModel.getScenario(),
                             builder: (context, snapshot) {
                               if (snapshot.connectionState ==
                                   ConnectionState.waiting) {
@@ -256,7 +256,7 @@ class ConversationView extends BaseStateless {
                                   ConnectionState.done) {
                                 return GridView.builder(
                                   shrinkWrap: true,
-                                  itemCount: viewModel.topics.length,
+                                  itemCount: viewModel.scenarios.length,
                                   physics: const ClampingScrollPhysics(),
                                   scrollDirection: Axis.vertical,
                                   gridDelegate:
@@ -316,14 +316,14 @@ class ConversationView extends BaseStateless {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                viewModel.topics[index].title!,
+                viewModel.scenarios[index].title!,
                 style: currentTextTheme(context).headline3?.copyWith(
                       fontWeight: FontWeight.w500,
                       color: ColorConstant.instance.greyScale900,
                     ),
               ),
               Image.network(
-                viewModel.topics[index].icon!,
+                viewModel.scenarios[index].icon!,
                 width: 50.0,
                 height: 50.0,
               ),
@@ -356,11 +356,11 @@ class ConversationView extends BaseStateless {
                   children: [
                     Align(
                         alignment: Alignment.center,
-                        child: Image.network(viewModel.topics[index].icon!)),
+                        child: Image.network(viewModel.scenarios[index].icon!)),
                     Align(
                       alignment: Alignment.center,
                       child: Text(
-                        viewModel.topics[index].title!,
+                        viewModel.scenarios[index].title!,
                         style: currentTextTheme(context).headline1?.copyWith(
                               fontSize: 24.0,
                               fontWeight: FontWeight.w600,
@@ -370,30 +370,30 @@ class ConversationView extends BaseStateless {
                     ),
                     const SizedBox(height: 24.0),
                     Text(
-                      viewModel.topics[index].description![0],
+                      viewModel.scenarios[index].scenario!,
                       style: currentTextTheme(context).headline4?.copyWith(
                             fontWeight: FontWeight.w400,
                             color: ColorConstant.instance.greyScale900,
                           ),
                     ),
                     const SizedBox(height: 15.0),
-                    ListView.builder(
-                      itemCount:
-                          viewModel.topics[index].description!.length - 1,
-                      addAutomaticKeepAlives: false,
-                      addRepaintBoundaries: false,
-                      shrinkWrap: true,
-                      physics: const ClampingScrollPhysics(),
-                      itemBuilder: (context, i) {
-                        return Text(
-                          viewModel.topics[index].description![i + 1],
-                          style: currentTextTheme(context).headline4?.copyWith(
-                                fontWeight: FontWeight.w400,
-                                color: ColorConstant.instance.greyScale900,
-                              ),
-                        );
-                      },
-                    ),
+                    // ListView.builder(
+                    //   itemCount:
+                    //       viewModel.scenarios[index].description!.length - 1,
+                    //   addAutomaticKeepAlives: false,
+                    //   addRepaintBoundaries: false,
+                    //   shrinkWrap: true,
+                    //   physics: const ClampingScrollPhysics(),
+                    //   itemBuilder: (context, i) {
+                    //     return Text(
+                    //       viewModel.topics[index].description![i + 1],
+                    //       style: currentTextTheme(context).headline4?.copyWith(
+                    //             fontWeight: FontWeight.w400,
+                    //             color: ColorConstant.instance.greyScale900,
+                    //           ),
+                    //     );
+                    //   },
+                    // ),
                     const SizedBox(height: 24.0),
                     Consumer<HomeViewModel>(
                       builder: (context, state, child) {
@@ -406,7 +406,8 @@ class ConversationView extends BaseStateless {
                               state.setFirstLogin();
                               final response = viewModel.createConversation(
                                 context,
-                                topicId: viewModel.topics[index].id!.toString(),
+                                scenarioId:
+                                    viewModel.scenarios[index].id!.toString(),
                               );
 
                               response.then((value) {
