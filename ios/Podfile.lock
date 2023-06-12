@@ -2,6 +2,10 @@ PODS:
   - audioplayers_darwin (0.0.1):
     - Flutter
   - Flutter (1.0.0)
+  - flutter_sound (9.2.13):
+    - Flutter
+    - flutter_sound_core (= 9.2.13)
+  - flutter_sound_core (9.2.13)
   - flutter_tts (0.0.1):
     - Flutter
   - image_picker_ios (0.0.1):
@@ -9,7 +13,7 @@ PODS:
   - path_provider_foundation (0.0.1):
     - Flutter
     - FlutterMacOS
-  - permission_handler_apple (9.0.4):
+  - permission_handler_apple (9.1.0):
     - Flutter
   - shared_preferences_foundation (0.0.1):
     - Flutter
@@ -22,6 +26,7 @@ PODS:
 DEPENDENCIES:
   - audioplayers_darwin (from `.symlinks/plugins/audioplayers_darwin/ios`)
   - Flutter (from `Flutter`)
+  - flutter_sound (from `.symlinks/plugins/flutter_sound/ios`)
   - flutter_tts (from `.symlinks/plugins/flutter_tts/ios`)
   - image_picker_ios (from `.symlinks/plugins/image_picker_ios/ios`)
   - path_provider_foundation (from `.symlinks/plugins/path_provider_foundation/ios`)
@@ -31,6 +36,7 @@ DEPENDENCIES:
 
 SPEC REPOS:
   trunk:
+    - flutter_sound_core
     - Try
 
 EXTERNAL SOURCES:
@@ -38,6 +44,8 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/audioplayers_darwin/ios"
   Flutter:
     :path: Flutter
+  flutter_sound:
+    :path: ".symlinks/plugins/flutter_sound/ios"
   flutter_tts:
     :path: ".symlinks/plugins/flutter_tts/ios"
   image_picker_ios:
@@ -54,14 +62,16 @@ EXTERNAL SOURCES:
 SPEC CHECKSUMS:
   audioplayers_darwin: 877d9a4d06331c5c374595e46e16453ac7eafa40
   Flutter: f04841e97a9d0b0a8025694d0796dd46242b2854
+  flutter_sound: c60effa2a350fb977885f0db2fbc4c1ad5160900
+  flutter_sound_core: 26c10e5832e76aaacfae252d8925232281c486ae
   flutter_tts: 0f492aab6accf87059b72354fcb4ba934304771d
   image_picker_ios: 4a8aadfbb6dc30ad5141a2ce3832af9214a705b5
   path_provider_foundation: eaf5b3e458fc0e5fbb9940fb09980e853fe058b8
-  permission_handler_apple: 44366e37eaf29454a1e7b1b7d736c2cceaeb17ce
+  permission_handler_apple: 8f116445eff3c0e7c65ad60f5fef5490aa94b4e4
   shared_preferences_foundation: e2dae3258e06f44cc55f49d42024fd8dd03c590c
   speech_to_text: b43a7d99aef037bd758ed8e45d79bbac035d2dfe
   Try: 5ef669ae832617b3cee58cb2c6f99fb767a4ff96
 
-PODFILE CHECKSUM: 93172cdb718505a93dc8177d873db61bd843e33e
+PODFILE CHECKSUM: 39905337c1e082a79278f928e7d595e28d23ca1e
 
 COCOAPODS: 1.11.2

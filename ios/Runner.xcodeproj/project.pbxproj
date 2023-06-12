@@ -364,6 +364,35 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.1;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-ObjC",
+					"-lc++",
+					"-framework",
+					"\"AVFoundation\"",
+					"-framework",
+					"\"MediaPlayer\"",
+					"-framework",
+					"\"Try\"",
+					"-framework",
+					"\"audioplayers_darwin\"",
+					"-framework",
+					"\"flutter_sound\"",
+					"-framework",
+					"\"flutter_sound_core\"",
+					"-framework",
+					"\"flutter_tts\"",
+					"-framework",
+					"\"image_picker_ios\"",
+					"-framework",
+					"\"path_provider_foundation\"",
+					"-framework",
+					"\"permission_handler_apple\"",
+					"-framework",
+					"\"shared_preferences_foundation\"",
+					"-framework",
+					"\"speech_to_text\"",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.rondigital.chatbot;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -500,6 +529,35 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.1;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-ObjC",
+					"-lc++",
+					"-framework",
+					"\"AVFoundation\"",
+					"-framework",
+					"\"MediaPlayer\"",
+					"-framework",
+					"\"Try\"",
+					"-framework",
+					"\"audioplayers_darwin\"",
+					"-framework",
+					"\"flutter_sound\"",
+					"-framework",
+					"\"flutter_sound_core\"",
+					"-framework",
+					"\"flutter_tts\"",
+					"-framework",
+					"\"image_picker_ios\"",
+					"-framework",
+					"\"path_provider_foundation\"",
+					"-framework",
+					"\"permission_handler_apple\"",
+					"-framework",
+					"\"shared_preferences_foundation\"",
+					"-framework",
+					"\"speech_to_text\"",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.rondigital.chatbot;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -528,6 +586,35 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.1;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-ObjC",
+					"-lc++",
+					"-framework",
+					"\"AVFoundation\"",
+					"-framework",
+					"\"MediaPlayer\"",
+					"-framework",
+					"\"Try\"",
+					"-framework",
+					"\"audioplayers_darwin\"",
+					"-framework",
+					"\"flutter_sound\"",
+					"-framework",
+					"\"flutter_sound_core\"",
+					"-framework",
+					"\"flutter_tts\"",
+					"-framework",
+					"\"image_picker_ios\"",
+					"-framework",
+					"\"path_provider_foundation\"",
+					"-framework",
+					"\"permission_handler_apple\"",
+					"-framework",
+					"\"shared_preferences_foundation\"",
+					"-framework",
+					"\"speech_to_text\"",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.rondigital.chatbot;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";

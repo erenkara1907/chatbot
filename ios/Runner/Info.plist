@@ -7,7 +7,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Talkios</string>
+	<string>Talkios AI</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -15,7 +15,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>Talkios</string>
+	<string>Talkios AI</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -24,14 +24,16 @@
 	<string>????</string>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
-	<key>NSSpeechRecognitionUsageDescription</key>
-	<string>To convert audio to text by speaking during chat</string>
-	<key>NSMicrophoneUsageDescription</key>
-	<string>To convert audio to text by speaking during chat</string>	
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>To convert audio to text by speaking during chat</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Need to upload image</string>
+	<string>Need for upload image</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>To convert audio to text by speaking during chat</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>
