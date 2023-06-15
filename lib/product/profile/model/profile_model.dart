@@ -44,8 +44,10 @@ class User {
   NativeLanguage? nativeLanguage;
   List<LearnLanguages>? learnLanguages;
   String? profilePhoto;
+  bool? isAvatar;
   List<int>? color;
   DailyPractice? dailyPractice;
+  bool? isConversations;
 
   User(
       {this.id,
@@ -54,8 +56,10 @@ class User {
       this.nativeLanguage,
       this.learnLanguages,
       this.profilePhoto,
+      this.isAvatar,
       this.color,
-      this.dailyPractice});
+      this.dailyPractice,
+      this.isConversations});
 
   User.fromJson(Map<String, dynamic> json) {
     id = json['id'];
@@ -71,10 +75,12 @@ class User {
       });
     }
     profilePhoto = json['profile_photo'];
+    isAvatar = json['is_avatar'];
     color = json['color'].cast<int>();
     dailyPractice = json['daily_practice'] != null
         ? DailyPractice.fromJson(json['daily_practice'])
         : null;
+    isConversations = json['is_conversations'];
   }
 
   Map<String, dynamic> toJson() {
@@ -89,10 +95,12 @@ class User {
       data['learn_languages'] = learnLanguages!.map((v) => v.toJson()).toList();
     }
     data['profile_photo'] = profilePhoto;
+    data['is_avatar'] = isAvatar;
     data['color'] = color;
     if (dailyPractice != null) {
       data['daily_practice'] = dailyPractice!.toJson();
     }
+    data['is_conversations'] = isConversations;
     return data;
   }
 }
@@ -153,7 +161,7 @@ class LearnLanguages {
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = <String, dynamic>{};
+    final Map<String, dynamic> data = Map<String, dynamic>();
     data['id'] = id;
     data['code'] = code;
     data['title'] = title;

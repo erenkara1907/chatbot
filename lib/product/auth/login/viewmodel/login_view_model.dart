@@ -43,6 +43,7 @@ class LoginViewModel extends ChangeNotifier {
   }
 
   Future login(Map<String, dynamic> user, BuildContext context) async {
+    print("girdi");
     final response = await service.login(user);
 
     final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();

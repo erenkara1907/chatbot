@@ -1,5 +1,7 @@
 // ignore_for_file: no_leading_underscores_for_local_identifiers, must_be_immutable, use_key_in_widget_constructors
 
+import 'dart:io';
+
 import 'package:chatbot/core/enum/preference_keys.dart';
 import 'package:chatbot/core/language/localization_init.dart';
 import 'package:chatbot/core/utils/tts.dart';
@@ -7,28 +9,36 @@ import 'package:chatbot/core/view/theme/theme.dart';
 import 'package:chatbot/product/auth/language/viewmodel/language_view_model.dart';
 import 'package:chatbot/product/auth/login/view/login_view.dart';
 import 'package:chatbot/product/auth/login/viewmodel/login_view_model.dart';
-import 'package:chatbot/product/auth/name/viewmodel/name_view_model.dart';
+import 'package:chatbot/product/auth/register/view/register_view.dart';
 import 'package:chatbot/product/auth/register/viewmodel/register_view_model.dart';
 import 'package:chatbot/product/bottom_bar/view/bottom_bar_view.dart';
 import 'package:chatbot/product/bottom_bar/viewmodel/bottom_bar_view_model.dart';
 import 'package:chatbot/product/conversation/viewmodel/conversation_room_view_model.dart';
 import 'package:chatbot/product/conversation/viewmodel/conversation_view_model.dart';
 import 'package:chatbot/product/home/viewmodel/home_view_model.dart';
-import 'package:chatbot/product/onboard/view/onboard_view.dart';
 import 'package:chatbot/product/profile/viewmodel/profile_view_model.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+class MyHttpOverrides extends HttpOverrides {
+  @override
+  HttpClient createHttpClient(SecurityContext? context) {
+    return super.createHttpClient(context)
+      ..badCertificateCallback =
+          (X509Certificate cert, String host, int port) => true;
+  }
+}
+
 Future<void> main() async {
   final localizationInit = LocalizationInit();
   await localizationInit.init();
+  HttpOverrides.global = MyHttpOverrides();
 
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (context) => NameViewModel()),
         ChangeNotifierProvider(create: (context) => RegisterViewModel()),
         ChangeNotifierProvider(create: (context) => LanguageViewModel()),
         ChangeNotifierProvider(create: (context) => ProfileViewModel()),
@@ -90,8 +100,7 @@ class _MyAppState extends State<MyApp> {
                   localizationsDelegates: context.localizationDelegates,
                   locale: context.locale,
                   debugShowCheckedModeBanner: false,
-                  home:
-                      token.isNotEmpty ? BottomBarView() : const OnboardView(),
+                  home: token.isNotEmpty ? BottomBarView() : RegisterView(),
                 )
               : MaterialApp(
                   title: 'ChatBot',

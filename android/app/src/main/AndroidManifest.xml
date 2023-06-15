@@ -18,7 +18,7 @@
     </queries>
    <application
         android:requestLegacyExternalStorage="true"
-        android:label="Talkios"
+        android:label="Talkios AI"
         android:name="${applicationName}"
         android:icon="@mipmap/launcher_icon">
         <activity

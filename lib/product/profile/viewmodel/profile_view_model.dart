@@ -8,7 +8,6 @@ import 'package:chatbot/product/onboard/view/onboard_view.dart';
 import 'package:chatbot/product/profile/model/profile_model.dart';
 import 'package:chatbot/product/profile/service/profile_service.dart';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/constants/icon_constant.dart';
@@ -104,7 +103,7 @@ class ProfileViewModel extends ChangeNotifier {
     ),
   ];
 
-  XFile? image;
+  // XFile? image;
   Uint8List? bytes;
   File? imageFile;
 
@@ -114,7 +113,7 @@ class ProfileViewModel extends ChangeNotifier {
   bool isSelectAvatar = true;
   int selectedAvatarId = -1;
 
-  final ImagePicker _picker = ImagePicker();
+  // final ImagePicker _picker = ImagePicker();
 
   bool isActivePage = false;
 
@@ -159,23 +158,23 @@ class ProfileViewModel extends ChangeNotifier {
   }
 
   // Pick an image
-  Future pickImage(BuildContext context) async {
-    image = await _picker.pickImage(source: ImageSource.gallery);
-    bytes = await xFileToImage(image!);
+  // Future pickImage(BuildContext context) async {
+  //   image = await _picker.pickImage(source: ImageSource.gallery);
+  //   bytes = await xFileToImage(image!);
 
-    imageFile = File(image!.path);
+  //   imageFile = File(image!.path);
 
-    if (bytes != null) {
-      isPhotoLoaded = false;
-    }
-    notifyListeners();
-  }
+  //   if (bytes != null) {
+  //     isPhotoLoaded = false;
+  //   }
+  //   notifyListeners();
+  // }
 
-  Future<Uint8List> xFileToImage(XFile xFile) async {
-    final path = xFile.path;
-    final bytes = await File(path).readAsBytes();
-    return bytes;
-  }
+  // Future<Uint8List> xFileToImage(XFile xFile) async {
+  //   final path = xFile.path;
+  //   final bytes = await File(path).readAsBytes();
+  //   return bytes;
+  // }
 
   Future uploadFile(BuildContext context) async {
     final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();

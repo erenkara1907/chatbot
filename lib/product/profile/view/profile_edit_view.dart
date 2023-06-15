@@ -1,6 +1,6 @@
-// ignore_for_file: use_key_in_widget_constructors, must_be_immutable
+// ignore_for_file: use_key_in_widget_constructors, must_be_immutable, use_build_context_synchronously
 
-import 'dart:io';
+import 'dart:ui';
 
 import 'package:chatbot/core/constants/color_constant.dart';
 import 'package:chatbot/core/language/locale_keys.g.dart';
@@ -10,9 +10,11 @@ import 'package:chatbot/product/bottom_bar/view/bottom_bar_view.dart';
 import 'package:chatbot/product/profile/viewmodel/profile_view_model.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/constants/icon_constant.dart';
+import '../../../core/constants/image_constant.dart';
 import '../../../core/view/widget/button/language_button.dart';
 import '../../../core/view/widget/button/profile_button.dart';
 import '../../../core/view/widget/formfield/app_form_field.dart';
@@ -54,123 +56,55 @@ class _ProfileEditViewState extends BaseState<ProfileEditView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: ColorConstant.instance.additionalWhite,
-      appBar: AppBar(
-        toolbarHeight: 40.0,
-        leadingWidth: 50.0,
-        titleSpacing: 0,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        actions: [
-          TextButton(
-            onPressed: () async {
-              Provider.of<ProfileViewModel>(context, listen: false)
-                  .setUpdating();
-              viewModel.isSelectAvatar
-                  ? await viewModel.updateProfile(
-                      context,
-                      viewModel.selectedAvatarId == -1
-                          ? viewModel.passwordController.text.isNotEmpty
-                              ? {
-                                  'name': viewModel.nameController.text,
-                                  'password': viewModel.passwordController.text,
-                                  'native_language_code':
-                                      viewModel.selectedLanguageCode
-                                }
-                              : {
-                                  'name': viewModel.nameController.text,
-                                  'native_language_code':
-                                      viewModel.selectedLanguageCode
-                                }
-                          : viewModel.passwordController.text.isNotEmpty
-                              ? {
-                                  'avatar_id': viewModel.selectedAvatarId
-                                      .toString()
-                                      .toString(),
-                                  'name': viewModel.nameController.text,
-                                  'password': viewModel.passwordController.text,
-                                  'native_language_code':
-                                      viewModel.selectedLanguageCode
-                                }
-                              : {
-                                  'avatar_id': viewModel.selectedAvatarId
-                                      .toString()
-                                      .toString(),
-                                  'name': viewModel.nameController.text,
-                                  'native_language_code':
-                                      viewModel.selectedLanguageCode
-                                },
-                    )
-                  : await viewModel.uploadFile(context);
-              Provider.of<ProfileViewModel>(context, listen: false)
-                  .setUpdating();
-            },
-            child: Consumer<ProfileViewModel>(
-              builder: (context, state, child) {
-                if (state.isUpdating) {
-                  return Center(
-                      child: SizedBox(
-                    width: 20.0,
-                    height: 20.0,
-                    child: CircularProgressIndicator(
-                      color: ColorConstant.instance.greyScale900,
-                    ),
-                  ));
-                } else {
-                  return Text(
-                    'Save',
-                    style: currentTextTheme.headline4?.copyWith(
-                      fontWeight: FontWeight.w400,
-                      color: ColorConstant.instance.greyScale900,
-                    ),
-                  );
-                }
-              },
+      backgroundColor: ColorConstant.instance.paletteBackground,
+      body: Stack(
+        children: [
+          Positioned(
+            top: 0.0,
+            left: 0.0,
+            right: 0.0,
+            child: Image.asset(
+              ImageConstant.instance.imageTopEllipse,
+              width: width(1.0),
+              fit: BoxFit.cover,
             ),
           ),
+          profileEdit(),
         ],
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 10.0),
-          child: Container(
-            decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(6.0),
-                color: ColorConstant.instance.greyScale100),
-            child: Center(
-              child: IconButton(
-                padding: const EdgeInsets.all(0.0),
-                onPressed: () {
-                  Navigator.pushReplacement(context,
-                      MaterialPageRoute(builder: (context) => BottomBarView()));
-                },
-                icon: Icon(
-                  Icons.arrow_back_ios,
-                  color: ColorConstant.instance.greyScale900,
-                  size: 20.0,
-                ),
-              ),
-            ),
-          ),
-        ),
-        title: Text(
-          LocaleKeys.personal_information.tr(),
-          style: currentTextTheme.headline3?.copyWith(
-            fontWeight: FontWeight.w500,
-            color: ColorConstant.instance.greyScale900,
-          ),
-        ),
       ),
-      body: Consumer<ProfileViewModel>(
-        builder: (context, state, child) {
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0),
-            child: SingleChildScrollView(
-              physics: const ClampingScrollPhysics(),
-              child: Stack(
-                children: [
-                  SizedBox(
-                    height: height(0.9),
+    );
+  }
+
+  Consumer<ProfileViewModel> profileEdit() {
+    return Consumer<ProfileViewModel>(
+      builder: (context, state, child) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+          child: SingleChildScrollView(
+            physics: const ClampingScrollPhysics(),
+            child: Stack(
+              children: [
+                SizedBox(
+                  height: height(0.9),
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 68.0),
                     child: Column(
                       children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            backButton(context),
+                            Text(
+                              LocaleKeys.personal_information.tr(),
+                              style: currentTextTheme.headline3?.copyWith(
+                                fontWeight: FontWeight.w500,
+                                color: ColorConstant.instance.additionalWhite,
+                              ),
+                            ),
+                            saveButton(context),
+                          ],
+                        ),
+                        const SizedBox(height: 40.0),
                         Align(
                           alignment: Alignment.center,
                           child: Container(
@@ -246,60 +180,51 @@ class _ProfileEditViewState extends BaseState<ProfileEditView> {
                           ),
                         ),
                         const SizedBox(height: 24.0),
-                        SizedBox(
-                          height: 60.0,
-                          child: ListView.builder(
-                            scrollDirection: Axis.horizontal,
-                            itemCount: widget.avatars.length,
-                            addAutomaticKeepAlives: false,
-                            addRepaintBoundaries: false,
-                            physics: const ClampingScrollPhysics(),
-                            itemBuilder: (context, index) {
-                              return Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 5.0),
-                                child: InkWell(
-                                  onTap: () async {
-                                    if (widget.avatars[index].id == 1) {
-                                      viewModel.isSelectAvatar = false;
-                                      await state.pickImage(context);
-                                      viewModel.imageFile =
-                                          File(state.image!.path);
-                                    } else {
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 16.0),
+                          child: SizedBox(
+                            height: 60.0,
+                            child: ListView.builder(
+                              scrollDirection: Axis.horizontal,
+                              itemCount: widget.avatars.length,
+                              addAutomaticKeepAlives: false,
+                              addRepaintBoundaries: false,
+                              physics: const ClampingScrollPhysics(),
+                              itemBuilder: (context, index) {
+                                return Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 5.0),
+                                  child: InkWell(
+                                    onTap: () async {
                                       Provider.of<ProfileViewModel>(context,
                                               listen: false)
                                           .setPhotoLoaded();
                                       viewModel.isSelectAvatar = true;
                                       viewModel.selectedAvatarId =
-                                          widget.avatars[index].id!;
+                                          widget.avatars[index].id! + 1;
                                       viewModel.avatarUrl =
                                           widget.avatars[index].url!;
                                       viewModel.selectedAvatarIndex = index;
-                                    }
-                                  },
-                                  child: AvatarButton(
-                                    color: Color.fromRGBO(
-                                      widget.avatars[index].color![0],
-                                      widget.avatars[index].color![1],
-                                      widget.avatars[index].color![2],
-                                      1,
+                                      // }
+                                    },
+                                    child: AvatarButton(
+                                      color: Color.fromRGBO(
+                                        widget.avatars[index].color![0],
+                                        widget.avatars[index].color![1],
+                                        widget.avatars[index].color![2],
+                                        1,
+                                      ),
+                                      image: widget.avatars[index].url!,
+                                      padding: const EdgeInsets.all(5.0),
+                                      avatarId: widget.avatars[index].id!,
+                                      selectedIndex:
+                                          viewModel.selectedAvatarIndex,
                                     ),
-                                    image: widget.avatars[index].url!,
-                                    padding: widget.avatars[index].id == 1
-                                        ? const EdgeInsets.all(15.0)
-                                        : const EdgeInsets.all(5.0),
-                                    avatarId: widget.avatars[index].id!,
-                                    selectedIndex:
-                                        viewModel.selectedAvatarIndex,
                                   ),
-                                ),
-                              );
-                            },
+                                );
+                              },
+                            ),
                           ),
-                        ),
-                        Divider(
-                          thickness: 1.0,
-                          color: ColorConstant.instance.greyScale200,
                         ),
                         const SizedBox(height: 20.0),
                         Form(
@@ -333,10 +258,6 @@ class _ProfileEditViewState extends BaseState<ProfileEditView> {
                           ),
                         ),
                         const SizedBox(height: 20.0),
-                        Divider(
-                          thickness: 1.0,
-                          color: ColorConstant.instance.greyScale200,
-                        ),
                         const SizedBox(height: 15.0),
                         ProfileButton(
                           onTap: () {
@@ -345,13 +266,17 @@ class _ProfileEditViewState extends BaseState<ProfileEditView> {
                               isScrollControlled: true,
                               context: context,
                               builder: (BuildContext context) {
-                                return Consumer<ProfileViewModel>(
-                                  builder: (context, state, child) {
-                                    return FractionallySizedBox(
-                                      heightFactor: 0.8,
-                                      child: languages(context),
-                                    );
-                                  },
+                                return BackdropFilter(
+                                  filter: ImageFilter.blur(
+                                      sigmaX: 10.0, sigmaY: 10.0),
+                                  child: Consumer<ProfileViewModel>(
+                                    builder: (context, state, child) {
+                                      return FractionallySizedBox(
+                                        heightFactor: 0.8,
+                                        child: languages(context),
+                                      );
+                                    },
+                                  ),
                                 );
                               },
                             );
@@ -366,33 +291,116 @@ class _ProfileEditViewState extends BaseState<ProfileEditView> {
                         ),
                         Divider(
                           thickness: 1.0,
-                          color: ColorConstant.instance.greyScale200,
+                          color: ColorConstant.instance.paletteGrey,
                         ),
                       ],
                     ),
                   ),
-                  Positioned(
-                    bottom: 20.0,
-                    left: 0.0,
-                    right: 0.0,
-                    child: TextButton(
-                      onPressed: () {
-                        viewModel.deleteAccount(context);
-                      },
-                      child: Text(
-                        LocaleKeys.delete_account.tr(),
-                        style: currentTextTheme.headline4?.copyWith(
-                          fontWeight: FontWeight.w400,
-                          color: ColorConstant.instance.additionalRed,
-                        ),
+                ),
+                Positioned(
+                  bottom: 20.0,
+                  left: 0.0,
+                  right: 0.0,
+                  child: TextButton(
+                    onPressed: () {
+                      viewModel.deleteAccount(context);
+                    },
+                    child: Text(
+                      LocaleKeys.delete_account.tr(),
+                      style: currentTextTheme.headline4?.copyWith(
+                        fontWeight: FontWeight.w400,
+                        color: ColorConstant.instance.additionalRed,
                       ),
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          );
+          ),
+        );
+      },
+    );
+  }
+
+  TextButton saveButton(BuildContext context) {
+    return TextButton(
+      onPressed: () async {
+        Provider.of<ProfileViewModel>(context, listen: false).setUpdating();
+        await viewModel.updateProfile(
+          context,
+          viewModel.passwordController.text.isNotEmpty
+              ? viewModel.selectedAvatarId == -1
+                  ? {
+                      'name': viewModel.nameController.text,
+                      'password': viewModel.passwordController.text,
+                      'native_language_code': viewModel.selectedLanguageCode
+                    }
+                  : {
+                      'avatar_id': viewModel.selectedAvatarId.toString(),
+                      'name': viewModel.nameController.text,
+                      'password': viewModel.passwordController.text,
+                      'native_language_code': viewModel.selectedLanguageCode
+                    }
+              : viewModel.selectedAvatarId == -1
+                  ? {
+                      'name': viewModel.nameController.text,
+                      'native_language_code': viewModel.selectedLanguageCode
+                    }
+                  : {
+                      'avatar_id': viewModel.selectedAvatarId.toString(),
+                      'name': viewModel.nameController.text,
+                      'native_language_code': viewModel.selectedLanguageCode
+                    },
+        );
+
+        Provider.of<ProfileViewModel>(context, listen: false).setUpdating();
+      },
+      child: Consumer<ProfileViewModel>(
+        builder: (context, state, child) {
+          if (state.isUpdating) {
+            return Center(
+              child: SizedBox(
+                width: 20.0,
+                height: 20.0,
+                child: CircularProgressIndicator(
+                  color: ColorConstant.instance.paletteBlue,
+                ),
+              ),
+            );
+          } else {
+            return Text(
+              'Save',
+              style: currentTextTheme.headline4?.copyWith(
+                fontWeight: FontWeight.w400,
+                color: ColorConstant.instance.paletteBlue,
+                fontSize: 14.0,
+              ),
+            );
+          }
         },
+      ),
+    );
+  }
+
+  Container backButton(BuildContext context) {
+    return Container(
+      width: 25.0,
+      height: 25.0,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(50.0),
+        border: Border.all(color: ColorConstant.instance.paletteGrey),
+      ),
+      child: IconButton(
+        onPressed: () {
+          Navigator.pushReplacement(context,
+              MaterialPageRoute(builder: (context) => BottomBarView()));
+        },
+        icon: SvgPicture.asset(
+          IconConstant.instance.iconArrowBack,
+          color: ColorConstant.instance.paletteGrey,
+          width: 25.0,
+          height: 25.0,
+        ),
       ),
     );
   }
@@ -403,96 +411,132 @@ class _ProfileEditViewState extends BaseState<ProfileEditView> {
       child: Container(
         width: width(1.0),
         decoration: BoxDecoration(
-          color: ColorConstant.instance.additionalWhite,
+          color: ColorConstant.instance.paletteBackground,
           borderRadius: const BorderRadius.only(
             topLeft: Radius.circular(20.0),
             topRight: Radius.circular(20.0),
           ),
         ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
-              const SizedBox(height: 15.0),
-              Align(
-                alignment: Alignment.centerRight,
-                child: CircleAvatar(
-                  radius: 15.0,
-                  backgroundColor: ColorConstant.instance.greyScale300,
-                  child: IconButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                    icon: Icon(
-                      Icons.close,
-                      color: ColorConstant.instance.greyScale900,
-                      size: 15.0,
-                    ),
+        child: Stack(
+          children: [
+            Positioned(
+              bottom: 0.0,
+              left: 0.0,
+              right: 0.0,
+              child: Image.asset(
+                ImageConstant.instance.imageBottomEllipse,
+                width: width(1.0),
+                fit: BoxFit.cover,
+              ),
+            ),
+            languageModal(context),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Padding languageModal(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          const SizedBox(height: 15.0),
+          Align(
+            alignment: Alignment.centerRight,
+            child: InkWell(
+              onTap: () {
+                Navigator.pop(context);
+              },
+              child: Container(
+                width: 25.0,
+                height: 25.0,
+                decoration: BoxDecoration(
+                  color: Colors.transparent,
+                  borderRadius: BorderRadius.circular(50.0),
+                  border: Border.all(color: ColorConstant.instance.paletteGrey),
+                ),
+                child: Center(
+                  child: Icon(
+                    Icons.close,
+                    size: 15.0,
+                    color: ColorConstant.instance.paletteGrey,
                   ),
                 ),
               ),
-              const SizedBox(height: 24.0),
-              Text(
-                LocaleKeys.all_lang.tr(),
-                style: currentTextTheme.headline3?.copyWith(
-                  fontWeight: FontWeight.w500,
-                  color: ColorConstant.instance.greyScale600,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 15.0),
-              ListView.builder(
-                shrinkWrap: true,
-                physics: const ClampingScrollPhysics(),
-                itemCount: viewModel.languages.length,
-                itemBuilder: (context, index) {
-                  return Consumer<ProfileViewModel>(
-                    builder: (context, state, child) {
-                      return Column(
-                        children: [
-                          LanguageButton(
-                            image: viewModel.languages[index].flag.toString(),
-                            languageId: index + 1,
-                            selectedIndex: state.selectedIndex,
-                            onTap: () {
-                              viewModel.selectedLanguageId =
-                                  viewModel.languages[index].id!;
-                              viewModel.selectedLanguageCode =
-                                  viewModel.languages[index].code!;
+            ),
+        
+          ),
+          const SizedBox(height: 24.0),
+          Text(
+            LocaleKeys.all_lang.tr(),
+            style: currentTextTheme.headline3?.copyWith(
+              fontWeight: FontWeight.w500,
+              color: ColorConstant.instance.additionalWhite,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 15.0),
+          ListView.builder(
+            shrinkWrap: true,
+            physics: const ClampingScrollPhysics(),
+            itemCount: viewModel.languages.length,
+            itemBuilder: (context, index) {
+              return Consumer<ProfileViewModel>(
+                builder: (context, state, child) {
+                  return Column(
+                    children: [
+                      LanguageButton(
+                        image: viewModel.languages[index].flag.toString(),
+                        languageId: index + 1,
+                        selectedIndex: state.selectedIndex,
+                        onTap: () {
+                          viewModel.selectedLanguageId =
+                              viewModel.languages[index].id!;
+                          viewModel.selectedLanguageCode =
+                              viewModel.languages[index].code!;
 
-                              state.changeCheckboxStatus(index: index);
-                              state.changeBottomSheet(true);
+                          state.changeCheckboxStatus(index: index);
+                          state.changeBottomSheet(true);
 
-                              viewModel.selectedLanguage =
-                                  viewModel.languages[index].title.toString();
-                              Navigator.pop(context);
-                            },
-                            widthValue: width(1.0),
-                            heightValue: height(0.07),
-                            backgroundColor:
-                                ColorConstant.instance.additionalWhite,
-                            borderRadius: 66.0,
-                            text: viewModel.languages[index].title.toString(),
-                            textStyle: currentTextTheme.headline3?.copyWith(
-                                    fontWeight: FontWeight.w400,
-                                    color:
-                                        ColorConstant.instance.greyScale900) ??
-                                const TextStyle(),
-                            onChangedCheckBox: (_) {},
-                          ),
-                          const SizedBox(height: 15.0),
-                        ],
-                      );
-                    },
+                          viewModel.selectedLanguage =
+                              viewModel.languages[index].title.toString();
+                          Navigator.pop(context);
+                        },
+                        widthValue: width(1.0),
+                        heightValue: height(0.07),
+                        backgroundColor: Colors.transparent,
+                        borderRadius: 66.0,
+                        text: viewModel.languages[index].title.toString(),
+                        textStyle: currentTextTheme.headline3?.copyWith(
+                                fontWeight: FontWeight.w400,
+                                color: ColorConstant.instance.greyScale900) ??
+                            const TextStyle(),
+                        onChangedCheckBox: (_) {
+                          viewModel.selectedLanguageId =
+                              viewModel.languages[index].id!;
+                          viewModel.selectedLanguageCode =
+                              viewModel.languages[index].code!;
+
+                          state.changeCheckboxStatus(index: index);
+                          state.changeBottomSheet(true);
+
+                          viewModel.selectedLanguage =
+                              viewModel.languages[index].title.toString();
+                          Navigator.pop(context);
+                        },
+                      ),
+                      const SizedBox(height: 15.0),
+                    ],
                   );
                 },
-              ),
-              const SizedBox(height: 30.0),
-            ],
+              );
+            },
           ),
-        ),
+          const SizedBox(height: 30.0),
+        ],
       ),
     );
   }

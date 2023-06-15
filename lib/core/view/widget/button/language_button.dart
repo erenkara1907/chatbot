@@ -46,8 +46,8 @@ class LanguageButton extends BaseStateless {
             side: BorderSide(
               width: 1.0,
               color: selectedIndex == languageId - 1
-                  ? ColorConstant.instance.greyScale900
-                  : ColorConstant.instance.greyScale400,
+                  ? ColorConstant.instance.additionalWhite
+                  : ColorConstant.instance.paletteGrey,
             ),
           ),
           elevation: 0,
@@ -60,7 +60,7 @@ class LanguageButton extends BaseStateless {
                 SvgPicture.asset(
                   image,
                   width: 32.0,
-                  height: 32.0,
+                  height: 24.0,
                 ),
                 const SizedBox(width: 16.0),
                 Text(
@@ -69,7 +69,7 @@ class LanguageButton extends BaseStateless {
                         fontWeight: selectedIndex == languageId - 1
                             ? FontWeight.w600
                             : FontWeight.w400,
-                        color: ColorConstant.instance.greyScale900,
+                        color: ColorConstant.instance.additionalWhite,
                       ),
                 ),
               ],
@@ -77,13 +77,16 @@ class LanguageButton extends BaseStateless {
             Transform.scale(
               scale: 1.3,
               child: Checkbox(
-                  activeColor: ColorConstant.instance.greyScale900,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(50.0),
-                  ),
-                  value: selectedIndex == languageId - 1,
-                  onChanged: onChangedCheckBox ?? (_) {},
-                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap),
+                activeColor: ColorConstant.instance.additionalWhite,
+                checkColor: ColorConstant.instance.paletteBackground,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(50.0),
+                ),
+                side: BorderSide(color: ColorConstant.instance.paletteGrey),
+                value: selectedIndex == languageId - 1,
+                onChanged: onChangedCheckBox ?? (_) {},
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
             ),
           ],
         ),

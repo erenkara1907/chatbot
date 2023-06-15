@@ -30,4 +30,8 @@ class ImageConstant {
   String avatarBig = '$asset' 'avatar_big.png';
   String avatarHome = '$asset' 'home_avatar.png';
   String smallRobot = '$asset' 'small_robot.png';
+  String imageTopEllipse = '$asset' 'top_ellipse.png';
+  String imageBottomEllipse = '$asset' 'bottom_ellipse.png';
+  String imageAI = '$asset' 'ai.png';
+  String imageAIProfile = '$asset' 'ai_profile.png';
 }

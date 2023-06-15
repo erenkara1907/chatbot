@@ -15,6 +15,7 @@ class IconConstant {
   String iconChat = '$asset' 'chat.svg';
   String iconHomeFill = '$asset' 'home_fill.svg';
   String iconHome = '$asset' 'home.svg';
+  String iconHomeTouched = '$asset' 'home_touched.svg';
   String iconLanguage = '$asset' 'language.svg';
   String iconLockClose = '$asset' 'lock_close.svg';
   String iconLockOpen = '$asset' 'lock_open.svg';
@@ -22,6 +23,9 @@ class IconConstant {
   String iconProfileFill = '$asset' 'profile_fill.svg';
   String iconProfileTrophy = '$asset' 'profile_trophy.svg';
   String iconProfile = '$asset' 'profile.svg';
+  String iconProfileTouched = '$asset' 'profile_touched.svg';
+  String iconMessage = '$asset' 'message.svg';
+  String iconMessageTouched = '$asset' 'message_touched.svg';
   String iconTerms = '$asset' 'terms.svg';
   String iconTrophy = '$asset' 'trophy.png';
   String iconWhiteTrophy = '$asset' 'white_trophy.svg';
@@ -29,6 +33,17 @@ class IconConstant {
   String iconSend = '$asset' 'send.svg';
   String iconCharge = '$asset' 'charge.svg';
   String iconLogout = '$asset' 'logout.svg';
+  String iconChatBubble = '$asset' 'chatbubbles.svg';
+  String iconArrowDown = '$asset' 'arrow_down.svg';
+  String iconPronunciation = '$asset' 'pronunciation.svg';
+  String iconCorrect = '$asset' 'correct.svg';
+  String iconWrong = '$asset' 'wrong.svg';
+  String iconTranslate = '$asset' 'translate.svg';
+  String iconVoice = '$asset' 'voice.svg';
+  String iconArrowBack = '$asset' 'arrow_back.svg';
+  String iconBubble = '$asset' 'bubble.svg';
+  String iconRestart = '$asset' 'restart.svg';
+  String iconKeyboard = '$asset' 'keyboard.svg';
 
   String flagTurkish = '$flagAsset' 'turkish.svg';
   String flagEnglish = '$flagAsset' 'english.svg';

@@ -50,7 +50,10 @@ class Scenarios {
   String? userRole;
   String? scenario;
   String? openingSentence;
+  String? photo;
   String? icon;
+  String? conversationCompletedScenario;
+  List<Levels>? levels;
 
   Scenarios(
       {this.id,
@@ -60,7 +63,10 @@ class Scenarios {
       this.userRole,
       this.scenario,
       this.openingSentence,
-      this.icon});
+      this.photo,
+      this.icon,
+      this.conversationCompletedScenario,
+      this.levels});
 
   Scenarios.fromJson(Map<String, dynamic> json) {
     id = json['id'];
@@ -71,7 +77,15 @@ class Scenarios {
     userRole = json['user_role'];
     scenario = json['scenario'];
     openingSentence = json['opening_sentence'];
+    photo = json['photo'];
     icon = json['icon'];
+    conversationCompletedScenario = json['conversation_completed_scenario'];
+    if (json['levels'] != null) {
+      levels = <Levels>[];
+      json['levels'].forEach((v) {
+        levels!.add(Levels.fromJson(v));
+      });
+    }
   }
 
   Map<String, dynamic> toJson() {
@@ -85,7 +99,12 @@ class Scenarios {
     data['user_role'] = userRole;
     data['scenario'] = scenario;
     data['opening_sentence'] = openingSentence;
+    data['photo'] = photo;
     data['icon'] = icon;
+    data['conversation_completed_scenario'] = conversationCompletedScenario;
+    if (levels != null) {
+      data['levels'] = levels!.map((v) => v.toJson()).toList();
+    }
     return data;
   }
 }
@@ -108,6 +127,43 @@ class Category {
     data['id'] = id;
     data['title'] = title;
     data['icon'] = icon;
+    return data;
+  }
+}
+
+class Levels {
+  int? id;
+  String? cefr;
+  String? scale;
+  String? title;
+  String? conversationId;
+  String? conversationCompleted;
+
+  Levels(
+      {this.id,
+      this.cefr,
+      this.scale,
+      this.title,
+      this.conversationId,
+      this.conversationCompleted});
+
+  Levels.fromJson(Map<String, dynamic> json) {
+    id = json['id'];
+    cefr = json['cefr'];
+    scale = json['scale'];
+    title = json['title'];
+    conversationId = json['conversation_id'];
+    conversationCompleted = json['conversation_completed'];
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['id'] = id;
+    data['cefr'] = cefr;
+    data['scale'] = scale;
+    data['title'] = title;
+    data['conversation_id'] = conversationId;
+    data['conversation_completed'] = conversationCompleted;
     return data;
   }
 }

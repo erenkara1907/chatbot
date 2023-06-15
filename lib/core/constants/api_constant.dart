@@ -1,4 +1,4 @@
-String baseUrl = "https://dev-talkios.rondigital.ai/api/v2";
+String baseUrl = "https://dev-talkios.rondigital.ai/api/v2.0.1";
 
 class ApiConstant {
   static ApiConstant? _instance;

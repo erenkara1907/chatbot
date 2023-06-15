@@ -25,4 +25,12 @@ class ColorConstant {
   Color additionalRed = const Color.fromRGBO(255, 98, 67, 1);
   Color additionalGreen = const Color.fromRGBO(0, 211, 148, 1);
   Color additionalWhite = const Color.fromRGBO(255, 255, 255, 1);
+
+  // Color Palette
+  Color paletteBackground = const Color.fromRGBO(14, 14, 16, 1);
+  Color paletteCard = const Color.fromRGBO(32, 33, 35, 1);
+  Color paletteGrey = const Color.fromRGBO(56, 57, 59, 1);
+  Color paletteBlue = const Color.fromRGBO(30, 91, 240, 1);
+  Color paletteBlueDark = const Color.fromRGBO(47, 67, 141, 1);
+  Color palettePurple = const Color.fromRGBO(66, 44, 96, 1);
 }

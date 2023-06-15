@@ -2,12 +2,14 @@
 
 import 'dart:async';
 
+import 'package:audioplayers/audioplayers.dart';
 import 'package:chatbot/product/auth/language/model/language_model.dart';
 import 'package:chatbot/product/conversation/model/translate_model.dart';
 import 'package:chatbot/product/conversation/service/conversation_service.dart';
 import 'package:chatbot/product/profile/model/profile_model.dart';
 import 'package:chatbot/product/profile/service/profile_service.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/constants/icon_constant.dart';
@@ -21,11 +23,10 @@ class ConversationRoomViewModel extends ChangeNotifier {
   ProfileService profileService = ProfileService();
   // LanguageService languageService = LanguageService();
 
-  TextEditingController sendMessageController = TextEditingController();
-
   FocusNode sendMessageFocusNode = FocusNode();
 
   bool isTap = false;
+  bool isTyping = false;
 
   String translateMessage = '';
 
@@ -104,7 +105,20 @@ class ConversationRoomViewModel extends ChangeNotifier {
   // StreamController? _streamController;
 
   bool isTapped = false;
+  bool isRecording = false;
   bool isComplete = false;
+
+  bool isSelectVoice = true;
+
+  selectVoice(bool value) {
+    isSelectVoice = value;
+    notifyListeners();
+  }
+
+  setIsRecord() {
+    isRecording = !isRecording;
+    notifyListeners();
+  }
 
   setIsComplete() {
     isComplete = !isComplete;
@@ -126,7 +140,7 @@ class ConversationRoomViewModel extends ChangeNotifier {
   List<Rates> rates = [];
 
   List<ChatModel> chatList = [];
-  List<ChatModel> tempList = [];
+  // List<ChatModel> tempList = [];
   List<ChatModel> get getChatList => chatList;
 
   void addUserMessage({required String message}) {
@@ -142,8 +156,50 @@ class ConversationRoomViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  // addMessage(String text) {
+  //   sendMessageController.text = text;
+  //   print("viewmodel : ${sendMessageController.text}");
+  //   notifyListeners();
+  // }
+
+  bool isListening = false;
+  late TextEditingController sendTextController;
+
+  showAlertDialog(context) => showCupertinoDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) => CupertinoAlertDialog(
+          title: const Text('Permission Denied'),
+          content: const Text('Allow access to gallery and photos'),
+          actions: <CupertinoDialogAction>[
+            CupertinoDialogAction(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            CupertinoDialogAction(
+              isDefaultAction: true,
+              onPressed: () => openAppSettings(),
+              child: const Text('Settings'),
+            ),
+          ],
+        ),
+      );
+
+  bool isReadMessage = false;
+
   Future<void> sendMessageAndGetAnswers(
       {required String message, required int conversationId}) async {
+    final player = AudioPlayer();
+    chatList.add(
+      ChatModel(
+        id: 92761,
+        message: "Load",
+        role: "assistant",
+        conversationCompletionCount: "1",
+        endConversation: 1,
+      ),
+    );
+    await player.play(AssetSource("sound/sound_assistant_bubble.wav"));
     final Future<SharedPreferences> prefs = SharedPreferences.getInstance();
     final SharedPreferences _prefs = await prefs;
 
@@ -152,7 +208,9 @@ class ConversationRoomViewModel extends ChangeNotifier {
     final response = await service.sendMessage(
         message: message, conversationId: conversationId, token: token);
 
+    chatList.removeLast();
     chatList.addAll(response);
+    isReadMessage = true;
 
     conversationCompleteCount = response[0].conversationCompletionCount;
     endChat = response[0].endConversation;
@@ -168,27 +226,6 @@ class ConversationRoomViewModel extends ChangeNotifier {
       rates.addAll(response.data!.rates!);
     }
   }
-
-  // Future getLanguages() async {
-  //   final model = await languageService.getLanguages();
-
-  //   if (model.result == true) {
-  //     for (var i = 0; i < model.data!.languages!.length; i++) {
-  //       if (model.data!.languages![i].isPopular == 1) {
-  //         if (popularLanguageTitles.length != 4) {
-  //           popularLanguageTitles.add(model.data!.languages![i].title!);
-  //           popularLanguageIds.add(model.data!.languages![i].id!);
-  //           popularLanguageImages.add(model.data!.languages![i].flag!);
-  //         }
-  //       } else {
-  //         languages.clear();
-  //         languages.addAll(model.data!.languages!);
-  //       }
-  //     }
-  //     languages.clear();
-  //     languages.addAll(model.data!.languages!);
-  //   }
-  // }
 
   Future sendToBackendRateId(
     BuildContext context, {
@@ -213,14 +250,13 @@ class ConversationRoomViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  // changeCheckboxStatusPopular({required int index}) {
-  //   selectedIndex = -1;
-  //   selectedPopularIndex = index;
-  //   notifyListeners();
-  // }
+  setData(bool data) {
+    notifyListeners();
+  }
+
+  bool isGetMessage = false;
 
   Future getAllMessages({required int conversationId}) async {
-    isData = true;
     final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
     final SharedPreferences prefs = await _prefs;
 
@@ -232,8 +268,6 @@ class ConversationRoomViewModel extends ChangeNotifier {
         await service.getAllMessages(token, conversationId: conversationId);
 
     if (response.result == true) {
-      // messages = response.data!.messages!;
-      // chatList = response.data!.messages;
       chatList = List.generate(
         response.data!.messages!.length,
         (index) => ChatModel(
@@ -252,31 +286,10 @@ class ConversationRoomViewModel extends ChangeNotifier {
       conversationCompleteCount =
           response.data!.conversation!.conversationCompletionCount!;
       conversationModel = response.data!.conversation!;
-
-      isData = false;
     }
-
+    isGetMessage = true;
     notifyListeners();
   }
-
-  // Future sendMessage({required int conversationId}) async {
-  //   changeSendIcon();
-  //   final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
-  //   final SharedPreferences prefs = await _prefs;
-
-  //   String token = prefs.getString(PreferencesKeys.TOKEN.toString())!;
-
-  //   final response = await service.sendMessage(token,
-  //       message: sendMessageController.text, conversationId: conversationId);
-
-  //   if (response.result == true) {
-  //     messages = response.data!.messages!;
-  //     sendMessageController.text = '';
-  //     changeSendIcon();
-  //   }
-
-  //   notifyListeners();
-  // }
 
   changeSendIcon() {
     isTap = !isTap;

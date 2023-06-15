@@ -37,18 +37,14 @@ class ProfileButton extends BaseStateless {
         onPressed: onTap ?? () {},
         style: ElevatedButton.styleFrom(
             enableFeedback: false,
-            backgroundColor: ColorConstant.instance.additionalWhite,
-            shape: RoundedRectangleBorder(
-              side: BorderSide(
-                  width: 0.0, color: ColorConstant.instance.additionalWhite),
-            ),
+            backgroundColor: Colors.transparent,
             elevation: 0),
         child: Column(
           children: [
             isDivider
                 ? Divider(
-                    thickness: 2,
-                    color: ColorConstant.instance.greyScale200,
+                    thickness: 1,
+                    color: ColorConstant.instance.paletteGrey,
                   )
                 : const SizedBox(),
             Row(
@@ -67,7 +63,7 @@ class ProfileButton extends BaseStateless {
                             image,
                             color: isLogout
                                 ? ColorConstant.instance.additionalRed
-                                : ColorConstant.instance.greyScale900,
+                                : ColorConstant.instance.additionalWhite,
                           ),
                     const SizedBox(width: 20.0),
                     Text(
@@ -77,7 +73,7 @@ class ProfileButton extends BaseStateless {
                             fontWeight: FontWeight.w400,
                             color: isLogout
                                 ? ColorConstant.instance.additionalRed
-                                : ColorConstant.instance.greyScale900,
+                                : ColorConstant.instance.additionalWhite,
                           ),
                     ),
                   ],
@@ -120,7 +116,7 @@ class ProfileButton extends BaseStateless {
                               onPressed: () {},
                               icon: Icon(
                                 Icons.arrow_forward_ios,
-                                color: ColorConstant.instance.greyScale600,
+                                color: ColorConstant.instance.paletteGrey,
                               ),
                             ),
                           ),

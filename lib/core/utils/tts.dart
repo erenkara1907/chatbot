@@ -35,6 +35,7 @@ class TextToSpeechViewModel extends ChangeNotifier {
 
   bool isCompleted = true;
   int selectedIndex = -1;
+  bool isSpeaking = false;
 
   changeSelectedIndex(int index) {
     selectedIndex = index;
@@ -63,6 +64,7 @@ class TextToSpeechViewModel extends ChangeNotifier {
 
     tts.setCompletionHandler(() {
       isCompleted = true;
+      isSpeaking = true;
       notifyListeners();
     });
 

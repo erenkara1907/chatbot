@@ -61,14 +61,14 @@ class AppFormField extends BaseStateless {
         textAlign: textAlign ?? TextAlign.center,
         style: currentTextTheme(context).headline3?.copyWith(
               fontWeight: FontWeight.w400,
-              color: ColorConstant.instance.greyScale900,
+              color: ColorConstant.instance.additionalWhite,
             ),
-        cursorColor: ColorConstant.instance.greyScale900,
+        cursorColor: ColorConstant.instance.additionalWhite,
         decoration: isPrefix || isSuffix
             ? InputDecoration(
                 prefixIcon: prefixIconValue ?? const SizedBox(),
                 suffixIcon: suffixIconValue ?? const SizedBox(),
-                contentPadding: EdgeInsets.zero,
+                contentPadding: const EdgeInsets.symmetric(vertical: 15.0),
                 hintText: hintText ?? LocaleKeys.email.tr(),
                 hintStyle: currentTextTheme(context).headline3?.copyWith(
                       fontWeight: FontWeight.w400,
@@ -130,7 +130,7 @@ class AppFormField extends BaseStateless {
                 ),
               )
             : InputDecoration(
-                contentPadding: EdgeInsets.zero,
+                contentPadding: const EdgeInsets.symmetric(vertical: 15.0),
                 hintText: hintText ?? LocaleKeys.email.tr(),
                 hintStyle: currentTextTheme(context).headline3?.copyWith(
                       fontWeight: FontWeight.w400,

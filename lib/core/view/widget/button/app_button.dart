@@ -11,6 +11,7 @@ class AppButton extends BaseStateless {
   final String text;
   final TextStyle textStyle;
   final void Function()? onTap;
+  final Color? borderColor;
   AppButton({
     required this.widthValue,
     required this.heightValue,
@@ -19,6 +20,7 @@ class AppButton extends BaseStateless {
     required this.text,
     required this.textStyle,
     this.onTap,
+    this.borderColor,
   });
   @override
   Widget build(BuildContext context) {
@@ -30,6 +32,7 @@ class AppButton extends BaseStateless {
           backgroundColor: backgroundColor,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(borderRadius),
+            side: BorderSide(color: borderColor ?? backgroundColor)
           ),
         ),
         onPressed: onTap ?? () {},

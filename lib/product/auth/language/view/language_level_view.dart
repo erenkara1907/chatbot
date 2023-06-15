@@ -81,39 +81,45 @@ class _LanguageLevelViewState extends BaseState<LanguageLevelView>
                       color: ColorConstant.instance.greyScale900,
                     ),
                     textAlign: TextAlign.center),
-                const Expanded(child: SizedBox()),
+                const Expanded(flex: 2, child: SizedBox()),
                 Consumer<LanguageViewModel>(
                   builder: (context, state, child) {
-                    return Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Text(
-                          state.sliderValue == 0
-                              ? 'A1'
-                              : state.sliderValue == 1
-                                  ? "A2"
-                                  : state.sliderValue == 2
-                                      ? "B1"
-                                      : state.sliderValue == 3
-                                          ? "B2"
-                                          : state.sliderValue == 4
-                                              ? "C1"
-                                              : "C2",
-                          style: currentTextTheme.headline1?.copyWith(
-                              fontWeight: FontWeight.w600,
-                              color: ColorConstant.instance.greyScale900),
-                        ),
-                        const SizedBox(height: 2.0),
-                        SizedBox(
-                            height: height(0.09),
+                    return SizedBox(
+                      height: height(0.25),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              state.sliderValue == 0
+                                  ? 'A1'
+                                  : state.sliderValue == 1
+                                      ? "A2"
+                                      : state.sliderValue == 2
+                                          ? "B1"
+                                          : state.sliderValue == 3
+                                              ? "B2"
+                                              : state.sliderValue == 4
+                                                  ? "C1"
+                                                  : "C2",
+                              style: currentTextTheme.headline1?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  color: ColorConstant.instance.greyScale900),
+                            ),
+                          ),
+                          const SizedBox(height: 2.0),
+                          Expanded(
+                            flex: 3,
                             child: Align(
                               alignment: Alignment.topCenter,
                               child: state.switchTextWidget(
                                   state.sliderValue.toInt(),
                                   context: context),
-                            )),
-                      ],
+                            ),
+                          ),
+                        ],
+                      ),
                     );
                   },
                 ),

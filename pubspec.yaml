@@ -17,7 +17,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.1.4
+version: 1.2.4
 
 environment:
   sdk: '>=2.18.6 <3.0.0'
@@ -33,11 +33,11 @@ dependencies:
     sdk: flutter
 
 
-  # The following adds the Cupertino Icons font to your application.
+  # The following adds the Cupertino Icons font to your application.  
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.2
   provider: ^6.0.5
-  flutter_svg: ^1.1.6
+  flutter_svg: ^2.0.7
   easy_localization: ^3.0.1
   http: ^0.13.5
   shared_preferences: ^2.0.18
@@ -53,6 +53,15 @@ dependencies:
   avatar_glow: ^2.0.2
   flutter_tts: ^3.6.3
   audioplayers: ^4.1.0
+  flutter_sound: ^9.2.13
+  dio: ^5.2.0
+  path_provider: ^2.0.15
+  percent_indicator: ^4.2.3
+  top_snackbar_flutter: ^3.0.0+1
+  animate_icons: ^2.0.0
+  animated_segmented_tab_control: ^1.0.1
+  flutter_image_compress: ^2.0.0
+  flutter_native_splash: ^2.2.18
 
 dev_dependencies:
   flutter_launcher_icons: any
@@ -72,6 +81,12 @@ flutter_icons:
   ios: true
   image_path: "assets/icons/talkios_logo.png"
   min_sdk_android: 21 # android min sdk min:16, default 21
+
+flutter_native_splash:
+  color: "#0E0E10"
+  image: assets/images/image_splash.png
+  android: true
+  ios: true
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
