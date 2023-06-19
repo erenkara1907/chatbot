@@ -3,14 +3,20 @@ import 'package:chatbot/core/constants/image_constant.dart';
 import 'package:chatbot/core/view/base/base_state.dart';
 import 'package:chatbot/product/home/model/category_model.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
+
+import '../../level/view/level_view.dart';
 
 class CategoryView extends StatefulWidget {
   final String categoryName;
   final List<ScenariosOfCategory> scenariosOfCategory;
+  final String profilePhoto;
+
   const CategoryView({
     Key? key,
     required this.categoryName,
     required this.scenariosOfCategory,
+    required this.profilePhoto,
   }) : super(key: key);
   @override
 // ignore: library_private_types_in_public_api
@@ -22,7 +28,7 @@ class _CategoryViewState extends BaseState<CategoryView> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: ColorConstant.instance.paletteBackground,
-      body: Stack(
+      body: Stack(  
         children: [
           Positioned(
             top: -170.0,
@@ -59,7 +65,21 @@ class _CategoryViewState extends BaseState<CategoryView> {
             borderRadius: BorderRadius.circular(20.0),
           ),
         ),
-        onPressed: () {},
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => LevelView(
+                profilePhoto: widget.profilePhoto,
+                scenarioId: widget.scenariosOfCategory[index].id,
+                levels: widget.scenariosOfCategory[index].levels,
+                scenarioName: widget.scenariosOfCategory[index].title,
+                scenario: widget.scenariosOfCategory[index].scenario,
+                scenarioIcon: widget.scenariosOfCategory[index].icon,
+              ),
+            ),
+          );
+        },
         child: Padding(
           padding: const EdgeInsets.symmetric(
             vertical: 16.0,
@@ -68,15 +88,15 @@ class _CategoryViewState extends BaseState<CategoryView> {
             mainAxisAlignment: MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Image.network(
-                widget.scenariosOfCategory[index].icon!,
+              SvgPicture.network(
+                widget.scenariosOfCategory[index].icon,
                 width: 48.0,
                 height: 48.0,
               ),
               const SizedBox(height: 10.0),
               Text(
-                widget.scenariosOfCategory[index].title!,
-                style: currentTextTheme.subtitle2?.copyWith(
+                widget.scenariosOfCategory[index].title,
+                style: currentTextTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.w600,
                   color: ColorConstant.instance.additionalWhite,
                   fontSize: 14.0,
@@ -84,15 +104,17 @@ class _CategoryViewState extends BaseState<CategoryView> {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
-              Text(
-                widget.scenariosOfCategory[index].scenario!,
-                style: currentTextTheme.subtitle2?.copyWith(
-                  fontWeight: FontWeight.w300,
-                  color: ColorConstant.instance.additionalWhite,
-                  fontSize: 14.0,
+              Expanded(
+                child: Text(
+                  widget.scenariosOfCategory[index].scenario,
+                  style: currentTextTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w300,
+                    color: ColorConstant.instance.additionalWhite,
+                    fontSize: 14.0,
+                  ),
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),
@@ -108,13 +130,40 @@ class _CategoryViewState extends BaseState<CategoryView> {
         mainAxisAlignment: MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            widget.categoryName,
-            style: currentTextTheme.caption?.copyWith(
-              fontWeight: FontWeight.w600,
-              color: ColorConstant.instance.additionalWhite,
-              fontSize: 20.0,
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Material(
+                borderRadius: BorderRadius.circular(50.0),
+                child: CircleAvatar(
+                  radius: 14.0,
+                  backgroundColor: ColorConstant.instance.backIconColor,
+                  child: CircleAvatar(
+                    radius: 12.0,
+                    backgroundColor: ColorConstant.instance.paletteBackground,
+                    child: IconButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                      icon: Icon(
+                        Icons.arrow_back_ios,
+                        size: 10.0,
+                        color: ColorConstant.instance.backIconColor,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Text(
+                widget.categoryName,
+                style: currentTextTheme.bodySmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: ColorConstant.instance.additionalWhite,
+                  fontSize: 20.0,
+                ),
+              ),
+              const SizedBox(),
+            ],
           ),
           const SizedBox(height: 26.0),
           GridView.builder(

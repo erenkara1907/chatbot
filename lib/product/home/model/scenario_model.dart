@@ -136,7 +136,7 @@ class Levels {
   String? cefr;
   String? scale;
   String? title;
-  String? conversationId;
+  dynamic conversationId;
   String? conversationCompleted;
 
   Levels(

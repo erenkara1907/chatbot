@@ -41,9 +41,10 @@ class BottomBarView extends BaseStateless {
                           mainAxisAlignment: MainAxisAlignment.spaceAround,
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            InkWell(
-                              onTap: () => state.changeSelectedIndex(0),
-                              child: state.selectedIndex == 0
+                            IconButton(
+                              iconSize: 48.0,
+                              onPressed: () => state.changeSelectedIndex(0),
+                              icon: state.selectedIndex == 0
                                   ? CircleAvatar(
                                       radius: 26.0,
                                       backgroundColor: ColorConstant
@@ -57,9 +58,10 @@ class BottomBarView extends BaseStateless {
                                       icon: IconConstant.instance.iconHome,
                                     ),
                             ),
-                            InkWell(
-                              onTap: () => state.changeSelectedIndex(1),
-                              child: state.selectedIndex == 1
+                            IconButton(
+                              iconSize: 48.0,
+                              onPressed: () => state.changeSelectedIndex(1),
+                              icon: state.selectedIndex == 1
                                   ? CircleAvatar(
                                       radius: 26.0,
                                       backgroundColor: ColorConstant
@@ -73,9 +75,10 @@ class BottomBarView extends BaseStateless {
                                       icon: IconConstant.instance.iconMessage,
                                     ),
                             ),
-                            InkWell(
-                              onTap: () => state.changeSelectedIndex(2),
-                              child: state.selectedIndex == 2
+                            IconButton(
+                              iconSize: 48.0,
+                              onPressed: () => state.changeSelectedIndex(2),
+                              icon: state.selectedIndex == 2
                                   ? CircleAvatar(
                                       radius: 26.0,
                                       backgroundColor: ColorConstant

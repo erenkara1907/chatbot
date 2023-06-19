@@ -1,5 +1,8 @@
 // ignore_for_file: use_key_in_widget_constructors, no_leading_underscores_for_local_identifiers, must_be_immutable, use_build_context_synchronously
 
+import 'dart:async';
+import 'dart:ui';
+
 import 'package:chatbot/core/constants/color_constant.dart';
 import 'package:chatbot/core/constants/icon_constant.dart';
 import 'package:chatbot/core/enum/preference_keys.dart';
@@ -48,73 +51,7 @@ class ProfileView extends BaseStateless {
       future: viewModel.getProfileInfo(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 24.0, vertical: 68.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.start,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                const SkeletonAvatar(
-                  style: SkeletonAvatarStyle(
-                    width: 80.0,
-                    height: 80.0,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                const SizedBox(height: 15.0),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 40.0),
-                  child: SkeletonParagraph(
-                    style: const SkeletonParagraphStyle(
-                      lines: 1,
-                      lineStyle: SkeletonLineStyle(),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 25.0),
-                ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: 5,
-                  itemBuilder: (context, index) {
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 15.0),
-                      child: Container(
-                        padding: const EdgeInsets.all(8.0),
-                        decoration: BoxDecoration(
-                          color: ColorConstant.instance.greyScale300,
-                          borderRadius: BorderRadius.circular(10.0),
-                        ),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            const Expanded(
-                              child: SkeletonAvatar(
-                                style: SkeletonAvatarStyle(
-                                  width: 35.0,
-                                  height: 35.0,
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                            ),
-                            Expanded(
-                              flex: 4,
-                              child: SkeletonParagraph(
-                                style: const SkeletonParagraphStyle(
-                                  lines: 1,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ],
-            ),
-          );
+          return skeletonLoading();
         } else if (snapshot.connectionState == ConnectionState.done) {
           return Padding(
             padding: const EdgeInsets.only(top: 68.0),
@@ -131,9 +68,8 @@ class ProfileView extends BaseStateless {
                             return AnimatedContainer(
                               duration: const Duration(milliseconds: 500),
                               curve: Curves.easeInOut,
-                              width: state.isActivePage ? 100.0 : 50.0,
-                              height: state.isActivePage ? 100.0 : 50.0,
-                              padding: const EdgeInsets.all(5.0),
+                              width: state.isActivePage ? 90.0 : 50.0,
+                              height: state.isActivePage ? 90.0 : 50.0,
                               decoration: BoxDecoration(
                                   boxShadow: [
                                     BoxShadow(
@@ -152,20 +88,11 @@ class ProfileView extends BaseStateless {
                                         ColorConstant.instance.additionalWhite,
                                   )),
                               child: Container(
-                                width: 80.0,
-                                height: 80.0,
+                                width: 95.0,
+                                height: 95.0,
                                 padding: const EdgeInsets.all(5.0),
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(50.0),
-                                  color: Color.fromRGBO(
-                                    viewModel
-                                        .profileModel.data!.user!.color![0],
-                                    viewModel
-                                        .profileModel.data!.user!.color![1],
-                                    viewModel
-                                        .profileModel.data!.user!.color![2],
-                                    1,
-                                  ),
                                 ),
                                 child: Hero(
                                   tag: "profilePhoto",
@@ -190,7 +117,7 @@ class ProfileView extends BaseStateless {
                     const SizedBox(height: 14.0),
                     Text(
                       viewModel.profileModel.data!.user!.name!,
-                      style: currentTextTheme(context).headline3?.copyWith(
+                      style: currentTextTheme(context).displaySmall?.copyWith(
                             fontWeight: FontWeight.w600,
                             color: ColorConstant.instance.additionalWhite,
                           ),
@@ -246,81 +173,90 @@ class ProfileView extends BaseStateless {
                               showDialog(
                                 context: context,
                                 builder: (BuildContext context) {
-                                  return Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 24.0),
-                                    child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Container(
-                                          width: width(
-                                              context: context, value: 1.0),
-                                          padding: const EdgeInsets.symmetric(
-                                            vertical: 28.0,
-                                            horizontal: 30.0,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            borderRadius:
-                                                BorderRadius.circular(16.0),
-                                            color: ColorConstant
-                                                .instance.additionalWhite,
-                                          ),
-                                          child: Column(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.center,
-                                            children: [
-                                              Image.asset(
-                                                IconConstant.instance.iconStar,
-                                                width: 55.0,
-                                                height: 55.0,
-                                              ),
-                                              const SizedBox(height: 12.0),
-                                              Text(
-                                                LocaleKeys.write_us.tr(),
-                                                style: currentTextTheme(context)
-                                                    .headline1
-                                                    ?.copyWith(
-                                                      fontSize: 24.0,
-                                                      fontWeight:
-                                                          FontWeight.w600,
-                                                      color: ColorConstant
-                                                          .instance
-                                                          .greyScale900,
-                                                    ),
-                                              ),
-                                              const SizedBox(height: 24.0),
-                                              Text(
-                                                LocaleKeys.write_us_content
-                                                    .tr(),
-                                                style: currentTextTheme(context)
-                                                    .headline4
-                                                    ?.copyWith(
-                                                      fontWeight:
-                                                          FontWeight.w400,
-                                                      color: ColorConstant
-                                                          .instance
-                                                          .greyScale900,
-                                                    ),
-                                              ),
-                                              Text(
-                                                'info@ron.digital',
-                                                style: currentTextTheme(context)
-                                                    .headline4
-                                                    ?.copyWith(
-                                                      fontWeight:
-                                                          FontWeight.w600,
-                                                      color: ColorConstant
-                                                          .instance
-                                                          .greyScale900,
-                                                    ),
-                                              ),
-                                            ],
-                                          ),
-                                        )
-                                      ],
+                                  return BackdropFilter(
+                                    filter: ImageFilter.blur(
+                                        sigmaX: 10.0, sigmaY: 10.0),
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 24.0),
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Container(
+                                            width: width(
+                                                context: context, value: 1.0),
+                                            padding: const EdgeInsets.symmetric(
+                                              vertical: 28.0,
+                                              horizontal: 30.0,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              borderRadius:
+                                                  BorderRadius.circular(16.0),
+                                              color: ColorConstant
+                                                  .instance.paletteBackground,
+                                            ),
+                                            child: Column(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.center,
+                                              children: [
+                                                Image.asset(
+                                                  IconConstant
+                                                      .instance.iconStar,
+                                                  width: 55.0,
+                                                  height: 55.0,
+                                                ),
+                                                const SizedBox(height: 12.0),
+                                                Text(
+                                                  LocaleKeys.write_us.tr(),
+                                                  style:
+                                                      currentTextTheme(context)
+                                                          .displayLarge
+                                                          ?.copyWith(
+                                                            fontSize: 24.0,
+                                                            fontWeight:
+                                                                FontWeight.w600,
+                                                            color: ColorConstant
+                                                                .instance
+                                                                .additionalWhite,
+                                                          ),
+                                                ),
+                                                const SizedBox(height: 24.0),
+                                                Text(
+                                                  LocaleKeys.write_us_content
+                                                      .tr(),
+                                                  style:
+                                                      currentTextTheme(context)
+                                                          .headlineMedium
+                                                          ?.copyWith(
+                                                            fontWeight:
+                                                                FontWeight.w400,
+                                                            color: ColorConstant
+                                                                .instance
+                                                                .additionalWhite,
+                                                          ),
+                                                  textAlign: TextAlign.center,
+                                                ),
+                                                Text(
+                                                  'info@ron.digital',
+                                                  style:
+                                                      currentTextTheme(context)
+                                                          .headlineMedium
+                                                          ?.copyWith(
+                                                            fontWeight:
+                                                                FontWeight.w600,
+                                                            color: ColorConstant
+                                                                .instance
+                                                                .additionalWhite,
+                                                          ),
+                                                ),
+                                              ],
+                                            ),
+                                          )
+                                        ],
+                                      ),
                                     ),
                                   );
                                 },
@@ -378,6 +314,74 @@ class ProfileView extends BaseStateless {
           return const Text('error');
         }
       },
+    );
+  }
+
+  Padding skeletonLoading() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 68.0),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          const SkeletonAvatar(
+            style: SkeletonAvatarStyle(
+              width: 80.0,
+              height: 80.0,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(height: 15.0),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 40.0),
+            child: SkeletonParagraph(
+              style: const SkeletonParagraphStyle(
+                lines: 1,
+                lineStyle: SkeletonLineStyle(),
+              ),
+            ),
+          ),
+          const SizedBox(height: 25.0),
+          ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: 5,
+            itemBuilder: (context, index) {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 15.0),
+                child: Container(
+                  padding: const EdgeInsets.all(8.0),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(10.0),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      const Expanded(
+                        child: SkeletonAvatar(
+                          style: SkeletonAvatarStyle(
+                            width: 35.0,
+                            height: 35.0,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        flex: 4,
+                        child: SkeletonParagraph(
+                          style: const SkeletonParagraphStyle(
+                            lines: 1,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
     );
   }
 }

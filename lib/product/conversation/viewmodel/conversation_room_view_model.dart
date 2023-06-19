@@ -1,6 +1,7 @@
 // ignore_for_file: no_leading_underscores_for_local_identifiers, prefer_final_fields, use_build_context_synchronously
 
 import 'dart:async';
+import 'dart:io';
 
 import 'package:audioplayers/audioplayers.dart';
 import 'package:chatbot/product/auth/language/model/language_model.dart';
@@ -16,6 +17,7 @@ import '../../../core/constants/icon_constant.dart';
 import '../../../core/enum/preference_keys.dart';
 import '../model/chat_model.dart';
 import '../model/conversation_room_model.dart';
+import '../model/one_message_model.dart';
 import '../model/rate_model.dart';
 
 class ConversationRoomViewModel extends ChangeNotifier {
@@ -32,6 +34,7 @@ class ConversationRoomViewModel extends ChangeNotifier {
 
   TranslateMessage translateModel = TranslateMessage();
   ProfileModel profileModel = ProfileModel();
+  List<Message> oneMessage = [];
 
   int endChat = 0;
   int isActive = 0;
@@ -109,6 +112,25 @@ class ConversationRoomViewModel extends ChangeNotifier {
   bool isComplete = false;
 
   bool isSelectVoice = true;
+  bool isSpeaking = false;
+
+  bool isAvatarSelected = false;
+  bool isAvatarAISelected = false;
+
+  setAvatarSelect(bool value) {
+    isAvatarSelected = value;
+    notifyListeners();
+  }
+
+  setAvatarAISelect(bool value) {
+    isAvatarAISelected = value;
+    notifyListeners();
+  }
+
+  setSpeaking() {
+    isSpeaking = !isSpeaking;
+    notifyListeners();
+  }
 
   selectVoice(bool value) {
     isSelectVoice = value;
@@ -143,7 +165,13 @@ class ConversationRoomViewModel extends ChangeNotifier {
   // List<ChatModel> tempList = [];
   List<ChatModel> get getChatList => chatList;
 
-  void addUserMessage({required String message}) {
+  void addUserMessage({
+    required String message,
+    required String betterSentence,
+    required String correctSentence,
+    required String sound,
+    required String soundRatio,
+  }) {
     chatList.add(
       ChatModel(
         message: message,
@@ -151,6 +179,10 @@ class ConversationRoomViewModel extends ChangeNotifier {
         id: 1,
         endConversation: 0,
         conversationCompletionCount: "0.0",
+        betterSentence: betterSentence,
+        correctSentence: correctSentence,
+        sound: sound,
+        soundRatio: soundRatio,
       ),
     );
     notifyListeners();
@@ -187,8 +219,12 @@ class ConversationRoomViewModel extends ChangeNotifier {
 
   bool isReadMessage = false;
 
-  Future<void> sendMessageAndGetAnswers(
-      {required String message, required int conversationId}) async {
+  Future<void> sendMessageAndGetAnswers({
+    required String message,
+    required int conversationId,
+    required String soundRatio,
+    required String sound,
+  }) async {
     final player = AudioPlayer();
     chatList.add(
       ChatModel(
@@ -197,16 +233,27 @@ class ConversationRoomViewModel extends ChangeNotifier {
         role: "assistant",
         conversationCompletionCount: "1",
         endConversation: 1,
+        betterSentence: '',
+        correctSentence: '',
+        sound: null,
+        soundRatio: null,
       ),
     );
     await player.play(AssetSource("sound/sound_assistant_bubble.wav"));
     final Future<SharedPreferences> prefs = SharedPreferences.getInstance();
     final SharedPreferences _prefs = await prefs;
-
+    File file = File(sound);
+    // String fileName = file.path.split('/').last;
+    // File newFile = File('${file.parent.path}/$fileName.wav');
+    // await file.copy(newFile.path);
     String token = _prefs.getString(PreferencesKeys.TOKEN.toString())!;
-
     final response = await service.sendMessage(
-        message: message, conversationId: conversationId, token: token);
+      soundFile: file,
+      soundRatio: soundRatio,
+      message: message,
+      conversationId: conversationId,
+      token: token,
+    );
 
     chatList.removeLast();
     chatList.addAll(response);
@@ -254,6 +301,18 @@ class ConversationRoomViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  String voiceMessage = "";
+
+  selectLanguageText(String text) {
+    nativeLanguage = text;
+    notifyListeners();
+  }
+
+  setText(String text) {
+    voiceMessage = text;
+    notifyListeners();
+  }
+
   bool isGetMessage = false;
 
   Future getAllMessages({required int conversationId}) async {
@@ -276,6 +335,11 @@ class ConversationRoomViewModel extends ChangeNotifier {
           id: response.data!.messages![index].id!,
           conversationCompletionCount: "0.0",
           endConversation: response.data!.messages![index].endConversation!,
+          betterSentence: response.data!.messages![index].betterSentence ?? "",
+          correctSentence:
+              response.data!.messages![index].correctSentence ?? "",
+          sound: response.data!.messages![index].sound ?? "",
+          soundRatio: response.data!.messages![index].soundRatio ?? "",
         ),
       );
 
@@ -291,15 +355,41 @@ class ConversationRoomViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future getMessage(
+      {required int conversationId, required int messageId}) async {
+    final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
+    final SharedPreferences prefs = await _prefs;
+
+    String token = prefs.getString(PreferencesKeys.TOKEN.toString())!;
+
+    await getRates(token);
+
+    final response = await service.getMessage(token,
+        conversationId: conversationId, messageId: messageId);
+
+    if (response.result == true) {
+      oneMessage.removeLast();
+      oneMessage.add(response.data!.message!);
+    }
+    isGetMessage = true;
+    notifyListeners();
+  }
+
   changeSendIcon() {
     isTap = !isTap;
     notifyListeners();
   }
 
-  Future translate(
-      {required int conversationId,
-      required int messageId,
-      String? translateTitle}) async {
+  setTranslateMessage(String message) {
+    translateMessage = message;
+    notifyListeners();
+  }
+
+  Future translate({
+    required int conversationId,
+    required int messageId,
+    String? translateTitle,
+  }) async {
     final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
     final SharedPreferences prefs = await _prefs;
 

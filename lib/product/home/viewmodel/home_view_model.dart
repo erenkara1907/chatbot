@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:chatbot/core/enum/preference_keys.dart';
 import 'package:chatbot/product/conversation/service/conversation_service.dart';
+import 'package:chatbot/product/conversation/view/conversation_room_view.dart';
 import 'package:chatbot/product/home/model/category_model.dart';
 import 'package:chatbot/product/home/model/language_proficiency_model.dart';
 import 'package:chatbot/product/home/model/profile_home_model.dart';
@@ -64,6 +65,12 @@ class HomeViewModel extends ChangeNotifier {
 
   String selectedLevel = "";
   int selectedLevelId = -1;
+  String selectedCefr = "A1";
+
+  selectCefr(String cefr) {
+    selectedCefr = cefr;
+    notifyListeners();
+  }
 
   selectTab(int index) {
     selectedTab = index;
@@ -181,6 +188,7 @@ class HomeViewModel extends ChangeNotifier {
     String token = prefs.getString(PreferencesKeys.TOKEN.toString())!;
     final categoryResponse = await service.getAllCategories(token);
 
+    await getScenario();
     await getProfileInfo();
 
     if (categoryResponse.result == true) {
@@ -245,18 +253,35 @@ class HomeViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<ConversationStoreModel> createConversation(BuildContext context,
-      {required String scenarioId}) async {
+  Future<ConversationStoreModel> createConversation(
+    BuildContext context, {
+    required String scenarioId,
+    required String cefr,
+    required String scenarioTitle,
+    required String profilePhoto,
+  }) async {
     final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
     final SharedPreferences prefs = await _prefs;
 
     String token = prefs.getString(PreferencesKeys.TOKEN.toString())!;
 
-    final response = await conversationService.createConversation(token,
-        scenarioId: scenarioId);
+    final response = await conversationService.createConversation(
+      token,
+      scenarioId: scenarioId,
+      cefr: cefr,
+    );
 
     if (response.result == true) {
       conversation = response.data!.conversation!;
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (context) => ConversationRoomView(
+            conversationId: conversation.id!,
+            scenarioTitle: scenarioTitle,
+            profilePhoto: profilePhoto,
+          ),
+        ),
+      );
     }
 
     return response;

@@ -33,4 +33,5 @@ class ColorConstant {
   Color paletteBlue = const Color.fromRGBO(30, 91, 240, 1);
   Color paletteBlueDark = const Color.fromRGBO(47, 67, 141, 1);
   Color palettePurple = const Color.fromRGBO(66, 44, 96, 1);
+  Color backIconColor = const Color.fromRGBO(143, 143, 144, 1);
 }

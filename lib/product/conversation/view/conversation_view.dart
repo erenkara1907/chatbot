@@ -1,5 +1,7 @@
 // ignore_for_file: use_key_in_widget_constructors, must_be_immutable, use_build_context_synchronously
 
+import 'dart:ui';
+
 import 'package:auto_animated/auto_animated.dart';
 import 'package:chatbot/core/constants/color_constant.dart';
 import 'package:chatbot/core/language/locale_keys.g.dart';
@@ -11,7 +13,9 @@ import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
 import 'package:skeletons/skeletons.dart';
 
+import '../../../core/constants/icon_constant.dart';
 import '../../../core/constants/image_constant.dart';
+import '../../home/model/category_model.dart';
 import '../../home/viewmodel/home_view_model.dart';
 import 'conversation_room_view.dart';
 
@@ -49,48 +53,7 @@ class ConversationView extends BaseStateless {
           .getAllConversation(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0),
-            child: ListView.builder(
-              shrinkWrap: true,
-              itemCount: 8,
-              physics: const NeverScrollableScrollPhysics(),
-              itemBuilder: (context, index) {
-                return Row(
-                  children: [
-                    const SkeletonAvatar(
-                      style: SkeletonAvatarStyle(
-                        width: 35.0,
-                        height: 35.0,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          SkeletonParagraph(
-                            style: SkeletonParagraphStyle(
-                              lines: 1,
-                              lineStyle: SkeletonLineStyle(
-                                maxLength: width(context: context, value: 0.2),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 5.0),
-                          SkeletonParagraph(
-                            style: const SkeletonParagraphStyle(
-                              lines: 2,
-                            ),
-                          )
-                        ],
-                      ),
-                    )
-                  ],
-                );
-              },
-            ),
-          );
+          return skeletonLoading();
         } else if (snapshot.connectionState == ConnectionState.done) {
           return Padding(
             padding: const EdgeInsets.only(
@@ -103,7 +66,7 @@ class ConversationView extends BaseStateless {
               children: [
                 Text(
                   LocaleKeys.chat.tr(),
-                  style: currentTextTheme(context).headline3?.copyWith(
+                  style: currentTextTheme(context).displaySmall?.copyWith(
                         fontWeight: FontWeight.w500,
                         color: ColorConstant.instance.additionalWhite,
                         fontSize: 18.0,
@@ -122,7 +85,7 @@ class ConversationView extends BaseStateless {
                         unselectedLabelColor:
                             ColorConstant.instance.additionalWhite,
                         labelStyle: currentTextTheme(context)
-                            .headline4
+                            .headlineMedium
                             ?.copyWith(
                               fontWeight: FontWeight.w400,
                               color: ColorConstant.instance.paletteBackground,
@@ -135,7 +98,7 @@ class ConversationView extends BaseStateless {
                           borderRadius: BorderRadius.circular(20.0),
                         ),
                         unselectedLabelStyle:
-                            currentTextTheme(context).headline4?.copyWith(
+                            currentTextTheme(context).headlineMedium?.copyWith(
                                   fontWeight: FontWeight.w400,
                                   color: ColorConstant.instance.additionalWhite,
                                 ),
@@ -180,6 +143,51 @@ class ConversationView extends BaseStateless {
     );
   }
 
+  Padding skeletonLoading() {
+    return Padding(
+      padding: const EdgeInsets.only(left: 24.0, right: 24.0, top: 78.0),
+      child: ListView.builder(
+        shrinkWrap: true,
+        itemCount: 8,
+        physics: const NeverScrollableScrollPhysics(),
+        itemBuilder: (context, index) {
+          return Row(
+            children: [
+              const SkeletonAvatar(
+                style: SkeletonAvatarStyle(
+                  width: 35.0,
+                  height: 35.0,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SkeletonParagraph(
+                      style: SkeletonParagraphStyle(
+                        lines: 1,
+                        lineStyle: SkeletonLineStyle(
+                          maxLength: width(context: context, value: 0.2),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 5.0),
+                    SkeletonParagraph(
+                      style: const SkeletonParagraphStyle(
+                        lines: 2,
+                      ),
+                    )
+                  ],
+                ),
+              )
+            ],
+          );
+        },
+      ),
+    );
+  }
+
   Padding noMessage(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 108.0),
@@ -191,7 +199,7 @@ class ConversationView extends BaseStateless {
           const SizedBox(height: 30.0),
           Text(
             LocaleKeys.no_message.tr(),
-            style: currentTextTheme(context).headline3?.copyWith(
+            style: currentTextTheme(context).displaySmall?.copyWith(
                   fontWeight: FontWeight.w500,
                   color: ColorConstant.instance.additionalWhite,
                 ),
@@ -211,7 +219,7 @@ class ConversationView extends BaseStateless {
         children: [
           Text(
             LocaleKeys.no_message.tr(),
-            style: currentTextTheme(context).headline3?.copyWith(
+            style: currentTextTheme(context).displaySmall?.copyWith(
                   fontWeight: FontWeight.w500,
                   color: ColorConstant.instance.additionalWhite,
                 ),
@@ -234,7 +242,56 @@ class ConversationView extends BaseStateless {
           radius: 25.0,
           child: IconButton(
             onPressed: () {
-              showScenarios(context);
+              // showScenarios(context);
+              showModalBottomSheet(
+                isScrollControlled: true,
+                enableDrag: true,
+                context: context,
+                builder: (BuildContext context) {
+                  return FractionallySizedBox(
+                    heightFactor: 0.9,
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+                      child: Container(
+                        width: width(context: context, value: 1.0),
+                        decoration: BoxDecoration(
+                          color: ColorConstant.instance.paletteBackground,
+                          borderRadius: const BorderRadius.only(
+                            topLeft: Radius.circular(20.0),
+                            topRight: Radius.circular(20.0),
+                          ),
+                        ),
+                        child: SingleChildScrollView(
+                          physics: const ClampingScrollPhysics(),
+                          child: FutureBuilder(
+                            future: viewModel.getCategories(),
+                            builder: (context, snapshot) {
+                              if (snapshot.connectionState ==
+                                  ConnectionState.waiting) {
+                                return SingleChildScrollView(
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  child: Column(
+                                    children: [
+                                      skeletonHorizontalLoading(),
+                                      skeletonHorizontalLoading(),
+                                      skeletonHorizontalLoading(),
+                                    ],
+                                  ),
+                                );
+                              } else if (snapshot.connectionState ==
+                                  ConnectionState.done) {
+                                return hasData(context);
+                              } else {
+                                return const Text("error");
+                              }
+                            },
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              );
             },
             icon: Icon(
               Icons.add,
@@ -246,264 +303,715 @@ class ConversationView extends BaseStateless {
     );
   }
 
-  Future<dynamic> showScenarios(BuildContext context) {
-    return showModalBottomSheet(
-      isScrollControlled: true,
-      context: context,
-      builder: (BuildContext context) {
-        return FractionallySizedBox(
-          heightFactor: 0.88,
-          child: Container(
-            width: width(context: context, value: 1.0),
-            decoration: BoxDecoration(
-              color: ColorConstant.instance.additionalWhite,
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(20.0),
-                topRight: Radius.circular(20.0),
-              ),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.only(
-                top: 15.0,
-                right: 24.0,
-                left: 24.0,
-              ),
-              child: SingleChildScrollView(
-                physics: const ClampingScrollPhysics(),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: CircleAvatar(
-                        backgroundColor: ColorConstant.instance.greyScale300,
-                        radius: 15.0,
-                        child: IconButton(
-                          onPressed: () {
-                            Navigator.pop(context);
-                          },
-                          icon: Icon(
-                            Icons.close,
-                            size: 15.0,
-                            color: ColorConstant.instance.greyScale900,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 24.0),
-                    Text(
-                      "Scenarios",
-                      style: currentTextTheme(context).headline2?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            color: ColorConstant.instance.greyScale900,
-                          ),
-                    ),
-                    const SizedBox(height: 24.0),
-                    FutureBuilder(
-                      future: viewModel.getScenario(),
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState ==
-                            ConnectionState.waiting) {
-                          return Center(
-                            child: CircularProgressIndicator(
-                              color: ColorConstant.instance.greyScale900,
-                            ),
-                          );
-                        } else if (snapshot.connectionState ==
-                            ConnectionState.done) {
-                          return GridView.builder(
-                            shrinkWrap: true,
-                            itemCount: viewModel.scenarios.length,
-                            physics: const ClampingScrollPhysics(),
-                            scrollDirection: Axis.vertical,
-                            gridDelegate:
-                                const SliverGridDelegateWithMaxCrossAxisExtent(
-                              maxCrossAxisExtent: 200,
-                              crossAxisSpacing: 20,
-                              mainAxisSpacing: 20,
-                            ),
-                            itemBuilder: (context, index) {
-                              return scenarioCard(context, index);
-                            },
-                          );
-                        } else {
-                          return const Text('error');
-                        }
-                      },
-                    ),
-                  ],
-                ),
-              ),
+  Column skeletonHorizontalLoading() {
+    return Column(
+      children: [
+        SkeletonParagraph(
+          style: const SkeletonParagraphStyle(
+            lines: 1,
+            lineStyle: SkeletonLineStyle(
+              width: 100.0,
             ),
           ),
-        );
-      },
+        ),
+        SizedBox(
+          height: 168.0,
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(right: 16.0),
+                  child: SkeletonItem(
+                    child: Container(
+                      width: 162.0,
+                      height: 168.0,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(20.0),
+                        color: ColorConstant.instance.paletteCard,
+                      ),
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(right: 16.0),
+                  child: SkeletonItem(
+                    child: Container(
+                      width: 162.0,
+                      height: 168.0,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(20.0),
+                        color: ColorConstant.instance.paletteCard,
+                      ),
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(right: 16.0),
+                  child: SkeletonItem(
+                    child: Container(
+                      width: 162.0,
+                      height: 168.0,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(20.0),
+                        color: ColorConstant.instance.paletteCard,
+                      ),
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(right: 16.0),
+                  child: SkeletonItem(
+                    child: Container(
+                      width: 162.0,
+                      height: 168.0,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(20.0),
+                        color: ColorConstant.instance.paletteCard,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 
-  InkWell scenarioCard(BuildContext context, int index) {
-    return InkWell(
-      onTap: () {
-        scenarioDialog(context, index);
-      },
-      child: Container(
-        width: width(context: context, value: 0.4),
-        height: height(context: context, value: 0.2),
-        decoration: BoxDecoration(
-            color: ColorConstant.instance.greyScale50,
-            borderRadius: BorderRadius.circular(16.0),
-            border: Border.all(
-              width: 1.0,
-              color: ColorConstant.instance.greyScale300,
-            ),
-            image: DecorationImage(
-              image: NetworkImage(viewModel.scenarios[index].photo!),
-              fit: BoxFit.cover,
-            )),
-        child: Padding(
-          padding: const EdgeInsets.only(bottom: 19.0, left: 9.0, right: 9.0),
-          child: Align(
-            alignment: Alignment.bottomLeft,
-            child: Padding(
-              padding: const EdgeInsets.only(
-                bottom: 19.0,
-                left: 8.0,
-                right: 8.0,
+  SingleChildScrollView hasData(BuildContext context) {
+    return SingleChildScrollView(
+      physics: const ClampingScrollPhysics(),
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 70.0, left: 24.0, right: 24.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 30.0),
+            InkWell(
+              onTap: () => Navigator.pop(context),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Container(
+                  width: 24.0,
+                  height: 24.0,
+                  decoration: BoxDecoration(
+                    color: Colors.transparent,
+                    borderRadius: BorderRadius.circular(50.0),
+                    border:
+                        Border.all(color: ColorConstant.instance.paletteGrey),
+                  ),
+                  child: Center(
+                    child: Icon(
+                      Icons.close,
+                      size: 16.0,
+                      color: ColorConstant.instance.paletteGrey,
+                    ),
+                  ),
+                ),
               ),
-              child: Text(
-                viewModel.scenarios[index].title!,
-                style: currentTextTheme(context).caption?.copyWith(
+            ),
+            const SizedBox(height: 15.0),
+            ListView.builder(
+              itemCount: viewModel.categories.length,
+              addAutomaticKeepAlives: false,
+              addRepaintBoundaries: false,
+              shrinkWrap: true,
+              padding: EdgeInsets.zero,
+              physics: const ClampingScrollPhysics(),
+              itemBuilder: (context, indexCategory) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 25.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      category(
+                        context,
+                        category: viewModel.categories[indexCategory].title,
+                        scenarios:
+                            viewModel.categories[indexCategory].scenarios,
+                      ),
+                      const SizedBox(height: 10.0),
+                      SizedBox(
+                        height: 168.0,
+                        child: ListView.builder(
+                          addAutomaticKeepAlives: false,
+                          addRepaintBoundaries: false,
+                          physics: const ClampingScrollPhysics(),
+                          itemCount: viewModel
+                              .categories[indexCategory].scenarios.length,
+                          scrollDirection: Axis.horizontal,
+                          itemBuilder: (context, index) {
+                            return Padding(
+                              padding: const EdgeInsets.only(right: 16.0),
+                              child:
+                                  scenarioCard(context, indexCategory, index),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  SingleChildScrollView scenarioOfCategory(BuildContext context,
+      String categoryName, List<ScenariosOfCategory> scenarios) {
+    return SingleChildScrollView(
+      physics: const ClampingScrollPhysics(),
+      child: Padding(
+        padding: const EdgeInsets.only(left: 24.0, right: 24.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 30.0),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                InkWell(
+                  onTap: () => Navigator.pop(context),
+                  child: Container(
+                    width: 24.0,
+                    height: 24.0,
+                    decoration: BoxDecoration(
+                      color: Colors.transparent,
+                      borderRadius: BorderRadius.circular(50.0),
+                      border:
+                          Border.all(color: ColorConstant.instance.paletteGrey),
+                    ),
+                    child: Center(
+                      child: Icon(
+                        Icons.close,
+                        size: 16.0,
+                        color: ColorConstant.instance.paletteGrey,
+                      ),
+                    ),
+                  ),
+                ),
+                Text(
+                  categoryName,
+                  style: currentTextTheme(context).titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: ColorConstant.instance.additionalWhite,
+                        fontSize: 20.0,
+                      ),
+                ),
+                const SizedBox(),
+              ],
+            ),
+            const SizedBox(height: 15.0),
+            GridView.builder(
+              padding: EdgeInsets.zero,
+              addAutomaticKeepAlives: false,
+              addRepaintBoundaries: false,
+              physics: const ClampingScrollPhysics(),
+              shrinkWrap: true,
+              itemCount: scenarios.length,
+              gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                maxCrossAxisExtent: 200,
+                mainAxisSpacing: 14.0,
+                crossAxisSpacing: 14.0,
+              ),
+              itemBuilder: (context, index) {
+                return scenarioCardCategory(
+                  context,
+                  index,
+                  scenarios[index].icon,
+                  scenarios[index].title,
+                  scenarios[index].scenario,
+                  scenarioId: scenarios[index].id,
+                  levels: scenarios[index].levels,
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  SizedBox scenarioCardCategory(BuildContext context, int index, String icon,
+      String title, String scenario,
+      {required List<Level> levels, required int scenarioId}) {
+    return SizedBox(
+      width: 162.0,
+      height: 166.0,
+      child: ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: ColorConstant.instance.paletteCard,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20.0),
+          ),
+        ),
+        onPressed: () {
+          showModalBottomSheet(
+            isDismissible: true,
+            isScrollControlled: true,
+            context: context,
+            builder: (BuildContext context) {
+              return BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+                child: FractionallySizedBox(
+                  heightFactor: 0.8,
+                  child: Container(
+                    width: width(context: context, value: 1.0),
+                    decoration: BoxDecoration(
+                      color: ColorConstant.instance.paletteBackground,
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(20.0),
+                        topRight: Radius.circular(20.0),
+                      ),
+                    ),
+                    child: level(
+                      context,
+                      title,
+                      icon,
+                      scenario,
+                      levels,
+                      scenarioId: scenarioId,
+                    ),
+                  ),
+                ),
+              );
+            },
+          );
+        },
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            vertical: 16.0,
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SvgPicture.network(
+                icon,
+                width: 48.0,
+                height: 48.0,
+                placeholderBuilder: (BuildContext context) => SkeletonItem(
+                  child: Container(
+                    width: 48.0,
+                    height: 48.0,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16.0),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10.0),
+              Text(
+                title,
+                style: currentTextTheme(context).titleSmall?.copyWith(
                       fontWeight: FontWeight.w600,
                       color: ColorConstant.instance.additionalWhite,
-                      fontSize: 12.0,
+                      fontSize: 14.0,
                     ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-            ),
+              Expanded(
+                child: Text(
+                  scenario,
+                  style: currentTextTheme(context).titleSmall?.copyWith(
+                        fontWeight: FontWeight.w300,
+                        color: ColorConstant.instance.additionalWhite,
+                        fontSize: 14.0,
+                      ),
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
 
-  Future<dynamic> scenarioDialog(BuildContext context, int index) {
-    return showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
-          child: Container(
-            width: width(context: context, value: 1.0),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16.0),
-              color: ColorConstant.instance.additionalWhite,
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  color: Colors.red,
-                  width: width(context: context, value: 1.0),
-                  height: height(context: context, value: 0.15),
-                  child: Align(
-                    alignment: Alignment.center,
-                    child: Image.network(
-                      viewModel.scenarios[index].icon!,
-                      fit: BoxFit.fill,
-                      width: width(context: context, value: 1.0),
+  SizedBox scenarioCard(BuildContext context, int indexCategory, int index) {
+    return SizedBox(
+      width: 162.0,
+      height: 166.0,
+      child: ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: ColorConstant.instance.paletteCard,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20.0),
+          ),
+        ),
+        onPressed: () {
+          showModalBottomSheet(
+            isDismissible: true,
+            isScrollControlled: true,
+            context: context,
+            builder: (BuildContext context) {
+              return BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+                child: FractionallySizedBox(
+                  heightFactor: 0.8,
+                  child: Container(
+                    width: width(context: context, value: 1.0),
+                    decoration: BoxDecoration(
+                      color: ColorConstant.instance.paletteBackground,
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(20.0),
+                        topRight: Radius.circular(20.0),
+                      ),
+                    ),
+                    child: level(
+                        context,
+                        viewModel
+                            .categories[indexCategory].scenarios[index].title,
+                        viewModel
+                            .categories[indexCategory].scenarios[index].icon,
+                        viewModel.categories[indexCategory].scenarios[index]
+                            .scenario,
+                        viewModel
+                            .categories[indexCategory].scenarios[index].levels,
+                        scenarioId: viewModel
+                            .categories[indexCategory].scenarios[index].id),
+                  ),
+                ),
+              );
+            },
+          );
+        },
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            vertical: 16.0,
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SvgPicture.network(
+                viewModel.categories[indexCategory].scenarios[index].icon,
+                width: 48.0,
+                height: 48.0,
+                placeholderBuilder: (BuildContext context) => SkeletonItem(
+                  child: Container(
+                    width: 48.0,
+                    height: 48.0,
+                    decoration: BoxDecoration(
+                      color: ColorConstant.instance.paletteGrey,
+                      borderRadius: BorderRadius.circular(16.0),
                     ),
                   ),
                 ),
-                const SizedBox(height: 15.0),
-                Align(
-                  alignment: Alignment.center,
-                  child: Text(
-                    viewModel.scenarios[index].title!,
-                    style: currentTextTheme(context).headline1?.copyWith(
-                          fontSize: 24.0,
-                          fontWeight: FontWeight.w600,
-                          color: ColorConstant.instance.greyScale900,
-                        ),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-                const SizedBox(height: 24.0),
-                Text(
-                  viewModel.scenarios[index].scenario!,
-                  style: currentTextTheme(context).headline4?.copyWith(
-                        fontWeight: FontWeight.w400,
-                        color: ColorConstant.instance.greyScale900,
-                      ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 15.0),
-                const SizedBox(height: 24.0),
-                Consumer<HomeViewModel>(
-                  builder: (context, state, child) {
-                    return SizedBox(
-                      width: width(context: context, value: 1.0) - 132.0,
-                      height: height(context: context, value: 0.07),
-                      child: ElevatedButton(
-                        onPressed: () {
-                          state.chnageConversationStatus(false);
-                          state.setFirstLogin();
-                          final response = viewModel.createConversation(
-                            context,
-                            scenarioId:
-                                viewModel.scenarios[index].id!.toString(),
-                          );
+              ),
+              const SizedBox(height: 10.0),
+              Text(
+                viewModel.categories[indexCategory].scenarios[index].title,
+                style: currentTextTheme(context).titleSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: ColorConstant.instance.additionalWhite,
+                      fontSize: 14.0,
+                    ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              Text(
+                viewModel.categories[indexCategory].scenarios[index].scenario,
+                style: currentTextTheme(context).titleSmall?.copyWith(
+                      fontWeight: FontWeight.w300,
+                      color: ColorConstant.instance.additionalWhite,
+                      fontSize: 14.0,
+                    ),
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
-                          response.then((value) {
-                            if (value.result == true) {
-                              state.chnageConversationStatus(true);
-                              Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => ConversationRoomView(
-                                    profilePhoto: state
-                                        .profileModel.data!.user!.profilePhoto!,
-                                    conversationId: viewModel.conversation.id!,
-                                    scenarioTitle:
-                                        viewModel.scenarios[index].title!,
-                                  ),
-                                ),
-                              );
-                            }
-                          });
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: ColorConstant.instance.greyScale400,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(66.0),
-                          ),
-                          elevation: 0,
+  Row category(BuildContext context,
+      {required String category,
+      required List<ScenariosOfCategory> scenarios}) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          category,
+          style: currentTextTheme(context).titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: ColorConstant.instance.additionalWhite,
+                fontSize: 20.0,
+              ),
+        ),
+        IconButton(
+          onPressed: () {
+            showModalBottomSheet(
+              isDismissible: true,
+              isScrollControlled: true,
+              context: context,
+              builder: (BuildContext context) {
+                return BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+                  child: FractionallySizedBox(
+                    heightFactor: 0.85,
+                    child: Container(
+                      width: width(context: context, value: 1.0),
+                      decoration: BoxDecoration(
+                        color: ColorConstant.instance.paletteBackground,
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(20.0),
+                          topRight: Radius.circular(20.0),
                         ),
-                        child: state.isCreatedConversation
-                            ? Text(
-                                LocaleKeys.let_start.tr(),
-                                style: currentTextTheme(context)
-                                    .headline3
-                                    ?.copyWith(
-                                      fontWeight: FontWeight.w400,
-                                      color:
-                                          ColorConstant.instance.greyScale900,
-                                    ),
-                              )
-                            : Center(
-                                child: CircularProgressIndicator(
-                                  color: ColorConstant.instance.additionalWhite,
-                                ),
-                              ),
                       ),
-                    );
-                  },
-                ),
-              ],
+                      child: scenarioOfCategory(
+                        context,
+                        category,
+                        scenarios,
+                      ),
+                    ),
+                  ),
+                );
+              },
+            );
+          },
+          icon: Icon(
+            Icons.arrow_forward_ios,
+            color: ColorConstant.instance.additionalWhite,
+            size: 16.0,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Row header(BuildContext context, String scenarioName) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        InkWell(
+          onTap: () {
+            Navigator.pop(context);
+          },
+          child: Container(
+            width: 24.0,
+            height: 24.0,
+            decoration: BoxDecoration(
+              color: Colors.transparent,
+              borderRadius: BorderRadius.circular(50.0),
+              border: Border.all(
+                color: ColorConstant.instance.paletteGrey,
+              ),
+            ),
+            child: Center(
+              child: Icon(
+                Icons.close,
+                size: 16.0,
+                color: ColorConstant.instance.paletteGrey,
+              ),
             ),
           ),
-        );
-      },
+        ),
+        SizedBox(
+          width: width(context: context, value: 0.7),
+          child: Center(
+            child: Text(
+              scenarioName,
+              style: currentTextTheme(context).bodySmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: ColorConstant.instance.additionalWhite,
+                    fontSize: 20.0,
+                  ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ),
+        const SizedBox(),
+      ],
+    );
+  }
+
+  SingleChildScrollView level(
+    BuildContext context,
+    String scenarioName,
+    String scenarioIcon,
+    String scenario,
+    List<Level> levels, {
+    required int scenarioId,
+  }) {
+    return SingleChildScrollView(
+      physics: const ClampingScrollPhysics(),
+      child: Padding(
+        padding: const EdgeInsets.only(left: 24.0, right: 24.0),
+        child: SingleChildScrollView(
+          physics: const ClampingScrollPhysics(),
+          child: Column(
+            children: [
+              const SizedBox(height: 35.0),
+              header(context, scenarioName),
+              const SizedBox(height: 35.0),
+              Column(
+                children: [
+                  SvgPicture.network(
+                    scenarioIcon,
+                    width: 62.0,
+                    height: 62.0,
+                  ),
+                  const SizedBox(height: 26.0),
+                  Text(
+                    scenario,
+                    style: currentTextTheme(context).bodySmall?.copyWith(
+                          fontWeight: FontWeight.w300,
+                          color: ColorConstant.instance.additionalWhite,
+                          fontSize: 16.0,
+                        ),
+                    textAlign: TextAlign.center,
+                  )
+                ],
+              ),
+              const SizedBox(height: 35.0),
+              ListView.builder(
+                shrinkWrap: true,
+                itemCount: levels.length,
+                addAutomaticKeepAlives: false,
+                addRepaintBoundaries: false,
+                physics: const ClampingScrollPhysics(),
+                itemBuilder: (context, index) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 20.0),
+                    child: SizedBox(
+                      width: width(context: context, value: 1.0),
+                      height: height(context: context, value: 0.09),
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: ColorConstant.instance.paletteCard,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20.0),
+                          ),
+                        ),
+                        onPressed: () {
+                          Provider.of<HomeViewModel>(context, listen: false)
+                              .selectCefr(levels[index].cefr);
+                          Provider.of<HomeViewModel>(context, listen: false)
+                              .createConversation(
+                            context,
+                            scenarioId: scenarioId.toString(),
+                            cefr: Provider.of<HomeViewModel>(context,
+                                    listen: false)
+                                .selectedCefr,
+                            scenarioTitle: scenarioName,
+                            profilePhoto: Provider.of<ConversationViewModel>(
+                                    context,
+                                    listen: false)
+                                .profileModel
+                                .data!
+                                .user!
+                                .profilePhoto!,
+                          );
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16.0,
+                            vertical: 16.0,
+                          ),
+                          child: SizedBox(
+                            height: height(context: context, value: 0.09),
+                            width: width(context: context, value: 1.0),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    levels[index].cefr,
+                                    style: currentTextTheme(context)
+                                        .bodySmall
+                                        ?.copyWith(
+                                          fontWeight: FontWeight.w500,
+                                          color: ColorConstant
+                                              .instance.additionalWhite,
+                                          fontSize: width(context: context, value: 1.0) % 18,
+                                        ),
+                                  ),
+                                ),
+                                const SizedBox(width: 18.0),
+                                Expanded(
+                                  flex: 5,
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          levels[index].scale,
+                                          style: currentTextTheme(context)
+                                              .bodySmall
+                                              ?.copyWith(
+                                                fontWeight: FontWeight.w600,
+                                                color: ColorConstant
+                                                    .instance.additionalWhite,
+                                                fontSize: width(context: context, value: 1.0) % 13,
+                                              ),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 6.0),
+                                      Expanded(
+                                        child: SizedBox(
+                                          width:
+                                              width(context: context, value: 5.0),
+                                          child: ClipRRect(
+                                            borderRadius:
+                                                BorderRadius.circular(10.0),
+                                            child: LinearProgressIndicator(
+                                              backgroundColor:
+                                                  const Color.fromRGBO(
+                                                      69, 70, 72, 1),
+                                              color: ColorConstant
+                                                  .instance.paletteBlue,
+                                              value: double.parse(
+                                                levels[index]
+                                                    .conversationCompleted,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 20.0),
+                                Expanded(
+                                  child: SvgPicture.asset(
+                                    IconConstant.instance.iconBubble,
+                                    width: 24.0,
+                                    height: 24.0,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -610,7 +1118,7 @@ class ConversationView extends BaseStateless {
                                         state.conversationModelTemp[index]
                                             .scenario!.title!,
                                         style: currentTextTheme(context)
-                                            .headline3
+                                            .displaySmall
                                             ?.copyWith(
                                               fontWeight: FontWeight.w600,
                                               color: ColorConstant
@@ -629,7 +1137,7 @@ class ConversationView extends BaseStateless {
                                       state.conversationModelTemp[index]
                                           .lastMessage!,
                                       style: currentTextTheme(context)
-                                          .headline3
+                                          .displaySmall
                                           ?.copyWith(
                                             fontWeight: FontWeight.w300,
                                             color: ColorConstant
@@ -736,7 +1244,7 @@ class ConversationView extends BaseStateless {
                                         state.completedMessageTemp[index]
                                             .scenario!.title!,
                                         style: currentTextTheme(context)
-                                            .headline3
+                                            .displaySmall
                                             ?.copyWith(
                                               fontWeight: FontWeight.w600,
                                               color: ColorConstant
@@ -755,7 +1263,7 @@ class ConversationView extends BaseStateless {
                                       state.completedMessageTemp[index]
                                           .lastMessage!,
                                       style: currentTextTheme(context)
-                                          .headline3
+                                          .displaySmall
                                           ?.copyWith(
                                             fontWeight: FontWeight.w300,
                                             color: ColorConstant

@@ -2,6 +2,7 @@
 
 import 'dart:io';
 
+import 'package:chatbot/core/constants/color_constant.dart';
 import 'package:chatbot/core/enum/preference_keys.dart';
 import 'package:chatbot/core/language/localization_init.dart';
 import 'package:chatbot/core/utils/tts.dart';
@@ -21,6 +22,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:skeletons/skeletons.dart';
 
 class MyHttpOverrides extends HttpOverrides {
   @override
@@ -85,35 +87,40 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder(
-      future: checkLoginStatus(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(
-            child: CircularProgressIndicator(),
-          );
-        } else if (snapshot.connectionState == ConnectionState.done) {
-          return isFirst
-              ? MaterialApp(
-                  title: 'ChatBot',
-                  theme: appTheme,
-                  localizationsDelegates: context.localizationDelegates,
-                  locale: context.locale,
-                  debugShowCheckedModeBanner: false,
-                  home: token.isNotEmpty ? BottomBarView() : RegisterView(),
-                )
-              : MaterialApp(
-                  title: 'ChatBot',
-                  theme: appTheme,
-                  localizationsDelegates: context.localizationDelegates,
-                  locale: context.locale,
-                  debugShowCheckedModeBanner: false,
-                  home: token.isNotEmpty ? BottomBarView() : LoginView(),
-                );
-        } else {
-          return const Text('error');
-        }
-      },
+    return SkeletonTheme(
+      shimmerGradient: LinearGradient(colors: [
+        ColorConstant.instance.paletteCard,
+        ColorConstant.instance.paletteGrey,
+      ]),
+      child: FutureBuilder(
+        future: checkLoginStatus(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
+          } else if (snapshot.connectionState == ConnectionState.done) {
+            return isFirst
+                ? MaterialApp(
+                    title: 'ChatBot',
+                    theme: appTheme,
+                    localizationsDelegates: context.localizationDelegates,
+                    locale: context.locale,
+                    debugShowCheckedModeBanner: false,
+                    home: token.isNotEmpty ? BottomBarView() : RegisterView())
+                : MaterialApp(
+                    title: 'ChatBot',
+                    theme: appTheme,
+                    localizationsDelegates: context.localizationDelegates,
+                    locale: context.locale,
+                    debugShowCheckedModeBanner: false,
+                    home: token.isNotEmpty ? BottomBarView() : LoginView(),
+                  );
+          } else {
+            return const Text('error');
+          }
+        },
+      ),
     );
   }
 }

@@ -55,14 +55,21 @@ class TextToSpeechViewModel extends ChangeNotifier {
   }
 
   speak(String text) async {
+    final response = await tts.setIosAudioCategory(
+        IosTextToSpeechAudioCategory.playAndRecord,
+        [IosTextToSpeechAudioCategoryOptions.defaultToSpeaker]);
+
+    print("response : ${response.runtimeType}");
     await tts.setIosAudioCategory(IosTextToSpeechAudioCategory.playAndRecord,
         [IosTextToSpeechAudioCategoryOptions.defaultToSpeaker]);
     tts.setStartHandler(() {
+      print("girdi start");
       isCompleted = false;
       notifyListeners();
     });
 
     tts.setCompletionHandler(() {
+      print("girdi completedd");
       isCompleted = true;
       isSpeaking = true;
       notifyListeners();

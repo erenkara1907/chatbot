@@ -43,7 +43,6 @@ class LoginViewModel extends ChangeNotifier {
   }
 
   Future login(Map<String, dynamic> user, BuildContext context) async {
-    print("girdi");
     final response = await service.login(user);
 
     final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
@@ -53,7 +52,8 @@ class LoginViewModel extends ChangeNotifier {
       await prefs.setString(
           PreferencesKeys.TOKEN.toString(), response.data!.token!);
 
-      Navigator.of(context).pushReplacement(createRoute(page: BottomBarView()));
+      Navigator.pushAndRemoveUntil(
+          context, createRoute(page: BottomBarView()), (route) => false);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Wrong email or password')),

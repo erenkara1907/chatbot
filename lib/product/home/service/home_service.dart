@@ -23,6 +23,7 @@ class HomeService {
       'Authorization': 'Bearer $token',
     });
 
+
     return ProfileHomeModel.fromJson(jsonDecode(response.body));
   }
 
@@ -32,6 +33,7 @@ class HomeService {
       'Authorization': 'Bearer $token',
     });
 
+
     return ScenarioModel.fromJson(jsonDecode(response.body));
   }
 
@@ -40,6 +42,7 @@ class HomeService {
         await http.get(Uri.parse(ApiConstant.instance.categoryUrl), headers: {
       'Authorization': 'Bearer $token',
     });
+
 
     return CategoryModel.fromJson(jsonDecode(response.body));
   }

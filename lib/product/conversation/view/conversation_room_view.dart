@@ -1,5 +1,6 @@
-// ignore_for_file: prefer_final_fields, unused_field, must_be_immutable, use_build_context_synchronously, unused_element
+// ignore_for_file: prefer_final_fields, unused_field, must_be_immutable, use_build_context_synchronously, unused_element, deprecated_member_use
 
+import 'dart:convert';
 import 'dart:io';
 import 'dart:ui';
 
@@ -10,6 +11,7 @@ import 'package:chatbot/core/constants/color_constant.dart';
 import 'package:chatbot/core/utils/tts.dart';
 import 'package:chatbot/core/view/base/base_state.dart';
 import 'package:chatbot/product/conversation/viewmodel/conversation_room_view_model.dart';
+import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -17,6 +19,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_sound/flutter_sound.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:http/http.dart' as http;
 import 'package:lottie/lottie.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:percent_indicator/circular_percent_indicator.dart';
@@ -52,10 +55,25 @@ class ConversationRoomView extends StatefulWidget {
 }
 
 class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
+  final String appKey = "1686539747000176";
+  final String secretKey = "acf887731c9876ee6e41652394c4c873";
+  final String userId = "uid";
+  final String baseHOST = "api.speechsuper.com";
+
+  final String coreType =
+      "sent.eval"; // Change the coreType according to your needs.
+  final refText =
+      "supermarket"; // Change the reference text according to your needs.
+  // final audioPath =
+  //     _path; // Change the audio path corresponding to the reference text.
+  final audioType =
+      "wav"; // Change the audio type corresponding to the audio file.
+  final audioSampleRate = "16000";
   // SpeechToText speechToText = SpeechToText();
 
   bool? _isFirst;
   bool isScroll = true;
+  String voiceRatio = "";
 
   // var isListening = false;
 
@@ -102,10 +120,16 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
       try {
         HapticFeedback.mediumImpact();
         await player.play(AssetSource("sound/sound_click.wav"));
-        chatProvider.addUserMessage(message: "Yükleniyor");
+        chatProvider.addUserMessage(
+          message: "Yükleniyor",
+          betterSentence: '',
+          correctSentence: '',
+          sound: '',
+          soundRatio: '',
+        );
+        await player.play(AssetSource("sound/sound_user_bubble.wav"));
         // Uygulamanın kendi dosya yolunu alıyoruz
         Directory appDocDirectory = await getApplicationDocumentsDirectory();
-        await player.play(AssetSource("sound/sound_user_bubble.wav"));
 
         // Dosyanın kaydedileceği yolu belirliyoruz
         _path = '${appDocDirectory.path}/soundfile.wav';
@@ -126,7 +150,13 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
         // Kaydediciyi kapatıyoruz
         await _recorder.closeRecorder();
         // chatProvider.chatList.removeLast();
-        chatProvider.addUserMessage(message: "Please try again");
+        chatProvider.addUserMessage(
+          message: "Please try again",
+          betterSentence: '',
+          correctSentence: '',
+          sound: '',
+          soundRatio: '',
+        );
       }
     } else if (status.isDenied) {
       chatProvider.isRecording = false;
@@ -148,6 +178,79 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
     _uploadAudio(_path, chatProvider);
   }
 
+  void _pronunciationCheck() {
+    String timestamp = DateTime.now().millisecondsSinceEpoch.toString();
+    String connectSig =
+        sha1.convert(utf8.encode("$appKey$timestamp$secretKey")).toString();
+    String startSig = sha1
+        .convert(utf8.encode("$appKey$timestamp$userId$secretKey"))
+        .toString();
+    String tokenId = DateTime.now().millisecondsSinceEpoch.toString();
+    var params = {
+      "connect": {
+        "cmd": "connect",
+        "param": {
+          "sdk": {"version": 16777472, "source": 9, "protocol": 2},
+          "app": {
+            "applicationId": appKey,
+            "sig": connectSig,
+            "timestamp": timestamp
+          }
+        }
+      },
+      "start": {
+        "cmd": "start",
+        "param": {
+          "app": {
+            "applicationId": appKey,
+            "sig": startSig,
+            "userId": userId,
+            "timestamp": timestamp
+          },
+          "audio": {
+            "audioType": audioType,
+            "sampleRate": audioSampleRate,
+            "channel": 1,
+            "sampleBytes": 2
+          },
+          "request": {
+            "refText": viewModel.sendTextController.text,
+            "coreType": coreType,
+            "tokenId": tokenId,
+          }
+        }
+      }
+    };
+
+    rootBundle.load(_path).then((ByteData data) async {
+      var url = Uri.https(baseHOST, coreType);
+      var request = http.MultipartRequest("POST", url)
+        ..fields["text"] = jsonEncode(params)
+        ..files.add(
+            http.MultipartFile.fromBytes("audio", data.buffer.asUint8List()))
+        ..headers["Request-Index"] = "0";
+
+      var response = await request.send();
+
+      if (response.statusCode != 200) {
+        // resultController.text = "HTTP status code ${response.statusCode}";
+      } else {
+        response.stream.transform(utf8.decoder).join().then((String str) {
+          if (str.contains("error")) {
+            // resultController.text = str;
+          } else {
+            var respJson = jsonDecode(str);
+            voiceRatio = "${respJson["result"]["overall"]}";
+            sendMessage(
+                chatProvider: Provider.of<ConversationRoomViewModel>(context,
+                    listen: false),
+                context);
+          }
+        });
+      }
+    });
+  }
+
   void _uploadAudio(
     String path,
     ConversationRoomViewModel chatProvider,
@@ -166,7 +269,7 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
           "task": "transcribe",
         }),
         options: Options(
-          headers: {'Authorization': 'Bearer L62YXPXSBF57TZGF7U4NDFG6B45R8STX'},
+          headers: {'Authorization': 'Bearer ZFAVBQD21KCPG7FR8D2CXARCSND4JHGG'},
         ),
       );
 
@@ -176,18 +279,30 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
         chatProvider.chatList.removeLast();
         scrollListToEND();
 
+        chatProvider.setText(response.data["text"]);
         viewModel.sendTextController.text = response.data["text"];
-        sendMessage(
-            chatProvider:
-                Provider.of<ConversationRoomViewModel>(context, listen: false),
-            context);
+
+        _pronunciationCheck();
+
+        Future.delayed(
+          const Duration(seconds: 1),
+          () {
+            chatProvider.voiceMessage != "" ? Navigator.pop(context) : null;
+          },
+        );
       }
     } catch (e) {
       await _recorder.stopRecorder();
       // Kaydediciyi kapatıyoruz
       await _recorder.closeRecorder();
       // chatProvider.chatList.removeLast();
-      chatProvider.addUserMessage(message: "Please try again");
+      chatProvider.addUserMessage(
+        message: "Please try again",
+        betterSentence: '',
+        correctSentence: '',
+        sound: '',
+        soundRatio: '',
+      );
     }
   }
 
@@ -264,7 +379,7 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
                   height: height(0.1),
                   width: width(0.5),
                   decoration: BoxDecoration(
-                    color: ColorConstant.instance.greyScale200,
+                    color: ColorConstant.instance.paletteCard,
                     borderRadius: const BorderRadius.only(
                       topLeft: Radius.circular(16.0),
                       topRight: Radius.circular(16.0),
@@ -290,7 +405,7 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
                   height: height(0.07),
                   width: width(0.5),
                   decoration: BoxDecoration(
-                    color: ColorConstant.instance.greyScale200,
+                    color: ColorConstant.instance.paletteCard,
                     borderRadius: const BorderRadius.only(
                       topLeft: Radius.circular(16.0),
                       topRight: Radius.circular(16.0),
@@ -341,7 +456,7 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
                 ),
                 Text(
                   "Do you want to complete the conversation?",
-                  style: currentTextTheme.headline3?.copyWith(
+                  style: currentTextTheme.displaySmall?.copyWith(
                     fontWeight: FontWeight.w600,
                     color: ColorConstant.instance.greyScale900,
                   ),
@@ -359,7 +474,7 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
                         },
                         child: Text(
                           "Continue",
-                          style: currentTextTheme.headline4?.copyWith(
+                          style: currentTextTheme.headlineMedium?.copyWith(
                             fontWeight: FontWeight.w400,
                             color: ColorConstant.instance.greyScale900,
                           ),
@@ -387,7 +502,7 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
                         backgroundColor: ColorConstant.instance.greyScale900,
                         borderRadius: 16.0,
                         text: "Complete",
-                        textStyle: currentTextTheme.headline4?.copyWith(
+                        textStyle: currentTextTheme.headlineMedium?.copyWith(
                                 fontWeight: FontWeight.w400,
                                 color:
                                     ColorConstant.instance.additionalWhite) ??
@@ -425,34 +540,37 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
                     crossAxisAlignment: CrossAxisAlignment.center,
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Container(
-                        width: 25.0,
-                        height: 25.0,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(50.0),
-                          border: Border.all(
-                              color: ColorConstant.instance.paletteGrey),
-                        ),
-                        child: IconButton(
-                          onPressed: () {
-                            textViewModel.stop();
-                            chatProvider.isGetMessage = false;
-                            Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) => BottomBarView()));
-                          },
-                          icon: SvgPicture.asset(
-                            IconConstant.instance.iconArrowBack,
-                            color: ColorConstant.instance.paletteGrey,
-                            width: 25.0,
-                            height: 25.0,
+                      Material(
+                        borderRadius: BorderRadius.circular(50.0),
+                        child: CircleAvatar(
+                          radius: 14.0,
+                          backgroundColor: ColorConstant.instance.backIconColor,
+                          child: CircleAvatar(
+                            radius: 12.0,
+                            backgroundColor:
+                                ColorConstant.instance.paletteBackground,
+                            child: IconButton(
+                              onPressed: () {
+                                textViewModel.stop();
+                                chatProvider.isReadMessage = false;
+                                chatProvider.isGetMessage = false;
+                                Navigator.pushReplacement(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) => BottomBarView()));
+                              },
+                              icon: Icon(
+                                Icons.arrow_back_ios,
+                                size: 10.0,
+                                color: ColorConstant.instance.backIconColor,
+                              ),
+                            ),
                           ),
                         ),
                       ),
                       Text(
                         "Speaking to Talkios",
-                        style: currentTextTheme.subtitle1?.copyWith(
+                        style: currentTextTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.w500,
                           color: ColorConstant.instance.additionalWhite,
                           fontSize: 16.0,
@@ -511,7 +629,7 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
                                       const SizedBox(width: 15.0),
                                       Text(
                                         LocaleKeys.endChat.tr(),
-                                        style: currentTextTheme.headline3
+                                        style: currentTextTheme.displaySmall
                                             ?.copyWith(
                                           fontWeight: FontWeight.w400,
                                           color: ColorConstant
@@ -528,75 +646,44 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
                   Consumer<ConversationRoomViewModel>(
                     builder: (context, state, child) {
                       return state.isSelectVoice
-                          ? voiceButton(context)
-                          : sendMessageInput(chatProvider);
+                          ? AbsorbPointer(
+                              absorbing:
+                                  chatProvider.isActive == 1 ? false : true,
+                              child: voiceButton(context),
+                            )
+                          : AbsorbPointer(
+                              absorbing:
+                                  chatProvider.isActive == 1 ? false : true,
+                              child: sendMessageInput(chatProvider),
+                            );
                     },
                   ),
                 ],
               )
-            : Column(
-                children: [
-                  Flexible(
-                    child: ListView.builder(
-                      itemCount: 10,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemBuilder: (context, index) {
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 15.0),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: ColorConstant.instance.greyScale200,
-                            ),
-                            child: SkeletonParagraph(
-                              style: SkeletonParagraphStyle(
-                                  lines: 3,
-                                  spacing: 6,
-                                  lineStyle: SkeletonLineStyle(
-                                    randomLength: true,
-                                    height: 10,
-                                    borderRadius: BorderRadius.circular(8),
-                                    minLength:
-                                        MediaQuery.of(context).size.width / 6,
-                                    maxLength:
-                                        MediaQuery.of(context).size.width / 3,
-                                  )),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                  // if (_isTyping) ...[
-                  //   const SpinKitThreeBounce(
-                  //     color: Colors.black,
-                  //     size: 18.0,
-                  //   )
-                  // ],
-                  const SizedBox(height: 5.0),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Expanded(
-                        flex: 3,
-                        child: SkeletonParagraph(
-                          style: const SkeletonParagraphStyle(
-                            lines: 1,
+            : ListView.builder(
+                shrinkWrap: true,
+                itemCount: 10,
+                physics: const NeverScrollableScrollPhysics(),
+                itemBuilder: (context, index) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 15.0),
+                    child: SkeletonItem(
+                      child: SkeletonParagraph(
+                        style: SkeletonParagraphStyle(
+                          lines: 3,
+                          spacing: 6,
+                          lineStyle: SkeletonLineStyle(
+                            randomLength: true,
+                            height: 10,
+                            borderRadius: BorderRadius.circular(8),
+                            minLength: MediaQuery.of(context).size.width / 6,
+                            maxLength: MediaQuery.of(context).size.width / 3,
                           ),
                         ),
                       ),
-                      const Expanded(
-                        child: SkeletonAvatar(
-                          style: SkeletonAvatarStyle(
-                            width: 35.0,
-                            height: 35.0,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                      )
-                    ],
-                  )
-                ],
+                    ),
+                  );
+                },
               ),
       ),
     );
@@ -617,9 +704,9 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
                 enabled: chatProvider.isActive == 0 ? false : true,
                 controller: viewModel.sendTextController,
                 focusNode: viewModel.sendMessageFocusNode,
-                style: currentTextTheme.headline3?.copyWith(
+                style: currentTextTheme.displaySmall?.copyWith(
                   fontWeight: FontWeight.w400,
-                  color: ColorConstant.instance.greyScale900,
+                  color: ColorConstant.instance.additionalWhite,
                 ),
                 decoration: InputDecoration(
                   filled: true,
@@ -633,6 +720,7 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
                       children: [
                         InkWell(
                           onTap: () {
+                            textViewModel.stop();
                             Provider.of<ConversationRoomViewModel>(context,
                                     listen: false)
                                 .selectVoice(true);
@@ -657,10 +745,14 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
                           child: Center(
                             child: IconButton(
                               onPressed: () async {
+                                textViewModel.stop();
                                 // await sendMessage(
                                 //     chatProvider:
                                 //         chatProvider);
                                 // sendTextController.clear();
+                                await sendMessage(context,
+                                    chatProvider: chatProvider);
+                                viewModel.sendTextController.clear();
                               },
                               icon: SvgPicture.asset(
                                 IconConstant.instance.iconSend,
@@ -689,7 +781,7 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
                   hintText: chatProvider.isActive == 0
                       ? 'Chat is completed'
                       : LocaleKeys.ask.tr(),
-                  hintStyle: currentTextTheme.headline3?.copyWith(
+                  hintStyle: currentTextTheme.displaySmall?.copyWith(
                     fontWeight: FontWeight.w400,
                     color: ColorConstant.instance.additionalWhite,
                     fontSize: 16.0,
@@ -712,8 +804,7 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
           alignment: Alignment.center,
           child: AvatarGlow(
             endRadius: 75.0,
-            animate:
-                Provider.of<ConversationRoomViewModel>(context).isRecording,
+            animate: !Provider.of<TextToSpeechViewModel>(context).isCompleted,
             duration: const Duration(milliseconds: 500),
             glowColor: const Color.fromRGBO(71, 115, 254, 1),
             repeat: true,
@@ -722,9 +813,12 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
             curve: Curves.fastOutSlowIn,
             child: GestureDetector(
               onTap: () async {
+                Provider.of<ConversationRoomViewModel>(context, listen: false)
+                    .setText("");
+                textViewModel.stop();
                 speakModal(context);
               },
-              child: Consumer<ConversationRoomViewModel>(
+              child: Consumer<TextToSpeechViewModel>(
                 builder: (context, state, child) {
                   return Container(
                     decoration: const BoxDecoration(
@@ -738,12 +832,12 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
                         backgroundColor:
                             const Color.fromRGBO(120, 122, 124, 0.4),
                         child: CircleAvatar(
-                          backgroundColor: state.isRecording
+                          backgroundColor: !state.isCompleted
                               ? ColorConstant.instance.additionalWhite
                               : const Color.fromRGBO(172, 173, 177, 1),
                           foregroundColor: Colors.red,
                           radius: 30.0,
-                          child: state.isRecording
+                          child: !state.isCompleted
                               ? ColorFiltered(
                                   colorFilter: const ColorFilter.mode(
                                     Color.fromRGBO(71, 115, 254, 1),
@@ -768,6 +862,8 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
         ),
         InkWell(
           onTap: () {
+            textViewModel.stop();
+            viewModel.sendTextController.text = "";
             Provider.of<ConversationRoomViewModel>(context, listen: false)
                 .selectVoice(false);
           },
@@ -810,197 +906,184 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
                 color: ColorConstant.instance.paletteBackground,
               ),
               width: width(1.0),
-              child: Stack(
-                children: [
-                  Positioned(
-                    top: 0.0,
-                    left: 0.0,
-                    right: 0.0,
-                    child: Image.asset(
-                      ImageConstant.instance.imageTopEllipse,
-                      width: width(1.0),
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(
-                        top: 68.0, right: 24.0, left: 24.0),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      crossAxisAlignment: CrossAxisAlignment.center,
+              child: Padding(
+                padding:
+                    const EdgeInsets.only(top: 68.0, right: 24.0, left: 24.0),
+                child: ListView(
+                  shrinkWrap: true,
+                  physics: const ClampingScrollPhysics(),
+                  children: [
+                    Column(
                       children: [
-                        Column(
+                        speakHeader(context),
+                        const SizedBox(height: 17.0),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            speakHeader(context),
-                            const SizedBox(height: 17.0),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                const SizedBox(width: 24.0),
-                                Text(
-                                  "Go ahead, I’m listening",
-                                  style: currentTextTheme.caption?.copyWith(
-                                    fontWeight: FontWeight.w500,
-                                    color:
-                                        const Color.fromRGBO(155, 150, 161, 1),
-                                    fontSize: 14.0,
-                                  ),
-                                ),
-                                const SizedBox(),
-                              ],
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 39.0),
-                        Image.asset(ImageConstant.instance.imageAI),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 18.0),
-                          child: Text(
-                            "I am going to the cinema, I am going to read a book.",
-                            style: currentTextTheme.caption?.copyWith(
-                              fontWeight: FontWeight.w400,
-                              color: ColorConstant.instance.additionalWhite,
-                              fontSize: 20.0,
-                            ),
-                            maxLines: 4,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        const Expanded(
-                          flex: 2,
-                          child: SizedBox(),
-                        ),
-                        Column(
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Align(
-                              alignment: Alignment.center,
-                              child: AvatarGlow(
-                                endRadius: 75.0,
-                                animate: Provider.of<ConversationRoomViewModel>(
-                                        context)
-                                    .isRecording,
-                                duration: const Duration(milliseconds: 500),
-                                glowColor:
-                                    const Color.fromRGBO(71, 115, 254, 1),
-                                repeat: true,
-                                repeatPauseDuration:
-                                    const Duration(milliseconds: 100),
-                                showTwoGlows: true,
-                                curve: Curves.fastOutSlowIn,
-                                child: GestureDetector(
-                                  onTap: () {
-                                    textViewModel.isSpeaking = true;
-                                    Provider.of<TextToSpeechViewModel>(context,
-                                            listen: false)
-                                        .selectedIndex = -1;
-                                    textViewModel.stop();
-                                    Provider.of<ConversationRoomViewModel>(
-                                            context,
-                                            listen: false)
-                                        .setIsRecord();
-                                    if (Provider.of<ConversationRoomViewModel>(
-                                            context,
-                                            listen: false)
-                                        .isRecording) {
-                                      _startRecording(Provider.of<
-                                              ConversationRoomViewModel>(
-                                          context,
-                                          listen: false));
-                                    } else {
-                                      _stopRecording(Provider.of<
-                                              ConversationRoomViewModel>(
-                                          context,
-                                          listen: false));
-                                    }
-                                  },
-                                  child: Consumer<ConversationRoomViewModel>(
-                                    builder: (context, state, child) {
-                                      return Container(
-                                        decoration: const BoxDecoration(
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: CircleAvatar(
-                                          radius: 55.0,
-                                          backgroundColor: const Color.fromRGBO(
-                                              120, 122, 124, 0.2),
-                                          child: CircleAvatar(
-                                            radius: 40.0,
-                                            backgroundColor:
-                                                const Color.fromRGBO(
-                                                    120, 122, 124, 0.4),
-                                            child: CircleAvatar(
-                                              backgroundColor: state.isRecording
-                                                  ? ColorConstant
-                                                      .instance.additionalWhite
-                                                  : const Color.fromRGBO(
-                                                      172, 173, 177, 1),
-                                              foregroundColor: Colors.red,
-                                              radius: 30.0,
-                                              child: state.isRecording
-                                                  ? ColorFiltered(
-                                                      colorFilter:
-                                                          const ColorFilter
-                                                              .mode(
-                                                        Color.fromRGBO(
-                                                            71, 115, 254, 1),
-                                                        BlendMode.modulate,
-                                                      ),
-                                                      child: Lottie.asset(
-                                                        "assets/lottie/lottie_recording.json",
-                                                        width: 45.0,
-                                                        height: 45.0,
-                                                      ),
-                                                    )
-                                                  : SvgPicture.asset(
-                                                      IconConstant
-                                                          .instance.iconVoice),
-                                            ),
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                ),
+                            const SizedBox(width: 24.0),
+                            Text(
+                              "Go ahead, I’m listening",
+                              style: currentTextTheme.bodySmall?.copyWith(
+                                fontWeight: FontWeight.w500,
+                                color: const Color.fromRGBO(155, 150, 161, 1),
+                                fontSize: 14.0,
                               ),
                             ),
-                            const SizedBox(height: 10.0),
-                            InkWell(
+                            const SizedBox(),
+                          ],
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 35.0),
+                    Consumer<ConversationRoomViewModel>(
+                      builder: (context, state, child) {
+                        return state.isSpeaking
+                            ? Image.asset("assets/images/image_circle_loop.gif", width: 300.0, height: 300.0)
+                            : Image.asset(ImageConstant.instance.imageAI, width: 300.0, height: 300.0,);
+                      },
+                    ),
+                    Consumer<ConversationRoomViewModel>(
+                      builder: (context, state, child) {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 18.0),
+                          child: state.voiceMessage == "loading"
+                              ? SizedBox(
+                                  width: width(0.3),
+                                  child: SpinKitThreeBounce(
+                                    color:
+                                        ColorConstant.instance.additionalWhite,
+                                    size: 18.0,
+                                  ),
+                                )
+                              : Text(
+                                  state.voiceMessage,
+                                  style: currentTextTheme.bodySmall?.copyWith(
+                                    fontWeight: FontWeight.w400,
+                                    color:
+                                        ColorConstant.instance.additionalWhite,
+                                    fontSize: 20.0,
+                                  ),
+                                  maxLines: 4,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                        );
+                      },
+                    ),
+                    SizedBox(height: 40.0),
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Align(
+                          alignment: Alignment.center,
+                          child: AvatarGlow(
+                            endRadius: 75.0,
+                            animate:
+                                Provider.of<ConversationRoomViewModel>(context)
+                                    .isRecording,
+                            duration: const Duration(milliseconds: 500),
+                            glowColor: const Color.fromRGBO(71, 115, 254, 1),
+                            repeat: true,
+                            repeatPauseDuration:
+                                const Duration(milliseconds: 100),
+                            showTwoGlows: true,
+                            curve: Curves.fastOutSlowIn,
+                            child: GestureDetector(
                               onTap: () {
                                 Provider.of<ConversationRoomViewModel>(context,
                                         listen: false)
-                                    .selectVoice(false);
-                                Navigator.pop(context);
+                                    .setText("loading");
+                                    
+                                textViewModel.isSpeaking = true;
+                                Provider.of<TextToSpeechViewModel>(context,
+                                        listen: false)
+                                    .selectedIndex = -1;
+                                textViewModel.stop();
+                                Provider.of<ConversationRoomViewModel>(context,
+                                        listen: false)
+                                    .setIsRecord();
+                                Provider.of<ConversationRoomViewModel>(context,
+                                        listen: false)
+                                    .setSpeaking();
+                                if (Provider.of<ConversationRoomViewModel>(
+                                        context,
+                                        listen: false)
+                                    .isRecording) {
+                                  _startRecording(
+                                      Provider.of<ConversationRoomViewModel>(
+                                          context,
+                                          listen: false));
+                                } else {
+                                  _stopRecording(
+                                      Provider.of<ConversationRoomViewModel>(
+                                          context,
+                                          listen: false));
+                                }
                               },
-                              child: Container(
-                                width: 40.0,
-                                height: 40.0,
-                                decoration: BoxDecoration(
-                                  color: Colors.transparent,
-                                  borderRadius: BorderRadius.circular(50.0),
-                                  border: Border.all(
-                                    color:
-                                        ColorConstant.instance.additionalWhite,
-                                  ),
-                                ),
-                                child: Center(
-                                  child: SvgPicture.asset(
-                                    IconConstant.instance.iconKeyboard,
-                                    width: 15.0,
-                                    height: 15.0,
-                                    fit: BoxFit.cover,
-                                  ),
-                                ),
+                              child: Consumer<ConversationRoomViewModel>(
+                                builder: (context, state, child) {
+                                  return Container(
+                                    decoration: const BoxDecoration(
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: CircleAvatar(
+                                      radius: 55.0,
+                                      backgroundColor: const Color.fromRGBO(
+                                          120, 122, 124, 0.2),
+                                      child: CircleAvatar(
+                                        radius: 40.0,
+                                        backgroundColor: const Color.fromRGBO(
+                                            120, 122, 124, 0.4),
+                                        child: CircleAvatar(
+                                          backgroundColor: const Color.fromRGBO(
+                                              172, 173, 177, 1),
+                                          foregroundColor: Colors.red,
+                                          radius: 30.0,
+                                          child: SvgPicture.asset(
+                                              IconConstant.instance.iconVoice),
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
                               ),
                             ),
-                          ],
+                          ),
                         ),
-                        const Expanded(child: SizedBox()),
+                        const SizedBox(height: 10.0),
+                        InkWell(
+                          onTap: () {
+                            viewModel.sendTextController.text = "";
+                            Provider.of<ConversationRoomViewModel>(context,
+                                    listen: false)
+                                .selectVoice(false);
+                            Navigator.pop(context);
+                          },
+                          child: Container(
+                            width: 40.0,
+                            height: 40.0,
+                            decoration: BoxDecoration(
+                              color: Colors.transparent,
+                              borderRadius: BorderRadius.circular(50.0),
+                              border: Border.all(
+                                color: ColorConstant.instance.additionalWhite,
+                              ),
+                            ),
+                            child: Center(
+                              child: SvgPicture.asset(
+                                IconConstant.instance.iconKeyboard,
+                                width: 15.0,
+                                height: 15.0,
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                          ),
+                        ),
                       ],
                     ),
-                  ),
-                ],
+                    SizedBox(height: 20.0),
+                  ],
+                ),
               ),
             ),
           ),
@@ -1014,22 +1097,24 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
       crossAxisAlignment: CrossAxisAlignment.center,
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Container(
-          width: 25.0,
-          height: 25.0,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(50.0),
-            border: Border.all(color: ColorConstant.instance.paletteGrey),
-          ),
-          child: IconButton(
-            onPressed: () {
-              Navigator.pop(context);
-            },
-            icon: SvgPicture.asset(
-              IconConstant.instance.iconArrowBack,
-              color: ColorConstant.instance.paletteGrey,
-              width: 25.0,
-              height: 25.0,
+        Material(
+          borderRadius: BorderRadius.circular(50.0),
+          child: CircleAvatar(
+            radius: 14.0,
+            backgroundColor: ColorConstant.instance.backIconColor,
+            child: CircleAvatar(
+              radius: 12.0,
+              backgroundColor: ColorConstant.instance.paletteBackground,
+              child: IconButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                icon: Icon(
+                  Icons.arrow_back_ios,
+                  size: 10.0,
+                  color: ColorConstant.instance.backIconColor,
+                ),
+              ),
             ),
           ),
         ),
@@ -1037,7 +1122,7 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
           children: [
             Text(
               "Speaking to Talkios",
-              style: currentTextTheme.subtitle1?.copyWith(
+              style: currentTextTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w500,
                 color: ColorConstant.instance.additionalWhite,
                 fontSize: 16.0,
@@ -1105,7 +1190,16 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
     );
   }
 
-  Future<dynamic> pronunciationAndGrammer() {
+  Future<dynamic> pronunciationAndGrammer({
+    required String correctMessage,
+    required String userMessage,
+    required String betterMessage,
+    required String voiceRatio,
+    required String userSound,
+    required String profilePhoto,
+    required int conversationId,
+    required int messageId,
+  }) {
     return showModalBottomSheet(
       isDismissible: false,
       isScrollControlled: true,
@@ -1128,7 +1222,6 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
                 ),
                 child: Stack(
                   children: [
-                    proAndGrammer(context),
                     Positioned(
                       bottom: 0.0,
                       left: 0.0,
@@ -1138,6 +1231,17 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
                         width: width(1.0),
                         fit: BoxFit.cover,
                       ),
+                    ),
+                    proAndGrammer(
+                      context,
+                      correctMessage: correctMessage,
+                      userMessage: userMessage,
+                      betterMessage: betterMessage,
+                      voiceRatio: voiceRatio,
+                      userSound: userSound,
+                      profilePhoto: profilePhoto,
+                      conversationId: conversationId,
+                      messageId: messageId,
                     ),
                   ],
                 ),
@@ -1149,129 +1253,453 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
     );
   }
 
-  Padding proAndGrammer(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 24.0,
-        vertical: 24.0,
-      ),
-      child: Column(
-        children: [
-          Align(
-            alignment: Alignment.centerRight,
-            child: CircleAvatar(
-              backgroundColor: ColorConstant.instance.greyScale300,
-              radius: 15.0,
-              child: IconButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-                icon: Icon(
-                  Icons.close,
-                  size: 15.0,
-                  color: ColorConstant.instance.greyScale900,
-                ),
-              ),
+  Widget proAndGrammer(
+    BuildContext context, {
+    required String correctMessage,
+    required String userMessage,
+    required String betterMessage,
+    required String voiceRatio,
+    required String userSound,
+    required String profilePhoto,
+    required int conversationId,
+    required int messageId,
+  }) {
+    return correctMessage == "correctSentence"
+        ? futureModal(conversationId, messageId, userMessage, profilePhoto)
+        : Padding(
+            padding: const EdgeInsets.only(
+              left: 24.0,
+              right: 24.0,
+              top: 24.0,
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 70.0),
-            child: segmentTabBar(),
-          ),
-          Expanded(
-            child: TabBarView(children: [
-              grammarView(),
-              Padding(
-                padding: const EdgeInsets.all(50.0),
-                child: Column(
-                  children: [
-                    CircularPercentIndicator(
-                      radius: 55.0,
-                      lineWidth: 7.0,
-                      percent: 0.8, // Yüzde değeri, 0.0 - 1.0 aralığında olmalı
-                      center: Text(
-                        '80',
-                        style: currentTextTheme.subtitle1?.copyWith(
-                          fontWeight: FontWeight.w500,
-                          color: ColorConstant.instance.additionalWhite,
-                          fontSize: 32.0,
+            child: Column(
+              children: [
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: InkWell(
+                    onTap: () {
+                      Navigator.pop(context);
+                    },
+                    child: Container(
+                      width: 25.0,
+                      height: 25.0,
+                      decoration: BoxDecoration(
+                        color: Colors.transparent,
+                        borderRadius: BorderRadius.circular(50.0),
+                        border: Border.all(
+                          color: ColorConstant.instance.backIconColor,
+                          width: 3.0,
                         ),
                       ),
-                      progressColor: ColorConstant.instance.palettePurple,
-                      backgroundColor: ColorConstant.instance.paletteGrey,
-                    ),
-                    const SizedBox(height: 5.0),
-                    Text(
-                      "Good",
-                      style: currentTextTheme.subtitle1?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: ColorConstant.instance.additionalWhite,
-                        fontSize: 20.0,
+                      child: Center(
+                        child: Icon(
+                          Icons.close,
+                          size: 15.0,
+                          color: ColorConstant.instance.backIconColor,
+                        ),
                       ),
                     ),
-                    const Expanded(child: SizedBox()),
-                    Text(
-                      "I will go to the cinema",
-                      style: currentTextTheme.subtitle1?.copyWith(
-                        fontWeight: FontWeight.w500,
-                        color: ColorConstant.instance.paletteBlue,
-                        fontSize: 16.0,
-                      ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 70.0),
+                  child: segmentTabBar(),
+                ),
+                Expanded(
+                  child: TabBarView(children: [
+                    grammarView(
+                      correctMessage: correctMessage,
+                      userMessage: userMessage,
+                      betterMessage: betterMessage,
+                      messageId: messageId,
                     ),
-                    const SizedBox(height: 20.0),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.center,
+                    Column(
                       children: [
-                        avatarButton(),
-                        const SizedBox(width: 20.0),
-                        avatarButton(),
-                      ],
-                    ),
-                    const Expanded(child: SizedBox()),
-                    Text(
-                      "Practice",
-                      style: currentTextTheme.caption?.copyWith(
-                        fontWeight: FontWeight.w400,
-                        color: const Color.fromRGBO(155, 150, 161, 1),
-                        fontSize: 14.0,
-                      ),
-                    ),
-                    const SizedBox(height: 20.0),
-                    Container(
-                      decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                      ),
-                      child: CircleAvatar(
-                        radius: 55.0,
-                        backgroundColor:
-                            const Color.fromRGBO(120, 122, 124, 0.2),
-                        child: CircleAvatar(
-                          radius: 40.0,
-                          backgroundColor:
-                              const Color.fromRGBO(120, 122, 124, 0.4),
-                          child: CircleAvatar(
-                            backgroundColor:
-                                const Color.fromRGBO(172, 173, 177, 1),
-                            foregroundColor: Colors.red,
-                            radius: 30.0,
-                            child: SvgPicture.asset(
-                                IconConstant.instance.iconVoice),
+                        const Expanded(child: SizedBox()),
+                        CircularPercentIndicator(
+                          radius: 55.0,
+                          lineWidth: 7.0,
+                          percent: voiceRatio != ""
+                              ? double.parse(voiceRatio) / 100
+                              : 0.0, // Yüzde değeri, 0.0 - 1.0 aralığında olmalı
+                          center: Text(
+                            voiceRatio,
+                            style: currentTextTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w500,
+                              color: ColorConstant.instance.additionalWhite,
+                              fontSize: 32.0,
+                            ),
+                          ),
+                          progressColor: ColorConstant.instance.palettePurple,
+                          backgroundColor: ColorConstant.instance.paletteGrey,
+                        ),
+                        const Expanded(child: SizedBox()),
+                        Text(
+                          userMessage,
+                          style: currentTextTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w500,
+                            color: ColorConstant.instance.paletteBlue,
+                            fontSize: 16.0,
                           ),
                         ),
+                        const SizedBox(height: 20.0),
+                        Consumer<ConversationRoomViewModel>(
+                          builder: (context, state, child) {
+                            return Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                avatarButtonAI(
+                                  state: state,
+                                  avatarPhoto:
+                                      ImageConstant.instance.imageAIProfile,
+                                  message: userMessage,
+                                ),
+                                SizedBox(
+                                  width: userSound == "" ? 0.0 : 20.0,
+                                ),
+                                userSound == ""
+                                    ? const Center()
+                                    : avatarButton(
+                                        state: state,
+                                        avatarPhoto: profilePhoto,
+                                        onPressed: () async {
+                                          state.setAvatarAISelect(false);
+                                          state.setAvatarSelect(true);
+                                          textViewModel.stop();
+                                          final player = AudioPlayer();
+                                          await player.play(
+                                            UrlSource(
+                                              userSound,
+                                            ),
+                                          );
+                                        }),
+                              ],
+                            );
+                          },
+                        ),
+                        const Expanded(child: SizedBox()),
+                        Text(
+                          "Practice",
+                          style: currentTextTheme.bodySmall?.copyWith(
+                            fontWeight: FontWeight.w400,
+                            color: const Color.fromRGBO(155, 150, 161, 1),
+                            fontSize: 14.0,
+                          ),
+                        ),
+                        const SizedBox(height: 20.0),
+                        Align(
+                          alignment: Alignment.center,
+                          child: AvatarGlow(
+                            endRadius: 75.0,
+                            animate: Provider.of<ConversationRoomViewModel>(
+                                    context)
+                                .isRecording,
+                            duration: const Duration(milliseconds: 500),
+                            glowColor: const Color.fromRGBO(71, 115, 254, 1),
+                            repeat: true,
+                            repeatPauseDuration:
+                                const Duration(milliseconds: 100),
+                            showTwoGlows: true,
+                            curve: Curves.fastOutSlowIn,
+                            child: GestureDetector(
+                              onTap: () {
+                                textViewModel.isSpeaking = true;
+                                Provider.of<TextToSpeechViewModel>(context,
+                                        listen: false)
+                                    .selectedIndex = -1;
+                                textViewModel.stop();
+                                Provider.of<ConversationRoomViewModel>(
+                                        context,
+                                        listen: false)
+                                    .setIsRecord();
+                                Provider.of<ConversationRoomViewModel>(
+                                        context,
+                                        listen: false)
+                                    .setSpeaking();
+                                if (Provider.of<ConversationRoomViewModel>(
+                                        context,
+                                        listen: false)
+                                    .isRecording) {
+                                  _startRecording(
+                                      Provider.of<ConversationRoomViewModel>(
+                                          context,
+                                          listen: false));
+                                } else {
+                                  _stopRecording(
+                                      Provider.of<ConversationRoomViewModel>(
+                                          context,
+                                          listen: false));
+                                }
+                              },
+                              child: Consumer<ConversationRoomViewModel>(
+                                builder: (context, state, child) {
+                                  return Container(
+                                    decoration: const BoxDecoration(
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: CircleAvatar(
+                                      radius: 55.0,
+                                      backgroundColor: const Color.fromRGBO(
+                                          120, 122, 124, 0.2),
+                                      child: CircleAvatar(
+                                        radius: 40.0,
+                                        backgroundColor: const Color.fromRGBO(
+                                            120, 122, 124, 0.4),
+                                        child: CircleAvatar(
+                                          backgroundColor:
+                                              const Color.fromRGBO(
+                                                  172, 173, 177, 1),
+                                          foregroundColor: Colors.red,
+                                          radius: 30.0,
+                                          child: SvgPicture.asset(IconConstant
+                                              .instance.iconVoice),
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    )
+                  ]),
+                )
+              ],
+            ),
+          );
+  }
+
+  FutureBuilder<dynamic> futureModal(int conversationId, int messageId,
+      String userMessage, String profilePhoto) {
+    return FutureBuilder(
+      future: viewModel.getMessage(
+        conversationId: conversationId,
+        messageId: messageId,
+      ),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        } else if (snapshot.connectionState == ConnectionState.done) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 24.0,
+              vertical: 24.0,
+            ),
+            child: Column(
+              children: [
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: CircleAvatar(
+                    backgroundColor: ColorConstant.instance.greyScale300,
+                    radius: 15.0,
+                    child: IconButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      icon: Icon(
+                        Icons.close,
+                        size: 15.0,
+                        color: ColorConstant.instance.greyScale900,
                       ),
                     ),
-                  ],
+                  ),
                 ),
-              )
-            ]),
-          )
-        ],
-      ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 70.0),
+                  child: segmentTabBar(),
+                ),
+                Expanded(
+                  child: TabBarView(children: [
+                    grammarView(
+                      messageId: messageId,
+                      correctMessage: viewModel.oneMessage[0].correctSentence,
+                      userMessage: userMessage,
+                      betterMessage: viewModel.oneMessage[0].betterSentence,
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(50.0),
+                      child: Column(
+                        children: [
+                          CircularPercentIndicator(
+                            radius: 55.0,
+                            lineWidth: 7.0,
+                            percent: double.parse(
+                                    viewModel.oneMessage[0].soundRatio) /
+                                100, // Yüzde değeri, 0.0 - 1.0 aralığında olmalı
+                            center: Text(
+                              viewModel.oneMessage[0].soundRatio,
+                              style: currentTextTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w500,
+                                color: ColorConstant.instance.additionalWhite,
+                                fontSize: 32.0,
+                              ),
+                            ),
+                            progressColor: ColorConstant.instance.palettePurple,
+                            backgroundColor: ColorConstant.instance.paletteGrey,
+                          ),
+                          // const SizedBox(height: 5.0),
+                          // Text(
+                          //   "Good",
+                          //   style: currentTextTheme.titleMedium?.copyWith(
+                          //     fontWeight: FontWeight.w600,
+                          //     color: ColorConstant.instance.additionalWhite,
+                          //     fontSize: 20.0,
+                          //   ),
+                          // ),
+                          const Expanded(child: SizedBox()),
+                          Text(
+                            userMessage,
+                            style: currentTextTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w500,
+                              color: ColorConstant.instance.paletteBlue,
+                              fontSize: 16.0,
+                            ),
+                          ),
+                          const SizedBox(height: 20.0),
+                          Consumer<ConversationRoomViewModel>(
+                            builder: (context, state, child) {
+                              return Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  avatarButtonAI(
+                                    avatarPhoto:
+                                        ImageConstant.instance.imageAIProfile,
+                                    message: userMessage,
+                                    state: state,
+                                  ),
+                                  SizedBox(
+                                    width: viewModel.oneMessage[0].sound == ""
+                                        ? 0.0
+                                        : 20.0,
+                                  ),
+                                  viewModel.oneMessage[0].sound == ""
+                                      ? const Center()
+                                      : avatarButton(
+                                          state: state,
+                                          avatarPhoto: profilePhoto,
+                                          onPressed: () async {
+                                            state.setAvatarAISelect(false);
+                                            state.setAvatarSelect(true);
+                                            textViewModel.stop();
+                                            final player = AudioPlayer();
+                                            await player.play(
+                                              UrlSource(viewModel
+                                                  .oneMessage[0].sound),
+                                            );
+                                          }),
+                                ],
+                              );
+                            },
+                          ),
+                          const Expanded(child: SizedBox()),
+                          Text(
+                            "Practice",
+                            style: currentTextTheme.bodySmall?.copyWith(
+                              fontWeight: FontWeight.w400,
+                              color: const Color.fromRGBO(155, 150, 161, 1),
+                              fontSize: 14.0,
+                            ),
+                          ),
+                          const SizedBox(height: 20.0),
+                          Align(
+                            alignment: Alignment.center,
+                            child: AvatarGlow(
+                              endRadius: 75.0,
+                              animate: Provider.of<ConversationRoomViewModel>(
+                                      context)
+                                  .isRecording,
+                              duration: const Duration(milliseconds: 500),
+                              glowColor: const Color.fromRGBO(71, 115, 254, 1),
+                              repeat: true,
+                              repeatPauseDuration:
+                                  const Duration(milliseconds: 100),
+                              showTwoGlows: true,
+                              curve: Curves.fastOutSlowIn,
+                              child: GestureDetector(
+                                onTap: () {
+                                  textViewModel.isSpeaking = true;
+                                  Provider.of<TextToSpeechViewModel>(context,
+                                          listen: false)
+                                      .selectedIndex = -1;
+                                  textViewModel.stop();
+                                  Provider.of<ConversationRoomViewModel>(
+                                          context,
+                                          listen: false)
+                                      .setIsRecord();
+                                  Provider.of<ConversationRoomViewModel>(
+                                          context,
+                                          listen: false)
+                                      .setSpeaking();
+                                  if (Provider.of<ConversationRoomViewModel>(
+                                          context,
+                                          listen: false)
+                                      .isRecording) {
+                                    _startRecording(
+                                        Provider.of<ConversationRoomViewModel>(
+                                            context,
+                                            listen: false));
+                                  } else {
+                                    _stopRecording(
+                                        Provider.of<ConversationRoomViewModel>(
+                                            context,
+                                            listen: false));
+                                  }
+                                },
+                                child: Consumer<ConversationRoomViewModel>(
+                                  builder: (context, state, child) {
+                                    return Container(
+                                      decoration: const BoxDecoration(
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: CircleAvatar(
+                                        radius: 55.0,
+                                        backgroundColor: const Color.fromRGBO(
+                                            120, 122, 124, 0.2),
+                                        child: CircleAvatar(
+                                          radius: 40.0,
+                                          backgroundColor: const Color.fromRGBO(
+                                              120, 122, 124, 0.4),
+                                          child: CircleAvatar(
+                                            backgroundColor:
+                                                const Color.fromRGBO(
+                                                    172, 173, 177, 1),
+                                            foregroundColor: Colors.red,
+                                            radius: 30.0,
+                                            child: SvgPicture.asset(IconConstant
+                                                .instance.iconVoice),
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  ]),
+                )
+              ],
+            ),
+          );
+        } else {
+          return const Text("error");
+        }
+      },
     );
   }
 
-  Widget avatarButton() {
+  Widget avatarButton({
+    required String avatarPhoto,
+    required void Function()? onPressed,
+    required ConversationRoomViewModel state,
+  }) {
     return SizedBox(
       width: 91.0,
       height: 51.0,
@@ -1281,14 +1709,19 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
           elevation: 1.0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16.0),
+            side: BorderSide(
+              color: state.isAvatarSelected
+                  ? ColorConstant.instance.additionalGreen
+                  : const Color.fromRGBO(60, 70, 72, 0.7),
+            ),
           ),
         ),
-        onPressed: () {},
+        onPressed: onPressed,
         child: Row(
           children: [
             CircleAvatar(
               radius: 13.0,
-              backgroundColor: ColorConstant.instance.greyScale300,
+              backgroundImage: NetworkImage(avatarPhoto),
             ),
             const SizedBox(width: 10.0),
             SvgPicture.asset(
@@ -1303,115 +1736,207 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
     );
   }
 
-  Padding grammarView() {
+  Widget avatarButtonAI(
+      {required String avatarPhoto,
+      required String message,
+      required ConversationRoomViewModel state}) {
+    return SizedBox(
+      width: 91.0,
+      height: 51.0,
+      child: ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color.fromRGBO(60, 70, 72, 0.7),
+          elevation: 1.0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16.0),
+            side: BorderSide(
+              color: state.isAvatarAISelected
+                  ? ColorConstant.instance.additionalGreen
+                  : const Color.fromRGBO(60, 70, 72, 0.7),
+            ),
+          ),
+        ),
+        onPressed: () async {
+          state.setAvatarSelect(false);
+          state.setAvatarAISelect(true);
+          textViewModel.stop();
+
+          await Provider.of<TextToSpeechViewModel>(context, listen: false)
+              .speak(message);
+        },
+        child: Row(
+          children: [
+            CircleAvatar(
+              radius: 13.0,
+              backgroundImage: AssetImage(avatarPhoto),
+            ),
+            const SizedBox(width: 10.0),
+            SvgPicture.asset(
+              IconConstant.instance.iconVoice,
+              width: 18.0,
+              height: 22.0,
+              color: ColorConstant.instance.additionalWhite,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Padding grammarView({
+    required String correctMessage,
+    required String userMessage,
+    required String betterMessage,
+    required int messageId,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 50.0, horizontal: 32.0),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                "I want to go to cinema",
-                style: currentTextTheme.caption?.copyWith(
-                  fontWeight: FontWeight.w500,
-                  color:
-                      ColorConstant.instance.additionalWhite.withOpacity(0.6),
-                  fontSize: 16.0,
+          SizedBox(
+            width: width(1.0),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    userMessage,
+                    style: currentTextTheme.bodySmall?.copyWith(
+                      fontWeight: FontWeight.w500,
+                      color: ColorConstant.instance.additionalWhite
+                          .withOpacity(0.6),
+                      fontSize: 16.0,
+                    ),
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-              ),
-              SvgPicture.asset(
-                IconConstant.instance.iconWrong,
-                width: 16.0,
-                height: 16.0,
-              )
-            ],
+                SvgPicture.asset(
+                  IconConstant.instance.iconWrong,
+                  width: 16.0,
+                  height: 16.0,
+                )
+              ],
+            ),
           ),
           const SizedBox(height: 18.0),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                "I want to go to the cinema.",
-                style: currentTextTheme.caption?.copyWith(
-                  fontWeight: FontWeight.w500,
-                  color: ColorConstant.instance.additionalWhite,
-                  fontSize: 16.0,
+          SizedBox(
+            width: width(1.0),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    correctMessage,
+                    style: currentTextTheme.bodySmall?.copyWith(
+                      fontWeight: FontWeight.w500,
+                      color: ColorConstant.instance.additionalWhite,
+                      fontSize: 16.0,
+                    ),
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-              ),
-              SvgPicture.asset(
-                IconConstant.instance.iconCorrect,
-                width: 16.0,
-                height: 16.0,
-              )
-            ],
+                SvgPicture.asset(
+                  IconConstant.instance.iconCorrect,
+                  width: 16.0,
+                  height: 16.0,
+                )
+              ],
+            ),
           ),
           const Expanded(child: SizedBox()),
           Text(
             "It's better to say",
-            style: currentTextTheme.caption?.copyWith(
+            style: currentTextTheme.bodySmall?.copyWith(
               fontWeight: FontWeight.w600,
               color: ColorConstant.instance.additionalWhite,
               fontSize: 16.0,
             ),
           ),
           const SizedBox(height: 10.0),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Text(
-                "I wanna go to cinema.",
-                style: currentTextTheme.caption?.copyWith(
-                  fontWeight: FontWeight.w500,
-                  color: ColorConstant.instance.additionalWhite,
-                  fontSize: 14.0,
+          SizedBox(
+            width: width(1.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: Text(
+                    betterMessage,
+                    style: currentTextTheme.bodySmall?.copyWith(
+                      fontWeight: FontWeight.w500,
+                      color: ColorConstant.instance.additionalWhite,
+                      fontSize: 14.0,
+                    ),
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-              ),
-              Row(
-                children: [
-                  CircleAvatar(
-                    radius: 16.0,
-                    backgroundColor: const Color.fromRGBO(60, 70, 72, 1),
-                    child: IconButton(
-                      onPressed: () {},
-                      icon: SvgPicture.asset(
-                        IconConstant.instance.iconTranslate,
-                        width: 16.0,
-                        height: 16.0,
-                        color: ColorConstant.instance.additionalWhite,
+                Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 16.0,
+                      backgroundColor: const Color.fromRGBO(60, 70, 72, 1),
+                      child: IconButton(
+                        onPressed: () async {
+                          await viewModel.translate(
+                            conversationId: widget.conversationId,
+                            messageId: messageId,
+                            translateTitle: viewModel.nativeLanguage,
+                          );
+
+                          Provider.of<ConversationRoomViewModel>(context,
+                                  listen: false)
+                              .setTranslateMessage(
+                                  viewModel.translateModel.betterSentence!);
+                        },
+                        icon: SvgPicture.asset(
+                          IconConstant.instance.iconTranslate,
+                          width: 16.0,
+                          height: 16.0,
+                          color: ColorConstant.instance.additionalWhite,
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 5.0),
-                  CircleAvatar(
-                    radius: 16.0,
-                    backgroundColor: const Color.fromRGBO(60, 70, 72, 1),
-                    child: IconButton(
-                      onPressed: () {},
-                      icon: SvgPicture.asset(
-                        IconConstant.instance.iconVoice,
-                        width: 16.0,
-                        height: 16.0,
+                    const SizedBox(width: 5.0),
+                    CircleAvatar(
+                      radius: 16.0,
+                      backgroundColor: const Color.fromRGBO(60, 70, 72, 1),
+                      child: IconButton(
+                        onPressed: () {
+                          Provider.of<TextToSpeechViewModel>(context,
+                                  listen: false)
+                              .speak(betterMessage);
+                        },
+                        icon: SvgPicture.asset(
+                          IconConstant.instance.iconVoice,
+                          width: 16.0,
+                          height: 16.0,
+                        ),
                       ),
                     ),
-                  ),
-                ],
-              )
-            ],
+                  ],
+                )
+              ],
+            ),
           ),
           const SizedBox(height: 10.0),
-          Text(
-            "Sinemaya gitmek istiyorum",
-            style: currentTextTheme.caption?.copyWith(
-              fontWeight: FontWeight.w500,
-              color: ColorConstant.instance.paletteBlue,
-              fontSize: 14.0,
-            ),
+          Consumer<ConversationRoomViewModel>(
+            builder: (context, state, child) {
+              return Text(
+                state.translateMessage == "" ? "" : state.translateMessage,
+                style: currentTextTheme.bodySmall?.copyWith(
+                  fontWeight: FontWeight.w500,
+                  color: ColorConstant.instance.paletteBlue,
+                  fontSize: 14.0,
+                ),
+              );
+            },
           ),
           const Expanded(flex: 2, child: SizedBox()),
         ],
@@ -1421,7 +1946,7 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
 
   SegmentedTabControl segmentTabBar() {
     return SegmentedTabControl(
-      textStyle: currentTextTheme.caption?.copyWith(
+      textStyle: currentTextTheme.bodySmall?.copyWith(
         fontWeight: FontWeight.w300,
         fontSize: 14.0,
       ),
@@ -1475,6 +2000,7 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.end,
                     crossAxisAlignment: CrossAxisAlignment.end,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       Row(
                         mainAxisSize: MainAxisSize.min,
@@ -1482,7 +2008,7 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
                           Expanded(
                             child: Text(
                               chatProvider.chatList[index].message,
-                              style: currentTextTheme.headline3?.copyWith(
+                              style: currentTextTheme.displaySmall?.copyWith(
                                 fontWeight: FontWeight.w400,
                                 color: ColorConstant.instance.additionalWhite,
                                 fontSize: 14.0,
@@ -1507,6 +2033,7 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
                         children: [
                           IconButton(
                             onPressed: () {
+                              textViewModel.stop();
                               chatProvider.translateMessage =
                                   chatProvider.chatList[index].message;
                               showTranslateMessage(context, index);
@@ -1518,8 +2045,37 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
                             ),
                           ),
                           IconButton(
-                            onPressed: () {
-                              pronunciationAndGrammer();
+                            onPressed: () async {
+                              textViewModel.stop();
+                              Provider.of<ConversationRoomViewModel>(context,
+                                      listen: false)
+                                  .setTranslateMessage("");
+                              Provider.of<ConversationRoomViewModel>(context,
+                                      listen: false)
+                                  .setAvatarAISelect(false);
+                              Provider.of<ConversationRoomViewModel>(context,
+                                      listen: false)
+                                  .setAvatarSelect(false);
+                              await Provider.of<ConversationRoomViewModel>(
+                                      context,
+                                      listen: false)
+                                  .getAllMessages(
+                                conversationId: widget.conversationId,
+                              );
+                              pronunciationAndGrammer(
+                                correctMessage: chatProvider
+                                    .chatList[index].correctSentence,
+                                userMessage:
+                                    chatProvider.chatList[index].message,
+                                betterMessage:
+                                    chatProvider.chatList[index].betterSentence,
+                                voiceRatio:
+                                    chatProvider.chatList[index].soundRatio,
+                                userSound: chatProvider.chatList[index].sound,
+                                profilePhoto: widget.profilePhoto,
+                                conversationId: widget.conversationId,
+                                messageId: chatProvider.chatList[index].id,
+                              );
                             },
                             icon: SvgPicture.asset(
                               IconConstant.instance.iconPronunciation,
@@ -1545,6 +2101,137 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
     );
   }
 
+  Future<dynamic> selectLanguageModal() {
+    return showModalBottomSheet(
+      isDismissible: true,
+      isScrollControlled: true,
+      context: context,
+      builder: (BuildContext context) {
+        return BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+          child: FractionallySizedBox(
+            heightFactor: 0.7,
+            child: Container(
+              width: width(1.0),
+              decoration: const BoxDecoration(
+                color: Colors.transparent,
+              ),
+              child: SingleChildScrollView(
+                physics: const ClampingScrollPhysics(),
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 8.0, right: 8.0),
+                  child: Column(
+                    children: [
+                      Container(
+                        width: width(1.0),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16.0),
+                          border: Border.all(
+                            color: ColorConstant.instance.paletteGrey,
+                          ),
+                        ),
+                        child: ListView.builder(
+                          itemCount: viewModel.languages.length,
+                          addAutomaticKeepAlives: false,
+                          addRepaintBoundaries: false,
+                          shrinkWrap: true,
+                          padding: EdgeInsets.zero,
+                          physics: const ClampingScrollPhysics(),
+                          itemBuilder: (context, index) {
+                            return SizedBox(
+                              width: width(1.0),
+                              height: 61.0,
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor:
+                                      const Color.fromRGBO(32, 33, 35, 0.8),
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.only(
+                                        topLeft: Radius.circular(
+                                            index == 0 ? 16.0 : 0.0),
+                                        topRight: Radius.circular(
+                                            index == 0 ? 16.0 : 0.0),
+                                        bottomLeft: Radius.circular(index ==
+                                                (viewModel.languages.length - 1)
+                                            ? 16.0
+                                            : 0.0),
+                                        bottomRight: Radius.circular(index ==
+                                                (viewModel.languages.length - 1)
+                                            ? 16.0
+                                            : 0.0),
+                                      ),
+                                      side: BorderSide(
+                                          color: ColorConstant
+                                              .instance.paletteGrey)),
+                                ),
+                                onPressed: () {
+                                  viewModel.selectedLanguageId =
+                                      viewModel.languages[index].id!;
+                                  viewModel.selectedLanguageCode =
+                                      viewModel.languages[index].code!;
+                                  viewModel.selectedIndex = index;
+                                  viewModel.nativeLanguage =
+                                      viewModel.languages[index].title!;
+              
+                                  Provider.of<ConversationRoomViewModel>(context,
+                                          listen: false)
+                                      .selectLanguageText(
+                                          viewModel.languages[index].title!);
+              
+                                  Navigator.pop(context);
+                                },
+                                child: Text(
+                                  viewModel.languages[index].title!,
+                                  style: currentTextTheme.caption?.copyWith(
+                                    fontWeight: FontWeight.w400,
+                                    fontSize: 20.0,
+                                    color: ColorConstant.instance.additionalWhite,
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 8.0),
+                      SizedBox(
+                        width: width(1.0),
+                        height: 61.0,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                              backgroundColor:
+                                  const Color.fromRGBO(32, 33, 35, 0.8),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16.0),
+                                side: BorderSide(
+                                  color: ColorConstant.instance.paletteGrey,
+                                ),
+                              )),
+                          onPressed: () {
+                            Navigator.pop(context);
+                          },
+                          child: Text(
+                            "Cancel",
+                            style: currentTextTheme.caption?.copyWith(
+                              fontWeight: FontWeight.w400,
+                              fontSize: 20.0,
+                              color: ColorConstant.instance.additionalWhite,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 32.0),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   Column assistantMessage(ConversationRoomViewModel chatProvider, int index) {
     if (index == chatProvider.getChatList.length - 1 &&
         !textViewModel.isSpeaking &&
@@ -1565,7 +2252,7 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
             const SizedBox(width: 10.0),
             Expanded(
               child: DefaultTextStyle(
-                style: currentTextTheme.headline3?.copyWith(
+                style: currentTextTheme.displaySmall?.copyWith(
                       fontWeight: FontWeight.w400,
                       fontSize: 14.0,
                       color: chatProvider.chatList[index].message ==
@@ -1591,6 +2278,7 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
                       child: IconButton(
                         iconSize: 18.0,
                         onPressed: () async {
+                          textViewModel.stop();
                           chatProvider.translateMessage =
                               chatProvider.chatList[index].message;
 
@@ -1604,84 +2292,25 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
                       ),
                     ),
                     const SizedBox(width: 10.0),
-                    Consumer<TextToSpeechViewModel>(
-                      builder: (context, state, child) {
-                        return state.isCompleted
-                            ? Expanded(
-                                child: IconButton(
-                                  iconSize: 18.0,
-                                  onPressed: () async {
-                                    HapticFeedback.heavyImpact();
+                    Expanded(
+                      child: IconButton(
+                        iconSize: 18.0,
+                        onPressed: () async {
+                          HapticFeedback.heavyImpact();
+                          var state = Provider.of<TextToSpeechViewModel>(
+                              context,
+                              listen: false);
 
-                                    state.speak(
-                                        chatProvider.chatList[index].message);
-                                    state.changeSelectedIndex(index);
-                                  },
-                                  icon: Icon(
-                                    Icons.mic,
-                                    color:
-                                        ColorConstant.instance.additionalWhite,
-                                    size: 18.0,
-                                  ),
-                                ),
-                              )
-                            : index == state.selectedIndex
-                                ? Expanded(
-                                    child: AvatarGlow(
-                                      showTwoGlows: true,
-                                      endRadius: 35.0,
-                                      animate: !state.isCompleted,
-                                      duration:
-                                          const Duration(milliseconds: 1500),
-                                      glowColor: Colors.blue,
-                                      repeat: true,
-                                      repeatPauseDuration:
-                                          const Duration(milliseconds: 100),
-                                      child: CircleAvatar(
-                                        backgroundColor:
-                                            ColorConstant.instance.greyScale400,
-                                        radius: 15.0,
-                                        child: IconButton(
-                                          onPressed: () async {
-                                            state.speak(chatProvider
-                                                .chatList[index].message);
-                                            state.changeSelectedIndex(index);
-                                          },
-                                          icon: Center(
-                                            child: Icon(
-                                              Icons.mic,
-                                              color: ColorConstant
-                                                  .instance.greyScale600,
-                                              size: 15.0,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  )
-                                : Expanded(
-                                    child: CircleAvatar(
-                                      backgroundColor:
-                                          ColorConstant.instance.greyScale400,
-                                      radius: 15.0,
-                                      child: IconButton(
-                                        onPressed: () async {
-                                          HapticFeedback.heavyImpact();
-                                          state.speak(chatProvider
-                                              .chatList[index].message);
-                                          state.changeSelectedIndex(index);
-                                        },
-                                        icon: Icon(
-                                          Icons.mic,
-                                          color: ColorConstant
-                                              .instance.greyScale600,
-                                          size: 15.0,
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                      },
-                    )
+                          state.speak(chatProvider.chatList[index].message);
+                          state.changeSelectedIndex(index);
+                        },
+                        icon: Icon(
+                          Icons.mic,
+                          color: ColorConstant.instance.additionalWhite,
+                          size: 18.0,
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -1712,7 +2341,7 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
 
     if (viewModel.isTyping) {
       showTopSnackBar(
-        Overlay.of(context)!,
+        Overlay.of(context),
         const CustomSnackBar.error(
           message: "You cannot send multiple sounds at the same time",
         ),
@@ -1724,7 +2353,7 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
       // chatProvider.chatList.removeLast();
       // chatProvider.addUserMessage(message: "Please send audio");
       showTopSnackBar(
-        Overlay.of(context)!,
+        Overlay.of(context),
         const CustomSnackBar.error(
           message: "Please send audio",
         ),
@@ -1734,16 +2363,24 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
 
     try {
       String msg = viewModel.sendTextController.text;
+      viewModel.sendTextController.clear();
       _isFirst = false;
 
       viewModel.isTyping = true;
 
-      chatProvider.addUserMessage(message: msg);
-      provider.sendTextController.clear();
+      chatProvider.addUserMessage(
+        message: msg,
+        betterSentence: "betterSentence",
+        correctSentence: "correctSentence",
+        sound: "sound",
+        soundRatio: "soundRatio",
+      );
 
       focusNode.unfocus();
 
       await chatProvider.sendMessageAndGetAnswers(
+        soundRatio: voiceRatio,
+        sound: _path,
         message: msg,
         conversationId: widget.conversationId,
       );
@@ -1761,9 +2398,6 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
     } finally {
       scrollListToEND();
       viewModel.isTyping = false;
-      // Future.delayed(const Duration(seconds: 2), () {
-
-      // });
     }
   }
 
@@ -1796,7 +2430,7 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
                         children: [
                           Text(
                             LocaleKeys.rate_text.tr(),
-                            style: currentTextTheme.headline3?.copyWith(
+                            style: currentTextTheme.displaySmall?.copyWith(
                               fontWeight: FontWeight.w600,
                               color: ColorConstant.instance.greyScale900,
                             ),
@@ -1810,7 +2444,7 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
                             },
                             child: Text(
                               LocaleKeys.skip.tr(),
-                              style: currentTextTheme.headline4?.copyWith(
+                              style: currentTextTheme.headlineMedium?.copyWith(
                                 fontWeight: FontWeight.w400,
                                 color: ColorConstant.instance.greyScale600,
                               ),
@@ -2011,7 +2645,7 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
                   const SizedBox(height: 10.0),
                   Text(
                     LocaleKeys.message.tr(),
-                    style: currentTextTheme.headline1?.copyWith(
+                    style: currentTextTheme.displayLarge?.copyWith(
                       fontSize: 16.0,
                       fontWeight: FontWeight.w600,
                       color: ColorConstant.instance.additionalWhite,
@@ -2020,7 +2654,7 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
                   const SizedBox(height: 16.0),
                   Text(
                     state.translateMessage,
-                    style: currentTextTheme.headline1?.copyWith(
+                    style: currentTextTheme.displayLarge?.copyWith(
                       fontSize: 16.0,
                       fontWeight: FontWeight.w400,
                       color: ColorConstant.instance.additionalWhite,
@@ -2032,7 +2666,7 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
                     children: [
                       Text(
                         LocaleKeys.translate_to.tr(),
-                        style: currentTextTheme.headline1?.copyWith(
+                        style: currentTextTheme.displayLarge?.copyWith(
                           fontSize: 20.0,
                           fontWeight: FontWeight.w600,
                           color: ColorConstant.instance.additionalWhite,
@@ -2049,17 +2683,23 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
                           ),
                         ),
                         onPressed: () {
-                          changeLanguage(context);
+                          // changeLanguage(context);
+                          selectLanguageModal();
                         },
-                        child: Text(
-                          viewModel.nativeLanguage == ''
-                              ? state.conversationModel.nativeLanguage!.title!
-                              : viewModel.nativeLanguage,
-                          style: currentTextTheme.headline3?.copyWith(
-                            fontSize: 14.0,
-                            fontWeight: FontWeight.w400,
-                            color: ColorConstant.instance.additionalWhite,
-                          ),
+                        child: Consumer<ConversationRoomViewModel>(
+                          builder: (context, stateCo, child) {
+                            return Text(
+                              stateCo.nativeLanguage == ''
+                                  ? state
+                                      .conversationModel.nativeLanguage!.title!
+                                  : stateCo.nativeLanguage,
+                              style: currentTextTheme.displaySmall?.copyWith(
+                                fontSize: 14.0,
+                                fontWeight: FontWeight.w400,
+                                color: ColorConstant.instance.additionalWhite,
+                              ),
+                            );
+                          },
                         ),
                       ),
                     ],
@@ -2067,7 +2707,7 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
                   const SizedBox(height: 16.0),
                   Text(
                     viewModel.translateModel.message!,
-                    style: currentTextTheme.headline1?.copyWith(
+                    style: currentTextTheme.displayLarge?.copyWith(
                       fontSize: 16.0,
                       fontWeight: FontWeight.w400,
                       color: ColorConstant.instance.additionalWhite,
@@ -2128,7 +2768,7 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
                     const SizedBox(height: 24.0),
                     Text(
                       LocaleKeys.all_lang.tr(),
-                      style: currentTextTheme.headline3?.copyWith(
+                      style: currentTextTheme.displaySmall?.copyWith(
                         fontWeight: FontWeight.w500,
                         color: ColorConstant.instance.greyScale600,
                       ),
@@ -2164,7 +2804,7 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
                                       ColorConstant.instance.additionalWhite,
                                   borderRadius: 66.0,
                                   text: viewModel.languages[index].title!,
-                                  textStyle: currentTextTheme.headline3
+                                  textStyle: currentTextTheme.displaySmall
                                           ?.copyWith(
                                               fontWeight: FontWeight.w400,
                                               color: ColorConstant

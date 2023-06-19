@@ -1,5 +1,6 @@
 // ignore_for_file: use_build_context_synchronously, unused_local_variable, no_leading_underscores_for_local_identifiers, iterable_contains_unrelated_type
 
+import 'package:chatbot/core/constants/color_constant.dart';
 import 'package:chatbot/core/enum/preference_keys.dart';
 import 'package:chatbot/product/auth/language/model/language_model.dart';
 import 'package:chatbot/product/auth/register/service/register_service.dart';
@@ -167,8 +168,9 @@ class LanguageViewModel extends ChangeNotifier {
         learnLanguageProficiencyCefr = "A1";
         return Text(
           LocaleKeys.a1.tr(),
-          style: Theme.of(context).textTheme.headline2?.copyWith(
+          style: Theme.of(context).textTheme.displayMedium?.copyWith(
                     fontWeight: FontWeight.w400,
+                    color: ColorConstant.instance.additionalWhite,
                   ) ??
               const TextStyle(),
           textAlign: TextAlign.center,
@@ -177,8 +179,9 @@ class LanguageViewModel extends ChangeNotifier {
         learnLanguageProficiencyCefr = "A2";
         return Text(
           LocaleKeys.a2.tr(),
-          style: Theme.of(context).textTheme.headline2?.copyWith(
+          style: Theme.of(context).textTheme.displayMedium?.copyWith(
                     fontWeight: FontWeight.w400,
+                    color: ColorConstant.instance.additionalWhite,
                   ) ??
               const TextStyle(),
           textAlign: TextAlign.center,
@@ -187,8 +190,9 @@ class LanguageViewModel extends ChangeNotifier {
         learnLanguageProficiencyCefr = "B1";
         return Text(
           LocaleKeys.b1.tr(),
-          style: Theme.of(context).textTheme.headline2?.copyWith(
+          style: Theme.of(context).textTheme.displayMedium?.copyWith(
                     fontWeight: FontWeight.w400,
+                    color: ColorConstant.instance.additionalWhite,
                   ) ??
               const TextStyle(),
           textAlign: TextAlign.center,
@@ -197,8 +201,9 @@ class LanguageViewModel extends ChangeNotifier {
         learnLanguageProficiencyCefr = "B2";
         return Text(
           LocaleKeys.b2.tr(),
-          style: Theme.of(context).textTheme.headline2?.copyWith(
+          style: Theme.of(context).textTheme.displayMedium?.copyWith(
                     fontWeight: FontWeight.w400,
+                    color: ColorConstant.instance.additionalWhite,
                   ) ??
               const TextStyle(),
           textAlign: TextAlign.center,
@@ -207,8 +212,9 @@ class LanguageViewModel extends ChangeNotifier {
         learnLanguageProficiencyCefr = "C1";
         return Text(
           LocaleKeys.c1.tr(),
-          style: Theme.of(context).textTheme.headline2?.copyWith(
+          style: Theme.of(context).textTheme.displayMedium?.copyWith(
                     fontWeight: FontWeight.w400,
+                    color: ColorConstant.instance.additionalWhite,
                   ) ??
               const TextStyle(),
           textAlign: TextAlign.center,
@@ -217,8 +223,9 @@ class LanguageViewModel extends ChangeNotifier {
         learnLanguageProficiencyCefr = "C2";
         return Text(
           LocaleKeys.c2.tr(),
-          style: Theme.of(context).textTheme.headline2?.copyWith(
+          style: Theme.of(context).textTheme.displayMedium?.copyWith(
                     fontWeight: FontWeight.w400,
+                    color: ColorConstant.instance.additionalWhite,
                   ) ??
               const TextStyle(),
           textAlign: TextAlign.center,
@@ -227,65 +234,15 @@ class LanguageViewModel extends ChangeNotifier {
         learnLanguageProficiencyCefr = "A1";
         return Text(
           LocaleKeys.c2.tr(),
-          style: Theme.of(context).textTheme.headline2?.copyWith(
+          style: Theme.of(context).textTheme.displayMedium?.copyWith(
                     fontWeight: FontWeight.w400,
+                    color: ColorConstant.instance.additionalWhite,
                   ) ??
               const TextStyle(),
           textAlign: TextAlign.center,
         );
     }
   }
-
-  // changeCheckboxStatusPopular({required int index}) {
-  //   selectedIndex = -1;
-  //   selectedPopularIndex = index;
-  //   notifyListeners();
-  // }
-
-  // changeCheckboxLearnStatus({required int index}) {
-  //   selectedLearnPopularIndex = -1;
-  //   selectedLearnIndex = index;
-  //   notifyListeners();
-  // }
-
-  // changeCheckboxLearnStatusPopular({required int index}) {
-  //   selectedLearnIndex = -1;
-  //   selectedLearnPopularIndex = index;
-  //   notifyListeners();
-  // }
-
-  // changeCheckboxStatusLevels({required int index}) {
-  //   selectedIndex = -1;
-  //   selectedPopularIndex = -1;
-  //   selectedLevelIndex = index;
-  //   notifyListeners();
-  // }
-
-  // Future getLanguages() async {
-  //   isGetLanguage = false;
-  //   final model = await service.getLanguages();
-
-  //   if (model.result == true) {
-  //     for (var i = 0; i < model.data!.languages!.length; i++) {
-  //       if (model.data!.languages![i].isPopular == 1) {
-  //         if (popularLanguageTitles.length != 4) {
-  //           popularLanguageTitles.add(model.data!.languages![i].title!);
-  //           popularLanguageIds.add(model.data!.languages![i].id!);
-  //           popularLanguageImages.add(model.data!.languages![i].flag!);
-  //         }
-  //       } else {
-  //         languages.clear();
-  //         languages.addAll(model.data!.languages!);
-  //       }
-  //     }
-  //     languages.clear();
-  //     languages.addAll(model.data!.languages!);
-  //   }
-
-  //   isGetLanguage = true;
-
-  //   notifyListeners();
-  // }
 
   Future register(Map<String, dynamic> user, BuildContext context) async {
     final response = await registerService.register(user);

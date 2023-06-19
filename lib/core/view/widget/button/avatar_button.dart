@@ -4,14 +4,14 @@ import 'package:chatbot/core/view/base/base_stateless.dart';
 import 'package:flutter/material.dart';
 
 class AvatarButton extends BaseStateless {
-  final Color color;
+  final Color? color;
   final String image;
   final EdgeInsetsGeometry padding;
   final int avatarId;
   final int selectedIndex;
 
   AvatarButton({
-    required this.color,
+    this.color,
     required this.image,
     required this.padding,
     required this.avatarId,
@@ -25,26 +25,32 @@ class AvatarButton extends BaseStateless {
       height: 60.0,
       padding: const EdgeInsets.all(5.0),
       decoration: BoxDecoration(
-        color: color,
+        image: DecorationImage(
+          image: NetworkImage(image),
+          fit: BoxFit.cover,
+        ),
+        color: color ?? Colors.transparent,
         borderRadius: BorderRadius.circular(50.0),
         border: Border.all(
             width: 1.0,
-            color: selectedIndex == avatarId - 1 ? Colors.red : Colors.transparent),
+            color: selectedIndex == avatarId - 1
+                ? Colors.red
+                : Colors.transparent),
       ),
-      child: Container(
-        width: 50.0,
-        height: 50.0,
-        padding: padding,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(50.0),
-        ),
-        child: Image.network(
-          image,
-          width: 50.0,
-          height: 50.0,
-          fit: BoxFit.cover,
-        ),
-      ),
+      // child: Container(
+      //   width: 60.0,
+      //   height: 60.0,
+      //   padding: padding,
+      //   decoration: BoxDecoration(
+      //     borderRadius: BorderRadius.circular(50.0),
+      //   ),
+      //   child: Image.network(
+      //     image,
+      //     width: 60.0,
+      //     height: 60.0,
+      //     fit: BoxFit.cover,
+      //   ),
+      // ),
     );
   }
 }

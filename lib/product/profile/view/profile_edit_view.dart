@@ -1,4 +1,4 @@
-// ignore_for_file: use_key_in_widget_constructors, must_be_immutable, use_build_context_synchronously
+// ignore_for_file: use_key_in_widget_constructors, must_be_immutable, use_build_context_synchronously, deprecated_member_use
 
 import 'dart:ui';
 
@@ -80,241 +80,221 @@ class _ProfileEditViewState extends BaseState<ProfileEditView> {
       builder: (context, state, child) {
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24.0),
-          child: SingleChildScrollView(
-            physics: const ClampingScrollPhysics(),
-            child: Stack(
-              children: [
-                SizedBox(
-                  height: height(0.9),
-                  child: Padding(
-                    padding: const EdgeInsets.only(top: 68.0),
-                    child: Column(
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            backButton(context),
-                            Text(
-                              LocaleKeys.personal_information.tr(),
-                              style: currentTextTheme.headline3?.copyWith(
-                                fontWeight: FontWeight.w500,
-                                color: ColorConstant.instance.additionalWhite,
-                              ),
-                            ),
-                            saveButton(context),
-                          ],
+          child: SizedBox(
+            height: height(0.9),
+            child: Padding(
+              padding: const EdgeInsets.only(top: 38.0),
+              child: ListView(
+                shrinkWrap: true,
+                physics: const ClampingScrollPhysics(),
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      backButton(context),
+                      Text(
+                        LocaleKeys.personal_information.tr(),
+                        style: currentTextTheme.displaySmall?.copyWith(
+                          fontWeight: FontWeight.w500,
+                          color: ColorConstant.instance.additionalWhite,
                         ),
-                        const SizedBox(height: 40.0),
-                        Align(
-                          alignment: Alignment.center,
-                          child: Container(
-                            width: 100.0,
-                            height: 100.0,
-                            padding: const EdgeInsets.all(5.0),
-                            decoration: BoxDecoration(
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: ColorConstant.instance.greyScale300,
-                                    blurRadius: 10.0,
-                                    spreadRadius: 1.0,
-                                    offset: const Offset(3, 3),
-                                  )
-                                ],
-                                color: ColorConstant.instance.additionalWhite,
-                                borderRadius: BorderRadius.circular(50.0),
-                                border: Border.all(
-                                  width: 1.0,
-                                  color: ColorConstant.instance.additionalWhite,
-                                )),
-                            child: state.isPhotoLoaded
-                                ? viewModel.selectedAvatarId == -1
-                                    ? Hero(
-                                        tag: "profilePhoto",
-                                        child: Container(
-                                          width: 60.0,
-                                          height: 60.0,
-                                          padding: const EdgeInsets.all(15.0),
-                                          decoration: BoxDecoration(
-                                            borderRadius:
-                                                BorderRadius.circular(50.0),
-                                            color:
-                                                widget.profileBackgroundColor,
-                                            image: DecorationImage(
-                                              image: NetworkImage(
-                                                  widget.profilePhoto),
-                                              fit: BoxFit.cover,
-                                            ),
-                                          ),
-                                        ),
-                                      )
-                                    : Container(
-                                        width: 60.0,
-                                        height: 60.0,
-                                        padding: const EdgeInsets.all(15.0),
-                                        decoration: BoxDecoration(
-                                          borderRadius:
-                                              BorderRadius.circular(50.0),
-                                          color: const Color.fromRGBO(
-                                              221, 212, 251, 1),
-                                          image: DecorationImage(
-                                            image: NetworkImage(
-                                                viewModel.avatarUrl),
-                                            fit: BoxFit.cover,
-                                          ),
-                                        ),
-                                      )
-                                : Container(
+                      ),
+                      saveButton(context),
+                    ],
+                  ),
+                  const SizedBox(height: 40.0),
+                  Align(
+                    alignment: Alignment.center,
+                    child: Container(
+                      width: 100.0,
+                      height: 100.0,
+                      padding: const EdgeInsets.all(5.0),
+                      decoration: BoxDecoration(
+                          boxShadow: [
+                            BoxShadow(
+                              color: ColorConstant.instance.greyScale300,
+                              blurRadius: 10.0,
+                              spreadRadius: 1.0,
+                              offset: const Offset(3, 3),
+                            )
+                          ],
+                          color: ColorConstant.instance.additionalWhite,
+                          borderRadius: BorderRadius.circular(50.0),
+                          border: Border.all(
+                            width: 1.0,
+                            color: ColorConstant.instance.additionalWhite,
+                          )),
+                      child: state.isPhotoLoaded
+                          ? viewModel.selectedAvatarId == -1
+                              ? Hero(
+                                  tag: "profilePhoto",
+                                  child: Container(
                                     width: 60.0,
                                     height: 60.0,
                                     padding: const EdgeInsets.all(15.0),
                                     decoration: BoxDecoration(
                                       borderRadius: BorderRadius.circular(50.0),
-                                      color: const Color.fromRGBO(
-                                          221, 212, 251, 1),
+                                      color: widget.profileBackgroundColor,
                                       image: DecorationImage(
-                                        image: MemoryImage(state.bytes!),
+                                        image:
+                                            NetworkImage(widget.profilePhoto),
                                         fit: BoxFit.cover,
                                       ),
                                     ),
                                   ),
-                          ),
-                        ),
-                        const SizedBox(height: 24.0),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 16.0),
-                          child: SizedBox(
-                            height: 60.0,
-                            child: ListView.builder(
-                              scrollDirection: Axis.horizontal,
-                              itemCount: widget.avatars.length,
-                              addAutomaticKeepAlives: false,
-                              addRepaintBoundaries: false,
-                              physics: const ClampingScrollPhysics(),
-                              itemBuilder: (context, index) {
-                                return Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 5.0),
-                                  child: InkWell(
-                                    onTap: () async {
-                                      Provider.of<ProfileViewModel>(context,
-                                              listen: false)
-                                          .setPhotoLoaded();
-                                      viewModel.isSelectAvatar = true;
-                                      viewModel.selectedAvatarId =
-                                          widget.avatars[index].id! + 1;
-                                      viewModel.avatarUrl =
-                                          widget.avatars[index].url!;
-                                      viewModel.selectedAvatarIndex = index;
-                                      // }
-                                    },
-                                    child: AvatarButton(
-                                      color: Color.fromRGBO(
-                                        widget.avatars[index].color![0],
-                                        widget.avatars[index].color![1],
-                                        widget.avatars[index].color![2],
-                                        1,
-                                      ),
-                                      image: widget.avatars[index].url!,
-                                      padding: const EdgeInsets.all(5.0),
-                                      avatarId: widget.avatars[index].id!,
-                                      selectedIndex:
-                                          viewModel.selectedAvatarIndex,
+                                )
+                              : Container(
+                                  width: 60.0,
+                                  height: 60.0,
+                                  padding: const EdgeInsets.all(15.0),
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(50.0),
+                                    color:
+                                        const Color.fromRGBO(221, 212, 251, 1),
+                                    image: DecorationImage(
+                                      image: NetworkImage(viewModel.avatarUrl),
+                                      fit: BoxFit.cover,
                                     ),
                                   ),
+                                )
+                          : Container(
+                              width: 60.0,
+                              height: 60.0,
+                              padding: const EdgeInsets.all(15.0),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(50.0),
+                                color: const Color.fromRGBO(221, 212, 251, 1),
+                                image: DecorationImage(
+                                  image: MemoryImage(state.bytes!),
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                            ),
+                    ),
+                  ),
+                  const SizedBox(height: 24.0),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 16.0),
+                    child: SizedBox(
+                      height: 60.0,
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: widget.avatars.length,
+                        addAutomaticKeepAlives: false,
+                        addRepaintBoundaries: false,
+                        physics: const ClampingScrollPhysics(),
+                        itemBuilder: (context, index) {
+                          return Padding(
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 5.0),
+                            child: InkWell(
+                              onTap: () async {
+                                Provider.of<ProfileViewModel>(context,
+                                        listen: false)
+                                    .setPhotoLoaded();
+                                viewModel.isSelectAvatar = true;
+                                viewModel.selectedAvatarId =
+                                    widget.avatars[index].id! + 1;
+                                viewModel.avatarUrl =
+                                    widget.avatars[index].url!;
+                                viewModel.selectedAvatarIndex = index;
+                                // }
+                              },
+                              child: AvatarButton(
+                                image: widget.avatars[index].url!,
+                                padding: const EdgeInsets.all(0.0),
+                                avatarId: widget.avatars[index].id!,
+                                selectedIndex: viewModel.selectedAvatarIndex,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20.0),
+                  Expanded(
+                    child: Form(
+                      child: Column(
+                        children: [
+                          AppFormField(
+                            heightValue: height(0.07),
+                            controller: viewModel.nameController,
+                            focusNode: viewModel.nameFocusNode,
+                            isPrefix: false,
+                            hintText: LocaleKeys.name.tr(),
+                          ),
+                          const SizedBox(height: 15.0),
+                          AppFormField(
+                            enabled: true,
+                            heightValue: height(0.07),
+                            controller: viewModel.emailController,
+                            focusNode: viewModel.emailFocusNode,
+                            isPrefix: false,
+                            hintText: LocaleKeys.email.tr(),
+                          ),
+                          const SizedBox(height: 15.0),
+                          AppFormField(
+                            heightValue: height(0.07),
+                            controller: viewModel.passwordController,
+                            focusNode: viewModel.passwordFocusNode,
+                            isPrefix: false,
+                            hintText: LocaleKeys.password.tr(),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 15.0),
+                  ProfileButton(
+                    onTap: () {
+                      showModalBottomSheet(
+                        isDismissible: false,
+                        isScrollControlled: true,
+                        context: context,
+                        builder: (BuildContext context) {
+                          return BackdropFilter(
+                            filter:
+                                ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+                            child: Consumer<ProfileViewModel>(
+                              builder: (context, state, child) {
+                                return FractionallySizedBox(
+                                  heightFactor: 0.8,
+                                  child: languages(context),
                                 );
                               },
                             ),
-                          ),
-                        ),
-                        const SizedBox(height: 20.0),
-                        Form(
-                          child: Column(
-                            children: [
-                              AppFormField(
-                                heightValue: height(0.07),
-                                controller: viewModel.nameController,
-                                focusNode: viewModel.nameFocusNode,
-                                isPrefix: false,
-                                hintText: LocaleKeys.name.tr(),
-                              ),
-                              const SizedBox(height: 15.0),
-                              AppFormField(
-                                enabled: true,
-                                heightValue: height(0.07),
-                                controller: viewModel.emailController,
-                                focusNode: viewModel.emailFocusNode,
-                                isPrefix: false,
-                                hintText: LocaleKeys.email.tr(),
-                              ),
-                              const SizedBox(height: 15.0),
-                              AppFormField(
-                                heightValue: height(0.07),
-                                controller: viewModel.passwordController,
-                                focusNode: viewModel.passwordFocusNode,
-                                isPrefix: false,
-                                hintText: LocaleKeys.password.tr(),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 20.0),
-                        const SizedBox(height: 15.0),
-                        ProfileButton(
-                          onTap: () {
-                            showModalBottomSheet(
-                              isDismissible: false,
-                              isScrollControlled: true,
-                              context: context,
-                              builder: (BuildContext context) {
-                                return BackdropFilter(
-                                  filter: ImageFilter.blur(
-                                      sigmaX: 10.0, sigmaY: 10.0),
-                                  child: Consumer<ProfileViewModel>(
-                                    builder: (context, state, child) {
-                                      return FractionallySizedBox(
-                                        heightFactor: 0.8,
-                                        child: languages(context),
-                                      );
-                                    },
-                                  ),
-                                );
-                              },
-                            );
-                          },
-                          image: IconConstant.instance.iconLanguage,
-                          text: LocaleKeys.language.tr(),
-                          isEnglish: true,
-                          isDivider: false,
-                          language: viewModel.selectedLanguage == ""
-                              ? widget.nativeLanguage
-                              : viewModel.selectedLanguage,
-                        ),
-                        Divider(
-                          thickness: 1.0,
-                          color: ColorConstant.instance.paletteGrey,
-                        ),
-                      ],
-                    ),
+                          );
+                        },
+                      );
+                    },
+                    image: IconConstant.instance.iconLanguage,
+                    text: LocaleKeys.language.tr(),
+                    isEnglish: true,
+                    isDivider: false,
+                    language: viewModel.selectedLanguage == ""
+                        ? widget.nativeLanguage
+                        : viewModel.selectedLanguage,
                   ),
-                ),
-                Positioned(
-                  bottom: 20.0,
-                  left: 0.0,
-                  right: 0.0,
-                  child: TextButton(
+                  Divider(
+                    thickness: 1.0,
+                    color: ColorConstant.instance.paletteGrey,
+                  ),
+                  const SizedBox(height: 24.0),
+                  TextButton(
                     onPressed: () {
                       viewModel.deleteAccount(context);
                     },
                     child: Text(
                       LocaleKeys.delete_account.tr(),
-                      style: currentTextTheme.headline4?.copyWith(
+                      style: currentTextTheme.headlineMedium?.copyWith(
                         fontWeight: FontWeight.w400,
                         color: ColorConstant.instance.additionalRed,
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         );
@@ -370,7 +350,7 @@ class _ProfileEditViewState extends BaseState<ProfileEditView> {
           } else {
             return Text(
               'Save',
-              style: currentTextTheme.headline4?.copyWith(
+              style: currentTextTheme.headlineMedium?.copyWith(
                 fontWeight: FontWeight.w400,
                 color: ColorConstant.instance.paletteBlue,
                 fontSize: 14.0,
@@ -456,23 +436,24 @@ class _ProfileEditViewState extends BaseState<ProfileEditView> {
                 decoration: BoxDecoration(
                   color: Colors.transparent,
                   borderRadius: BorderRadius.circular(50.0),
-                  border: Border.all(color: ColorConstant.instance.paletteGrey),
+                  border: Border.all(
+                    color: ColorConstant.instance.backIconColor,
+                  ),
                 ),
                 child: Center(
                   child: Icon(
                     Icons.close,
                     size: 15.0,
-                    color: ColorConstant.instance.paletteGrey,
+                    color: ColorConstant.instance.backIconColor,
                   ),
                 ),
               ),
             ),
-        
           ),
           const SizedBox(height: 24.0),
           Text(
             LocaleKeys.all_lang.tr(),
-            style: currentTextTheme.headline3?.copyWith(
+            style: currentTextTheme.displaySmall?.copyWith(
               fontWeight: FontWeight.w500,
               color: ColorConstant.instance.additionalWhite,
             ),
@@ -510,7 +491,7 @@ class _ProfileEditViewState extends BaseState<ProfileEditView> {
                         backgroundColor: Colors.transparent,
                         borderRadius: 66.0,
                         text: viewModel.languages[index].title.toString(),
-                        textStyle: currentTextTheme.headline3?.copyWith(
+                        textStyle: currentTextTheme.displaySmall?.copyWith(
                                 fontWeight: FontWeight.w400,
                                 color: ColorConstant.instance.greyScale900) ??
                             const TextStyle(),
@@ -582,7 +563,7 @@ class _ProfileEditViewState extends BaseState<ProfileEditView> {
           child: Center(
             child: Text(
               text,
-              style: currentTextTheme.headline1?.copyWith(
+              style: currentTextTheme.displayLarge?.copyWith(
                 fontSize: 20.0,
                 fontWeight: FontWeight.w400,
                 color: ColorConstant.instance.greyScale900,

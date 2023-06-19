@@ -68,7 +68,7 @@ class ProfileButton extends BaseStateless {
                     const SizedBox(width: 20.0),
                     Text(
                       text,
-                      style: currentTextTheme(context).headline4?.copyWith(
+                      style: currentTextTheme(context).headlineMedium?.copyWith(
                             fontSize: 14.0,
                             fontWeight: FontWeight.w400,
                             color: isLogout
@@ -84,7 +84,7 @@ class ProfileButton extends BaseStateless {
                           Text(
                             language,
                             style: currentTextTheme(context)
-                                .headline6
+                                .titleLarge
                                 ?.copyWith(
                                   fontWeight: FontWeight.w400,
                                   color: ColorConstant.instance.greyScale600,
@@ -93,7 +93,7 @@ class ProfileButton extends BaseStateless {
                           Transform.scale(
                             scale: 0.7,
                             child: IconButton(
-                              onPressed: () {},
+                              onPressed: onTap,
                               icon: Icon(
                                 Icons.arrow_forward_ios,
                                 color: ColorConstant.instance.greyScale600,
@@ -106,14 +106,14 @@ class ProfileButton extends BaseStateless {
                         ? Transform.scale(
                             scale: 0.7,
                             child: IconButton(
-                              onPressed: () {},
+                              onPressed: onTap,
                               icon: const SizedBox(),
                             ),
                           )
                         : Transform.scale(
                             scale: 0.7,
                             child: IconButton(
-                              onPressed: () {},
+                              onPressed: onTap,
                               icon: Icon(
                                 Icons.arrow_forward_ios,
                                 color: ColorConstant.instance.paletteGrey,

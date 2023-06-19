@@ -1,4 +1,4 @@
-// ignore_for_file: use_key_in_widget_constructors, must_be_immutable
+// ignore_for_file: use_key_in_widget_constructors, must_be_immutable, deprecated_member_use
 
 import 'package:auto_animated/auto_animated.dart';
 import 'package:chatbot/core/utils/page_transition.dart';
@@ -111,7 +111,7 @@ class _NativeLanguageViewState extends BaseState<NativeLanguageView> {
                   borderRadius: 66.0,
                   borderColor: ColorConstant.instance.paletteBlue,
                   text: LocaleKeys.next.tr(),
-                  textStyle: currentTextTheme.headline3?.copyWith(
+                  textStyle: currentTextTheme.displaySmall?.copyWith(
                           fontWeight: FontWeight.w400,
                           color: ColorConstant.instance.additionalWhite) ??
                       const TextStyle(),
@@ -198,7 +198,7 @@ class _NativeLanguageViewState extends BaseState<NativeLanguageView> {
                       : Alignment.centerLeft,
                   child: Text(
                     LocaleKeys.can_answer.tr(),
-                    style: currentTextTheme.headline3?.copyWith(
+                    style: currentTextTheme.displaySmall?.copyWith(
                       fontWeight: FontWeight.w500,
                       color: const Color.fromRGBO(155, 150, 161, 1),
                     ),
@@ -212,7 +212,7 @@ class _NativeLanguageViewState extends BaseState<NativeLanguageView> {
                       : Alignment.centerLeft,
                   child: Text(
                     LocaleKeys.what_native.tr(),
-                    style: currentTextTheme.headline1?.copyWith(
+                    style: currentTextTheme.displayLarge?.copyWith(
                       fontWeight: FontWeight.w500,
                       letterSpacing: 1.0,
                       color: ColorConstant.instance.additionalWhite,
@@ -223,7 +223,7 @@ class _NativeLanguageViewState extends BaseState<NativeLanguageView> {
                 const SizedBox(height: 40.0),
                 Text(
                   LocaleKeys.all_lang.tr(),
-                  style: currentTextTheme.headline3?.copyWith(
+                  style: currentTextTheme.displaySmall?.copyWith(
                     fontWeight: FontWeight.w500,
                     color: ColorConstant.instance.additionalWhite,
                   ),
@@ -256,7 +256,7 @@ class _NativeLanguageViewState extends BaseState<NativeLanguageView> {
                           backgroundColor: Colors.transparent,
                           borderRadius: 66.0,
                           text: viewModel.languages[index].title!,
-                          textStyle: currentTextTheme.headline3?.copyWith(
+                          textStyle: currentTextTheme.displaySmall?.copyWith(
                                   fontWeight: FontWeight.w400,
                                   color: ColorConstant.instance.greyScale900) ??
                               const TextStyle(),

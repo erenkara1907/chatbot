@@ -81,7 +81,7 @@ class _RegisterViewState extends BaseState<RegisterView> {
                   children: [
                     Text(
                       LocaleKeys.sign_up.tr(),
-                      style: currentTextTheme.headline3?.copyWith(
+                      style: currentTextTheme.displaySmall?.copyWith(
                         fontWeight: FontWeight.w500,
                         color: ColorConstant.instance.greyScale600,
                       ),
@@ -90,7 +90,7 @@ class _RegisterViewState extends BaseState<RegisterView> {
                     const SizedBox(height: 4.0),
                     Text(
                       LocaleKeys.enter_information.tr(),
-                      style: currentTextTheme.headline1?.copyWith(
+                      style: currentTextTheme.displayLarge?.copyWith(
                         fontWeight: FontWeight.w500,
                         color: ColorConstant.instance.additionalWhite,
                       ),
@@ -181,12 +181,15 @@ class _RegisterViewState extends BaseState<RegisterView> {
                         onTap: () {
                           if (viewModel.registerFormKey.currentState!
                               .validate()) {
-                            Navigator.of(context).push(createRoute(
-                                page: NativeLanguageView(
-                              name: viewModel.nameController.text,
-                              email: viewModel.emailController.text,
-                              password: viewModel.passwordController.text,
-                            )));
+                            Navigator.pushAndRemoveUntil(
+                                context,
+                                createRoute(
+                                    page: NativeLanguageView(
+                                  name: viewModel.nameController.text,
+                                  email: viewModel.emailController.text,
+                                  password: viewModel.passwordController.text,
+                                )),
+                                (route) => false);
                           }
                         },
                         widthValue: width(1.0),
@@ -195,7 +198,7 @@ class _RegisterViewState extends BaseState<RegisterView> {
                         borderRadius: 66.0,
                         borderColor: ColorConstant.instance.paletteBlue,
                         text: LocaleKeys.sign_up.tr(),
-                        textStyle: currentTextTheme.headline3?.copyWith(
+                        textStyle: currentTextTheme.displaySmall?.copyWith(
                               fontWeight: FontWeight.w400,
                               color: ColorConstant.instance.additionalWhite,
                             ) ??
@@ -213,7 +216,7 @@ class _RegisterViewState extends BaseState<RegisterView> {
                           children: [
                             Text(
                               LocaleKeys.already_account.tr(),
-                              style: currentTextTheme.headline6?.copyWith(
+                              style: currentTextTheme.titleLarge?.copyWith(
                                 fontWeight: FontWeight.w500,
                                 color: ColorConstant.instance.additionalWhite,
                               ),
@@ -221,7 +224,7 @@ class _RegisterViewState extends BaseState<RegisterView> {
                             const SizedBox(width: 6.0),
                             Text(
                               LocaleKeys.sign_in.tr(),
-                              style: currentTextTheme.headline6?.copyWith(
+                              style: currentTextTheme.titleLarge?.copyWith(
                                 fontWeight: FontWeight.w800,
                                 color: ColorConstant.instance.paletteBlue,
                               ),
