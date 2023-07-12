@@ -3,8 +3,8 @@
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:chatbot/product/auth/register/view/register_view.dart';
 import 'package:chatbot/product/bottom_bar/view/bottom_bar_view.dart';
-import 'package:chatbot/product/onboard/view/onboard_view.dart';
 import 'package:chatbot/product/profile/model/profile_model.dart';
 import 'package:chatbot/product/profile/service/profile_service.dart';
 import 'package:flutter/material.dart';
@@ -151,7 +151,7 @@ class ProfileViewModel extends ChangeNotifier {
       prefs.remove(PreferencesKeys.IS_FIRST_APP.toString());
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (context) => const OnboardView()),
+        MaterialPageRoute(builder: (context) => RegisterView()),
         (route) => false,
       );
     }

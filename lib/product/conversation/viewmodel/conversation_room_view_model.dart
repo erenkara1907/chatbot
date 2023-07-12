@@ -5,6 +5,7 @@ import 'dart:io';
 
 import 'package:audioplayers/audioplayers.dart';
 import 'package:chatbot/product/auth/language/model/language_model.dart';
+import 'package:chatbot/product/conversation/model/transcription_model.dart';
 import 'package:chatbot/product/conversation/model/translate_model.dart';
 import 'package:chatbot/product/conversation/service/conversation_service.dart';
 import 'package:chatbot/product/profile/model/profile_model.dart';
@@ -37,8 +38,11 @@ class ConversationRoomViewModel extends ChangeNotifier {
   List<Message> oneMessage = [];
 
   int endChat = 0;
+  String sound = "";
   int isActive = 0;
   bool isData = false;
+
+  TranscriptionModel transcriptionModel = TranscriptionModel();
 
   List<LanguageModel> languages = [
     LanguageModel(
@@ -90,6 +94,11 @@ class ConversationRoomViewModel extends ChangeNotifier {
       flag: IconConstant.instance.flagSpanish,
     ),
   ];
+
+  setIsTyping() {
+    isTyping = !isTyping;
+    notifyListeners();
+  }
   // List<String> popularLanguageTitles = [];
   // List<String> popularLanguageImages = [];
   // List<int> popularLanguageIds = [];
@@ -112,7 +121,6 @@ class ConversationRoomViewModel extends ChangeNotifier {
   bool isComplete = false;
 
   bool isSelectVoice = true;
-  bool isSpeaking = false;
 
   bool isAvatarSelected = false;
   bool isAvatarAISelected = false;
@@ -139,6 +147,11 @@ class ConversationRoomViewModel extends ChangeNotifier {
 
   setIsRecord() {
     isRecording = !isRecording;
+    notifyListeners();
+  }
+
+  manuelSetRecord(bool value) {
+    isRecording = value;
     notifyListeners();
   }
 
@@ -219,7 +232,8 @@ class ConversationRoomViewModel extends ChangeNotifier {
 
   bool isReadMessage = false;
 
-  Future<void> sendMessageAndGetAnswers({
+  Future<void> sendMessageAndGetAnswers(
+    BuildContext context, {
     required String message,
     required int conversationId,
     required String soundRatio,
@@ -248,6 +262,7 @@ class ConversationRoomViewModel extends ChangeNotifier {
     // await file.copy(newFile.path);
     String token = _prefs.getString(PreferencesKeys.TOKEN.toString())!;
     final response = await service.sendMessage(
+      context,
       soundFile: file,
       soundRatio: soundRatio,
       message: message,
@@ -385,6 +400,8 @@ class ConversationRoomViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  bool isTranslated = false;
+
   Future translate({
     required int conversationId,
     required int messageId,
@@ -394,7 +411,6 @@ class ConversationRoomViewModel extends ChangeNotifier {
     final SharedPreferences prefs = await _prefs;
 
     String token = prefs.getString(PreferencesKeys.TOKEN.toString())!;
-
     final profileResponse = await profileService.getProfileInfo(token);
     // await getLanguages();
 
@@ -410,7 +426,53 @@ class ConversationRoomViewModel extends ChangeNotifier {
 
       if (response.result == true) {
         translateModel = response.data!.message!;
+        isTranslated = true;
       }
     }
+    notifyListeners();
   }
+
+  bool converted = false;
+  // bool isCompleted = true;
+  bool isSpeaking = false;
+
+  // isCompleteSpeak(bool value) {
+  //   isCompleted = value;
+  //   notifyListeners();
+  // }
+
+  // Future<bool?> sendTextToPlayAPI({required String content}) async {
+  //   final response = await service.sendTextToPlayAPI(content: content);
+
+  //   if (response.status == "CREATED" && response.transcriptionId!.isNotEmpty) {
+  //     transcriptionModel.transcriptionId = response.transcriptionId;
+  //     final responseData = await sendTranscriptionId();
+  //     if (responseData) {
+  //       return true;
+  //     }
+  //   } else {
+  //     return false;
+  //   }
+  //   return null;
+  // }
+
+  // bool isLoading = false;
+
+  // isLoadVoiceData(bool value) {
+  //   isLoading = value;
+  //   notifyListeners();
+  // }
+
+  // Future<bool> sendTranscriptionId() async {
+  //   final response = await service.sendTranscriptionIdToPlayAPI(
+  //     transcriptionId: transcriptionModel.transcriptionId!,
+  //   );
+
+  //   if (response.converted!) {
+  //     sound = response.audioUrl!;
+  //     return true;
+  //   } else {  
+  //     return false;
+  //   }
+  // }
 }

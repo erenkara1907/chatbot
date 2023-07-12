@@ -5,6 +5,8 @@ import 'dart:io';
 import 'package:chatbot/core/constants/color_constant.dart';
 import 'package:chatbot/core/enum/preference_keys.dart';
 import 'package:chatbot/core/language/localization_init.dart';
+import 'package:chatbot/core/utils/connectivity_sevice.dart';
+import 'package:chatbot/core/utils/soical_media_data.dart';
 import 'package:chatbot/core/utils/tts.dart';
 import 'package:chatbot/core/view/theme/theme.dart';
 import 'package:chatbot/product/auth/language/viewmodel/language_view_model.dart';
@@ -49,6 +51,7 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (context) => ConversationViewModel()),
         ChangeNotifierProvider(create: (context) => LoginViewModel()),
         ChangeNotifierProvider(create: (context) => TextToSpeechViewModel()),
+        ChangeNotifierProvider(create: (context) => ConnectivityService()),
         ChangeNotifierProvider(
             create: (context) => ConversationRoomViewModel()),
       ],

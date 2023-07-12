@@ -5,12 +5,11 @@ import 'package:chatbot/core/utils/page_transition.dart';
 import 'package:chatbot/core/view/base/base_state.dart';
 import 'package:chatbot/product/auth/language/viewmodel/language_view_model.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/constants/color_constant.dart';
-import '../../../../core/constants/icon_constant.dart';
 import '../../../../core/constants/image_constant.dart';
 import '../../../../core/language/locale_keys.g.dart';
 import '../../../../core/view/widget/button/app_button.dart';
@@ -18,25 +17,17 @@ import '../../../../core/view/widget/button/language_button.dart';
 import 'language_level_view.dart';
 
 class NativeLanguageView extends StatefulWidget {
-  final String email;
-  final String password;
-  final String name;
-
-  const NativeLanguageView({
-    required this.email,
-    required this.password,
-    required this.name,
-  });
-
   @override
   State<NativeLanguageView> createState() => _NativeLanguageViewState();
 }
 
 class _NativeLanguageViewState extends BaseState<NativeLanguageView> {
+  FirebaseAnalytics analyticInstance = FirebaseAnalytics.instance;
   LanguageViewModel viewModel = LanguageViewModel();
 
   @override
   Widget build(BuildContext context) {
+    analyticInstance.logEvent(name: "opened_native_language_view");
     Provider.of<LanguageViewModel>(context, listen: false).setActivePage();
     return Scaffold(
       backgroundColor: ColorConstant.instance.paletteBackground,
@@ -86,12 +77,12 @@ class _NativeLanguageViewState extends BaseState<NativeLanguageView> {
                 padding: const EdgeInsets.symmetric(horizontal: 80.0),
                 child: AppButton(
                   onTap: () {
-                    if (state.selectedLanguageId != -1) {
+                    analyticInstance.logEvent(name: "clicked_next_button");
+                    if (state.selectedLanguageId != -1 &&
+                            ModalRoute.of(context)!.isCurrent ??
+                        false) {
                       Navigator.of(context).push(createRoute(
                         page: LanguageLevelView(
-                          email: widget.email,
-                          password: widget.password,
-                          name: widget.name,
                           languageCode: state.selectedLanguageCode,
                         ),
                       ));
@@ -165,32 +156,6 @@ class _NativeLanguageViewState extends BaseState<NativeLanguageView> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: InkWell(
-                    onTap: () {
-                      Navigator.pop(context);
-                    },
-                    child: Container(
-                      width: 25.0,
-                      height: 25.0,
-                      decoration: BoxDecoration(
-                        color: Colors.transparent,
-                        borderRadius: BorderRadius.circular(50.0),
-                        border: Border.all(
-                            color: ColorConstant.instance.paletteGrey),
-                      ),
-                      child: Center(
-                        child: SvgPicture.asset(
-                          IconConstant.instance.iconArrowBack,
-                          color: ColorConstant.instance.paletteGrey,
-                          width: 10.0,
-                          height: 10.0,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
                 AnimatedAlign(
                   duration: const Duration(milliseconds: 500),
                   alignment: state.isActivePage
@@ -242,6 +207,7 @@ class _NativeLanguageViewState extends BaseState<NativeLanguageView> {
                           languageId: index + 1,
                           selectedIndex: state.selectedIndex,
                           onTap: () {
+                            analyticInstance.logEvent(name: "clicked_${viewModel.languages[index].title!}");
                             state.selectedLanguageId =
                                 viewModel.languages[index].id!;
 
@@ -261,6 +227,7 @@ class _NativeLanguageViewState extends BaseState<NativeLanguageView> {
                                   color: ColorConstant.instance.greyScale900) ??
                               const TextStyle(),
                           onChangedCheckBox: (value) {
+                            analyticInstance.logEvent(name: "clicked_${viewModel.languages[index].title!}_language_in_native_language_view");
                             state.selectedLanguageId =
                                 viewModel.languages[index].id!;
 

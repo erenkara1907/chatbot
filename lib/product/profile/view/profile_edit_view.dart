@@ -9,6 +9,7 @@ import 'package:chatbot/core/view/widget/button/avatar_button.dart';
 import 'package:chatbot/product/bottom_bar/view/bottom_bar_view.dart';
 import 'package:chatbot/product/profile/viewmodel/profile_view_model.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
@@ -44,6 +45,7 @@ class ProfileEditView extends StatefulWidget {
 }
 
 class _ProfileEditViewState extends BaseState<ProfileEditView> {
+  FirebaseAnalytics analyticInstance = FirebaseAnalytics.instance;
   ProfileViewModel viewModel = ProfileViewModel();
 
   @override
@@ -55,6 +57,7 @@ class _ProfileEditViewState extends BaseState<ProfileEditView> {
 
   @override
   Widget build(BuildContext context) {
+    analyticInstance.logEvent(name: "profile_edit_view_opened");
     return Scaffold(
       backgroundColor: ColorConstant.instance.paletteBackground,
       body: Stack(
@@ -79,223 +82,249 @@ class _ProfileEditViewState extends BaseState<ProfileEditView> {
     return Consumer<ProfileViewModel>(
       builder: (context, state, child) {
         return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
-          child: SizedBox(
-            height: height(0.9),
-            child: Padding(
-              padding: const EdgeInsets.only(top: 38.0),
-              child: ListView(
-                shrinkWrap: true,
-                physics: const ClampingScrollPhysics(),
+          padding: const EdgeInsets.only(
+            top: 38.0,
+            left: 24.0,
+            right: 24.0,
+          ),
+          child: ListView(
+            addAutomaticKeepAlives: false,
+            addSemanticIndexes: false,
+            shrinkWrap: true,
+            physics: const ClampingScrollPhysics(),
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      backButton(context),
-                      Text(
-                        LocaleKeys.personal_information.tr(),
-                        style: currentTextTheme.displaySmall?.copyWith(
-                          fontWeight: FontWeight.w500,
-                          color: ColorConstant.instance.additionalWhite,
-                        ),
-                      ),
-                      saveButton(context),
-                    ],
+                  backButton(context),
+                  Text(
+                    LocaleKeys.personal_information.tr(),
+                    style: currentTextTheme.displaySmall?.copyWith(
+                      fontWeight: FontWeight.w500,
+                      color: ColorConstant.instance.additionalWhite,
+                    ),
                   ),
-                  const SizedBox(height: 40.0),
-                  Align(
-                    alignment: Alignment.center,
-                    child: Container(
-                      width: 100.0,
-                      height: 100.0,
-                      padding: const EdgeInsets.all(5.0),
-                      decoration: BoxDecoration(
-                          boxShadow: [
-                            BoxShadow(
-                              color: ColorConstant.instance.greyScale300,
-                              blurRadius: 10.0,
-                              spreadRadius: 1.0,
-                              offset: const Offset(3, 3),
-                            )
-                          ],
+                  saveButton(context),
+                ],
+              ),
+              const SizedBox(height: 40.0),
+              InkWell(
+                overlayColor: MaterialStateProperty.all(ColorConstant.instance.paletteBackground),
+                onTap: () {
+                  analyticInstance.logEvent(
+                      name: "clicked_profile_photo");
+                },
+                child: Align(
+                  alignment: Alignment.center,
+                  child: Container(
+                    width: 100.0,
+                    height: 100.0,
+                    padding: const EdgeInsets.all(5.0),
+                    decoration: BoxDecoration(
+                        boxShadow: [
+                          BoxShadow(
+                            color: ColorConstant.instance.greyScale300,
+                            blurRadius: 10.0,
+                            spreadRadius: 1.0,
+                            offset: const Offset(3, 3),
+                          )
+                        ],
+                        color: ColorConstant.instance.additionalWhite,
+                        borderRadius: BorderRadius.circular(50.0),
+                        border: Border.all(
+                          width: 1.0,
                           color: ColorConstant.instance.additionalWhite,
-                          borderRadius: BorderRadius.circular(50.0),
-                          border: Border.all(
-                            width: 1.0,
-                            color: ColorConstant.instance.additionalWhite,
-                          )),
-                      child: state.isPhotoLoaded
-                          ? viewModel.selectedAvatarId == -1
-                              ? Hero(
-                                  tag: "profilePhoto",
-                                  child: Container(
-                                    width: 60.0,
-                                    height: 60.0,
-                                    padding: const EdgeInsets.all(15.0),
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(50.0),
-                                      color: widget.profileBackgroundColor,
-                                      image: DecorationImage(
-                                        image:
-                                            NetworkImage(widget.profilePhoto),
-                                        fit: BoxFit.cover,
-                                      ),
-                                    ),
-                                  ),
-                                )
-                              : Container(
+                        )),
+                    child: state.isPhotoLoaded
+                        ? viewModel.selectedAvatarId == -1
+                            ? Hero(
+                                tag: "profilePhoto",
+                                child: Container(
                                   width: 60.0,
                                   height: 60.0,
                                   padding: const EdgeInsets.all(15.0),
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(50.0),
-                                    color:
-                                        const Color.fromRGBO(221, 212, 251, 1),
+                                    color: widget.profileBackgroundColor,
                                     image: DecorationImage(
-                                      image: NetworkImage(viewModel.avatarUrl),
+                                      image: NetworkImage(widget.profilePhoto),
                                       fit: BoxFit.cover,
                                     ),
                                   ),
-                                )
-                          : Container(
-                              width: 60.0,
-                              height: 60.0,
-                              padding: const EdgeInsets.all(15.0),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(50.0),
-                                color: const Color.fromRGBO(221, 212, 251, 1),
-                                image: DecorationImage(
-                                  image: MemoryImage(state.bytes!),
-                                  fit: BoxFit.cover,
                                 ),
+                              )
+                            : Container(
+                                width: 60.0,
+                                height: 60.0,
+                                padding: const EdgeInsets.all(15.0),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(50.0),
+                                  color: const Color.fromRGBO(221, 212, 251, 1),
+                                  image: DecorationImage(
+                                    image: NetworkImage(viewModel.avatarUrl),
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                              )
+                        : Container(
+                            width: 60.0,
+                            height: 60.0,
+                            padding: const EdgeInsets.all(15.0),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(50.0),
+                              color: const Color.fromRGBO(221, 212, 251, 1),
+                              image: DecorationImage(
+                                image: MemoryImage(state.bytes!),
+                                fit: BoxFit.cover,
                               ),
                             ),
-                    ),
-                  ),
-                  const SizedBox(height: 24.0),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 16.0),
-                    child: SizedBox(
-                      height: 60.0,
-                      child: ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: widget.avatars.length,
-                        addAutomaticKeepAlives: false,
-                        addRepaintBoundaries: false,
-                        physics: const ClampingScrollPhysics(),
-                        itemBuilder: (context, index) {
-                          return Padding(
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 5.0),
-                            child: InkWell(
-                              onTap: () async {
-                                Provider.of<ProfileViewModel>(context,
-                                        listen: false)
-                                    .setPhotoLoaded();
-                                viewModel.isSelectAvatar = true;
-                                viewModel.selectedAvatarId =
-                                    widget.avatars[index].id! + 1;
-                                viewModel.avatarUrl =
-                                    widget.avatars[index].url!;
-                                viewModel.selectedAvatarIndex = index;
-                                // }
-                              },
-                              child: AvatarButton(
-                                image: widget.avatars[index].url!,
-                                padding: const EdgeInsets.all(0.0),
-                                avatarId: widget.avatars[index].id!,
-                                selectedIndex: viewModel.selectedAvatarIndex,
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 20.0),
-                  Expanded(
-                    child: Form(
-                      child: Column(
-                        children: [
-                          AppFormField(
-                            heightValue: height(0.07),
-                            controller: viewModel.nameController,
-                            focusNode: viewModel.nameFocusNode,
-                            isPrefix: false,
-                            hintText: LocaleKeys.name.tr(),
                           ),
-                          const SizedBox(height: 15.0),
-                          AppFormField(
-                            enabled: true,
-                            heightValue: height(0.07),
-                            controller: viewModel.emailController,
-                            focusNode: viewModel.emailFocusNode,
-                            isPrefix: false,
-                            hintText: LocaleKeys.email.tr(),
-                          ),
-                          const SizedBox(height: 15.0),
-                          AppFormField(
-                            heightValue: height(0.07),
-                            controller: viewModel.passwordController,
-                            focusNode: viewModel.passwordFocusNode,
-                            isPrefix: false,
-                            hintText: LocaleKeys.password.tr(),
-                          ),
-                        ],
-                      ),
-                    ),
                   ),
-                  const SizedBox(height: 15.0),
-                  ProfileButton(
-                    onTap: () {
-                      showModalBottomSheet(
-                        isDismissible: false,
-                        isScrollControlled: true,
-                        context: context,
-                        builder: (BuildContext context) {
-                          return BackdropFilter(
-                            filter:
-                                ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
-                            child: Consumer<ProfileViewModel>(
-                              builder: (context, state, child) {
-                                return FractionallySizedBox(
-                                  heightFactor: 0.8,
-                                  child: languages(context),
-                                );
-                              },
-                            ),
-                          );
-                        },
+                ),
+              ),
+              const SizedBox(height: 24.0),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16.0),
+                child: SizedBox(
+                  height: 60.0,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: widget.avatars.length,
+                    addAutomaticKeepAlives: false,
+                    addRepaintBoundaries: false,
+                    physics: const ClampingScrollPhysics(),
+                    itemBuilder: (context, index) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 5.0),
+                        child: InkWell(
+                          onTap: () async {
+                            analyticInstance.logEvent(
+                                name: "clicked_avatar_button");
+                            Provider.of<ProfileViewModel>(context,
+                                    listen: false)
+                                .setPhotoLoaded();
+                            viewModel.isSelectAvatar = true;
+                            viewModel.selectedAvatarId =
+                                widget.avatars[index].id! + 1;
+                            viewModel.avatarUrl = widget.avatars[index].url!;
+                            viewModel.selectedAvatarIndex = index;
+                            // }
+                          },
+                          child: AvatarButton(
+                            image: widget.avatars[index].url!,
+                            padding: const EdgeInsets.all(0.0),
+                            avatarId: widget.avatars[index].id!,
+                            selectedIndex: viewModel.selectedAvatarIndex,
+                          ),
+                        ),
                       );
                     },
-                    image: IconConstant.instance.iconLanguage,
-                    text: LocaleKeys.language.tr(),
-                    isEnglish: true,
-                    isDivider: false,
-                    language: viewModel.selectedLanguage == ""
-                        ? widget.nativeLanguage
-                        : viewModel.selectedLanguage,
                   ),
-                  Divider(
-                    thickness: 1.0,
-                    color: ColorConstant.instance.paletteGrey,
-                  ),
-                  const SizedBox(height: 24.0),
-                  TextButton(
-                    onPressed: () {
-                      viewModel.deleteAccount(context);
-                    },
-                    child: Text(
-                      LocaleKeys.delete_account.tr(),
-                      style: currentTextTheme.headlineMedium?.copyWith(
-                        fontWeight: FontWeight.w400,
-                        color: ColorConstant.instance.additionalRed,
+                ),
+              ),
+              const SizedBox(height: 20.0),
+              Form(
+                child: Column(
+                  children: [
+                    InkWell(
+                      onTap: () {
+                        analyticInstance.logEvent(
+                            name:
+                                "clicked_name_textfield_in_profile_edit_view");
+                      },
+                      child: AppFormField(
+                        heightValue: height(0.07),
+                        controller: viewModel.nameController,
+                        focusNode: viewModel.nameFocusNode,
+                        isPrefix: false,
+                        hintText: LocaleKeys.name.tr(),
                       ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 15.0),
+                    InkWell(
+                      onTap: () {
+                        analyticInstance.logEvent(
+                            name:
+                                "clicked_email_textfield_in_profile_edit_view");
+                      },
+                      child: AppFormField(
+                        enabled: true,
+                        heightValue: height(0.07),
+                        controller: viewModel.emailController,
+                        focusNode: viewModel.emailFocusNode,
+                        isPrefix: false,
+                        hintText: LocaleKeys.email.tr(),
+                      ),
+                    ),
+                    const SizedBox(height: 15.0),
+                    InkWell(
+                      onTap: () {
+                        analyticInstance.logEvent(
+                            name:
+                                "clicked_password_textfield_in_profile_edit_view");
+                      },
+                      child: AppFormField(
+                        heightValue: height(0.07),
+                        controller: viewModel.passwordController,
+                        focusNode: viewModel.passwordFocusNode,
+                        isPrefix: false,
+                        hintText: LocaleKeys.password.tr(),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
+              const SizedBox(height: 15.0),
+              ProfileButton(
+                onTap: () {
+                  analyticInstance.logEvent(name: "clicked_language");
+                  showModalBottomSheet(
+                    isDismissible: false,
+                    isScrollControlled: true,
+                    context: context,
+                    builder: (BuildContext context) {
+                      return BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+                        child: Consumer<ProfileViewModel>(
+                          builder: (context, state, child) {
+                            return FractionallySizedBox(
+                              heightFactor: 0.8,
+                              child: languages(context),
+                            );
+                          },
+                        ),
+                      );
+                    },
+                  );
+                },
+                image: IconConstant.instance.iconLanguage,
+                text: LocaleKeys.language.tr(),
+                isEnglish: true,
+                isDivider: false,
+                language: viewModel.selectedLanguage == ""
+                    ? widget.nativeLanguage
+                    : viewModel.selectedLanguage,
+              ),
+              Divider(
+                thickness: 1.0,
+                color: ColorConstant.instance.paletteGrey,
+              ),
+              const SizedBox(height: 24.0),
+              TextButton(
+                onPressed: () {
+                  analyticInstance.logEvent(
+                      name: "clicked_delete_my_account");
+                  viewModel.deleteAccount(context);
+                },
+                child: Text(
+                  LocaleKeys.delete_account.tr(),
+                  style: currentTextTheme.headlineMedium?.copyWith(
+                    fontWeight: FontWeight.w400,
+                    color: ColorConstant.instance.additionalRed,
+                  ),
+                ),
+              ),
+            ],
           ),
         );
       },
@@ -305,6 +334,8 @@ class _ProfileEditViewState extends BaseState<ProfileEditView> {
   TextButton saveButton(BuildContext context) {
     return TextButton(
       onPressed: () async {
+        analyticInstance.logEvent(
+            name: "click_save_button_in_profile_edit_view");
         Provider.of<ProfileViewModel>(context, listen: false).setUpdating();
         await viewModel.updateProfile(
           context,
@@ -372,6 +403,7 @@ class _ProfileEditViewState extends BaseState<ProfileEditView> {
       ),
       child: IconButton(
         onPressed: () {
+          analyticInstance.logEvent(name: "profile_edit_view_closed");
           Navigator.pushReplacement(context,
               MaterialPageRoute(builder: (context) => BottomBarView()));
         },
@@ -428,6 +460,7 @@ class _ProfileEditViewState extends BaseState<ProfileEditView> {
             alignment: Alignment.centerRight,
             child: InkWell(
               onTap: () {
+                analyticInstance.logEvent(name: "closed_language");
                 Navigator.pop(context);
               },
               child: Container(
@@ -474,6 +507,9 @@ class _ProfileEditViewState extends BaseState<ProfileEditView> {
                         languageId: index + 1,
                         selectedIndex: state.selectedIndex,
                         onTap: () {
+                          analyticInstance.logEvent(
+                              name:
+                                  "selected_${viewModel.languages[index].title.toString()}");
                           viewModel.selectedLanguageId =
                               viewModel.languages[index].id!;
                           viewModel.selectedLanguageCode =

@@ -14,6 +14,7 @@ import 'package:chatbot/product/conversation/viewmodel/conversation_room_view_mo
 import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_sound/flutter_sound.dart';
@@ -33,7 +34,6 @@ import '../../../core/constants/icon_constant.dart';
 import '../../../core/constants/image_constant.dart';
 import '../../../core/language/locale_keys.g.dart';
 import '../../../core/view/widget/button/app_button.dart';
-import '../../../core/view/widget/button/language_button.dart';
 import '../../bottom_bar/view/bottom_bar_view.dart';
 
 class ConversationRoomView extends StatefulWidget {
@@ -54,7 +54,11 @@ class ConversationRoomView extends StatefulWidget {
   _ConversationRoomViewState createState() => _ConversationRoomViewState();
 }
 
-class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
+class _ConversationRoomViewState extends BaseState<ConversationRoomView>
+    with AutomaticKeepAliveClientMixin {
+  FirebaseAnalytics analyticInstance = FirebaseAnalytics.instance;
+  @override
+  bool get wantKeepAlive => true;
   final String appKey = "1686539747000176";
   final String secretKey = "acf887731c9876ee6e41652394c4c873";
   final String userId = "uid";
@@ -69,23 +73,19 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
   final audioType =
       "wav"; // Change the audio type corresponding to the audio file.
   final audioSampleRate = "16000";
-  // SpeechToText speechToText = SpeechToText();
 
   bool? _isFirst;
   bool isScroll = true;
   String voiceRatio = "";
 
-  // var isListening = false;
-
   ConversationRoomViewModel viewModel = ConversationRoomViewModel();
   TextToSpeechViewModel textViewModel = TextToSpeechViewModel();
 
-  // late TextEditingController sendTextController;
   late ScrollController _listScrollController;
-  // late TextEditingController sendMessageController;
 
   late FocusNode focusNode;
   late FlutterSoundRecorder _recorder;
+  final player = AudioPlayer();
 
   String _path = '';
   bool isData = false;
@@ -97,7 +97,6 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
     requestPermission();
     _recorder = FlutterSoundRecorder();
     _listScrollController = ScrollController();
-    // sendTextController = TextEditingController();
     Provider.of<ConversationRoomViewModel>(context, listen: false)
         .sendTextController = TextEditingController();
     focusNode = FocusNode();
@@ -108,25 +107,27 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
   }
 
   requestPermission() async {
+    analyticInstance.logEvent(name: "worked_request_permission");
     await Permission.microphone.request();
   }
 
   _startRecording(ConversationRoomViewModel chatProvider) async {
     final status = await Permission.microphone.request();
     // final myRecorder = FlutterSoundRecorder();
-    final player = AudioPlayer();
 
     if (status.isGranted) {
       try {
+        analyticInstance.logEvent(
+            name: "worked_start_recording_in_conversation_room_view");
         HapticFeedback.mediumImpact();
         await player.play(AssetSource("sound/sound_click.wav"));
-        chatProvider.addUserMessage(
-          message: "Yükleniyor",
-          betterSentence: '',
-          correctSentence: '',
-          sound: '',
-          soundRatio: '',
-        );
+        // chatProvider.addUserMessage(
+        //   message: "Yükleniyor",
+        //   betterSentence: '',
+        //   correctSentence: '',
+        //   sound: '',
+        //   soundRatio: '',
+        // );
         await player.play(AssetSource("sound/sound_user_bubble.wav"));
         // Uygulamanın kendi dosya yolunu alıyoruz
         Directory appDocDirectory = await getApplicationDocumentsDirectory();
@@ -146,6 +147,8 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
         // // Kaydediciyi kapatıyoruz
         // await _recorder.closeRecorder();
       } catch (e) {
+        analyticInstance.logEvent(
+            name: "not_work_start_recording_in_conversation_room_view");
         await _recorder.stopRecorder();
         // Kaydediciyi kapatıyoruz
         await _recorder.closeRecorder();
@@ -159,15 +162,21 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
         );
       }
     } else if (status.isDenied) {
+      analyticInstance.logEvent(
+          name: "status_denied_recording_in_conversation_room_view");
       chatProvider.isRecording = false;
       viewModel.showAlertDialog(context);
     } else if (status.isPermanentlyDenied) {
+      analyticInstance.logEvent(
+          name:
+              "status_permanently_denied_recording_in_conversation_room_view");
       chatProvider.isRecording = false;
       viewModel.showAlertDialog(context);
     }
   }
 
   void _stopRecording(ConversationRoomViewModel chatProvider) async {
+    analyticInstance.logEvent(name: "stop_recording_worked");
     final player = AudioPlayer();
 
     await _recorder.stopRecorder();
@@ -178,7 +187,9 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
     _uploadAudio(_path, chatProvider);
   }
 
-  void _pronunciationCheck() {
+  Future<void> _pronunciationCheck(
+      ConversationRoomViewModel chatProvider) async {
+    analyticInstance.logEvent(name: "pronunciation_check_worked");
     String timestamp = DateTime.now().millisecondsSinceEpoch.toString();
     String connectSig =
         sha1.convert(utf8.encode("$appKey$timestamp$secretKey")).toString();
@@ -233,14 +244,18 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
       var response = await request.send();
 
       if (response.statusCode != 200) {
+        analyticInstance.logEvent(name: "prok_status_code_not_200");
         // resultController.text = "HTTP status code ${response.statusCode}";
       } else {
+        analyticInstance.logEvent(name: "pro_status_code_200");
         response.stream.transform(utf8.decoder).join().then((String str) {
           if (str.contains("error")) {
             // resultController.text = str;
           } else {
             var respJson = jsonDecode(str);
             voiceRatio = "${respJson["result"]["overall"]}";
+            chatProvider.chatList.removeLast();
+
             sendMessage(
                 chatProvider: Provider.of<ConversationRoomViewModel>(context,
                     listen: false),
@@ -258,6 +273,7 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
     Dio dio = Dio();
     String uploadUrl = "https://transcribe.whisperapi.com";
     try {
+      analyticInstance.logEvent(name: "upload_audio_worked");
       var response = await dio.post(
         uploadUrl,
         data: FormData.fromMap({
@@ -274,24 +290,41 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
       );
 
       if (response.statusCode == 200) {
+        analyticInstance.logEvent(name: "upload_audio_status_code_200");
         // provider.addMessage(response.data["text"]);
         viewModel.sendTextController.clear();
-        chatProvider.chatList.removeLast();
+        // chatProvider.chatList.removeLast();
         scrollListToEND();
 
         chatProvider.setText(response.data["text"]);
         viewModel.sendTextController.text = response.data["text"];
-
-        _pronunciationCheck();
+        if (viewModel.sendTextController.text.isEmpty) {
+          chatProvider.chatList.removeLast();
+          chatProvider.setText("Please send message");
+          Provider.of<ConversationRoomViewModel>(context, listen: false)
+              .setIsTyping();
+          return;
+        }
+        await _pronunciationCheck(chatProvider);
 
         Future.delayed(
           const Duration(seconds: 1),
           () {
+            analyticInstance.logEvent(name: "upload_audio_add_dump_message");
+            chatProvider.addUserMessage(
+              message: "loading",
+              betterSentence: "betterSentence",
+              correctSentence: "correctSentence",
+              sound: "sound",
+              soundRatio: "soundRatio",
+            );
             chatProvider.voiceMessage != "" ? Navigator.pop(context) : null;
           },
         );
       }
     } catch (e) {
+      analyticInstance.logEvent(
+          name: "upload_audio_error_in_conversation_room_view");
       await _recorder.stopRecorder();
       // Kaydediciyi kapatıyoruz
       await _recorder.closeRecorder();
@@ -307,6 +340,8 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
   }
 
   setComplete(ConversationRoomViewModel chatProvider) {
+    analyticInstance.logEvent(
+        name: "complete_message_func_worked_in_conversation_room_view");
     if (chatProvider.endChat == 1) {
       Provider.of<ConversationRoomViewModel>(context, listen: false)
           .setIsComplete();
@@ -327,37 +362,46 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
 
   @override
   Widget build(BuildContext context) {
+    analyticInstance.logEvent(name: "opened_conversation_room_view");
+    super.build(context);
     var chatProvider = Provider.of<ConversationRoomViewModel>(context);
 
-    return GestureDetector(
-      onTap: () => viewModel.startFocusNode(),
-      child: Scaffold(
-        backgroundColor: ColorConstant.instance.paletteBackground,
-        body: Stack(
-          children: [
-            Positioned(
-              top: 0.0,
-              left: 0.0,
-              right: 0.0,
-              child: Image.asset(
-                ImageConstant.instance.imageTopEllipse,
-                width: width(1.0),
-                fit: BoxFit.cover,
+    return WillPopScope(
+      onWillPop: () async {
+        return false;
+      },
+      child: GestureDetector(
+        onTap: () {
+          viewModel.startFocusNode();
+        },
+        child: Scaffold(
+          backgroundColor: ColorConstant.instance.paletteBackground,
+          body: Stack(
+            children: [
+              Positioned(
+                top: 0.0,
+                left: 0.0,
+                right: 0.0,
+                child: Image.asset(
+                  ImageConstant.instance.imageTopEllipse,
+                  width: width(1.0),
+                  fit: BoxFit.cover,
+                ),
               ),
-            ),
-            chatProvider.isGetMessage
-                ? chatProvider.endChat != 1
-                    ? chatBody(chatProvider, context)
-                    : chatProvider.isActive == 0
-                        ? chatBody(chatProvider, context)
-                        : Stack(
-                            children: [
-                              chatBody(chatProvider, context),
-                              completeDialog(chatProvider)
-                            ],
-                          )
-                : skeletonLoading(),
-          ],
+              chatProvider.isGetMessage
+                  ? chatProvider.endChat != 1
+                      ? chatBody(chatProvider, context)
+                      : chatProvider.isActive == 0
+                          ? chatBody(chatProvider, context)
+                          : Stack(
+                              children: [
+                                chatBody(chatProvider, context),
+                                completeDialog(chatProvider)
+                              ],
+                            )
+                  : skeletonLoading(),
+            ],
+          ),
         ),
       ),
     );
@@ -432,6 +476,7 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
   }
 
   Align completeDialog(ConversationRoomViewModel chatProvider) {
+    analyticInstance.logEvent(name: "opened_complete_dialog");
     return Align(
       alignment: Alignment.center,
       child: Container(
@@ -468,6 +513,9 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
                     Expanded(
                       child: TextButton(
                         onPressed: () {
+                          analyticInstance.logEvent(
+                              name:
+                                  "clicked_continue_chat_conversation_room_view");
                           setState(() {
                             chatProvider.endChat = 3;
                           });
@@ -485,6 +533,8 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
                     Expanded(
                       child: AppButton(
                         onTap: () async {
+                          analyticInstance.logEvent(
+                              name: "clicked_complete_chat");
                           chatProvider.isGetMessage = false;
                           Provider.of<ConversationRoomViewModel>(context,
                                   listen: false)
@@ -521,6 +571,7 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
 
   SafeArea chatBody(
       ConversationRoomViewModel chatProvider, BuildContext context) {
+    analyticInstance.logEvent(name: "worked_chat_body_conversation_room_view");
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_listScrollController.hasClients) {
         _listScrollController.animateTo(
@@ -551,6 +602,12 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
                                 ColorConstant.instance.paletteBackground,
                             child: IconButton(
                               onPressed: () {
+                                analyticInstance.logEvent(
+                                    name:
+                                        "close_chat_body_conversation_room_view");
+                                Provider.of<ConversationRoomViewModel>(context,
+                                        listen: false)
+                                    .isReadMessage = false;
                                 textViewModel.stop();
                                 chatProvider.isReadMessage = false;
                                 chatProvider.isGetMessage = false;
@@ -608,6 +665,9 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
                                     elevation: 0,
                                   ),
                                   onPressed: () async {
+                                    analyticInstance.logEvent(
+                                        name:
+                                            "clicked_rate_dialog_button_conversation_room_view");
                                     await chatProvider.sendToBackendRateId(
                                       context,
                                       conversationId: widget.conversationId,
@@ -647,13 +707,17 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
                     builder: (context, state, child) {
                       return state.isSelectVoice
                           ? AbsorbPointer(
-                              absorbing:
-                                  chatProvider.isActive == 1 ? false : true,
+                              absorbing: chatProvider.isActive == 1 &&
+                                      !viewModel.isTyping
+                                  ? false
+                                  : true,
                               child: voiceButton(context),
                             )
                           : AbsorbPointer(
-                              absorbing:
-                                  chatProvider.isActive == 1 ? false : true,
+                              absorbing: chatProvider.isActive == 1 &&
+                                      !viewModel.isTyping
+                                  ? false
+                                  : true,
                               child: sendMessageInput(chatProvider),
                             );
                     },
@@ -690,6 +754,8 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
   }
 
   SizedBox sendMessageInput(ConversationRoomViewModel chatProvider) {
+    analyticInstance.logEvent(
+        name: "clicked_send_message_input_conversation_room_view");
     return SizedBox(
       width: width(1.0),
       child: Row(
@@ -720,10 +786,17 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
                       children: [
                         InkWell(
                           onTap: () {
+                            analyticInstance.logEvent(
+                                name:
+                                    "clicked_open_speak_modal_input_button_conversation_room_view");
+                            Provider.of<ConversationRoomViewModel>(context,
+                                    listen: false)
+                                .isReadMessage = false;
                             textViewModel.stop();
                             Provider.of<ConversationRoomViewModel>(context,
                                     listen: false)
                                 .selectVoice(true);
+
                             speakModal(context);
                           },
                           child: SvgPicture.asset(
@@ -745,11 +818,11 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
                           child: Center(
                             child: IconButton(
                               onPressed: () async {
+                                analyticInstance.logEvent(
+                                    name:
+                                        "clicked_send_meessage_input_button_conversation_room_view");
                                 textViewModel.stop();
-                                // await sendMessage(
-                                //     chatProvider:
-                                //         chatProvider);
-                                // sendTextController.clear();
+
                                 await sendMessage(context,
                                     chatProvider: chatProvider);
                                 viewModel.sendTextController.clear();
@@ -813,8 +886,11 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
             curve: Curves.fastOutSlowIn,
             child: GestureDetector(
               onTap: () async {
+                analyticInstance.logEvent(name: "clicked_voice_button");
                 Provider.of<ConversationRoomViewModel>(context, listen: false)
                     .setText("");
+                Provider.of<ConversationRoomViewModel>(context, listen: false)
+                    .isReadMessage = false;
                 textViewModel.stop();
                 speakModal(context);
               },
@@ -850,7 +926,8 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
                                   ),
                                 )
                               : SvgPicture.asset(
-                                  IconConstant.instance.iconVoice),
+                                  IconConstant.instance.iconVoice,
+                                ),
                         ),
                       ),
                     ),
@@ -862,6 +939,9 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
         ),
         InkWell(
           onTap: () {
+            analyticInstance.logEvent(
+                name:
+                    "clicked_keyboard_button_conversation_room_view_for_open_input");
             textViewModel.stop();
             viewModel.sendTextController.text = "";
             Provider.of<ConversationRoomViewModel>(context, listen: false)
@@ -893,7 +973,8 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
 
   Future<dynamic> speakModal(BuildContext context) {
     return showModalBottomSheet(
-      isDismissible: false,
+      enableDrag: false,
+      isDismissible: true,
       isScrollControlled: true,
       context: context,
       builder: (BuildContext context) {
@@ -909,9 +990,9 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
               child: Padding(
                 padding:
                     const EdgeInsets.only(top: 68.0, right: 24.0, left: 24.0),
-                child: ListView(
-                  shrinkWrap: true,
-                  physics: const ClampingScrollPhysics(),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Column(
                       children: [
@@ -934,12 +1015,22 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
                         ),
                       ],
                     ),
-                    SizedBox(height: 35.0),
+                    const Expanded(child: SizedBox()),
                     Consumer<ConversationRoomViewModel>(
                       builder: (context, state, child) {
                         return state.isSpeaking
-                            ? Image.asset("assets/images/image_circle_loop.gif", width: 300.0, height: 300.0)
-                            : Image.asset(ImageConstant.instance.imageAI, width: 300.0, height: 300.0,);
+                            ? Expanded(
+                                flex: 2,
+                                child: Image.asset(
+                                  "assets/images/image_circle_loop.gif",
+                                ),
+                              )
+                            : Expanded(
+                                flex: 2,
+                                child: Image.asset(
+                                  ImageConstant.instance.imageAI,
+                                ),
+                              );
                       },
                     ),
                     Consumer<ConversationRoomViewModel>(
@@ -959,129 +1050,204 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
                                   state.voiceMessage,
                                   style: currentTextTheme.bodySmall?.copyWith(
                                     fontWeight: FontWeight.w400,
-                                    color:
-                                        ColorConstant.instance.additionalWhite,
+                                    color: state.voiceMessage ==
+                                            "Please send message"
+                                        ? ColorConstant.instance.additionalRed
+                                        : ColorConstant
+                                            .instance.additionalWhite,
                                     fontSize: 20.0,
                                   ),
                                   maxLines: 4,
+                                  textAlign: TextAlign.center,
                                   overflow: TextOverflow.ellipsis,
                                 ),
                         );
                       },
                     ),
-                    SizedBox(height: 40.0),
-                    Column(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    const Expanded(child: SizedBox()),
+                    Stack(
                       children: [
                         Align(
                           alignment: Alignment.center,
-                          child: AvatarGlow(
-                            endRadius: 75.0,
-                            animate:
-                                Provider.of<ConversationRoomViewModel>(context)
-                                    .isRecording,
-                            duration: const Duration(milliseconds: 500),
-                            glowColor: const Color.fromRGBO(71, 115, 254, 1),
-                            repeat: true,
-                            repeatPauseDuration:
-                                const Duration(milliseconds: 100),
-                            showTwoGlows: true,
-                            curve: Curves.fastOutSlowIn,
-                            child: GestureDetector(
-                              onTap: () {
-                                Provider.of<ConversationRoomViewModel>(context,
-                                        listen: false)
-                                    .setText("loading");
-                                    
-                                textViewModel.isSpeaking = true;
-                                Provider.of<TextToSpeechViewModel>(context,
-                                        listen: false)
-                                    .selectedIndex = -1;
-                                textViewModel.stop();
-                                Provider.of<ConversationRoomViewModel>(context,
-                                        listen: false)
-                                    .setIsRecord();
-                                Provider.of<ConversationRoomViewModel>(context,
-                                        listen: false)
-                                    .setSpeaking();
-                                if (Provider.of<ConversationRoomViewModel>(
-                                        context,
-                                        listen: false)
-                                    .isRecording) {
+                          child: AbsorbPointer(
+                            absorbing: viewModel.isTyping,
+                            child: AvatarGlow(
+                              endRadius: 75.0,
+                              animate: Provider.of<ConversationRoomViewModel>(
+                                      context)
+                                  .isRecording,
+                              duration: const Duration(milliseconds: 500),
+                              glowColor: const Color.fromRGBO(71, 115, 254, 1),
+                              repeat: true,
+                              repeatPauseDuration:
+                                  const Duration(milliseconds: 100),
+                              showTwoGlows: true,
+                              curve: Curves.fastOutSlowIn,
+                              child: GestureDetector(
+                                onLongPress: () {
+                                  analyticInstance.logEvent(
+                                      name: "press_record_button");
+                                  Provider.of<ConversationRoomViewModel>(
+                                          context,
+                                          listen: false)
+                                      .setText("loading");
+
+                                  textViewModel.isSpeaking = true;
+                                  Provider.of<TextToSpeechViewModel>(context,
+                                          listen: false)
+                                      .selectedIndex = -1;
+                                  textViewModel.stop();
+                                  Provider.of<ConversationRoomViewModel>(
+                                          context,
+                                          listen: false)
+                                      .setIsRecord();
+                                  Provider.of<ConversationRoomViewModel>(
+                                          context,
+                                          listen: false)
+                                      .setSpeaking();
                                   _startRecording(
                                       Provider.of<ConversationRoomViewModel>(
                                           context,
                                           listen: false));
-                                } else {
+                                },
+                                onLongPressEnd: (_) {
+                                  analyticInstance.logEvent(
+                                      name: "press_end_record_button");
+
+                                  textViewModel.isSpeaking = true;
+                                  Provider.of<TextToSpeechViewModel>(context,
+                                          listen: false)
+                                      .selectedIndex = -1;
+                                  textViewModel.stop();
+                                  Provider.of<ConversationRoomViewModel>(
+                                          context,
+                                          listen: false)
+                                      .setIsRecord();
+                                  Provider.of<ConversationRoomViewModel>(
+                                          context,
+                                          listen: false)
+                                      .setSpeaking();
                                   _stopRecording(
                                       Provider.of<ConversationRoomViewModel>(
                                           context,
                                           listen: false));
-                                }
-                              },
-                              child: Consumer<ConversationRoomViewModel>(
-                                builder: (context, state, child) {
-                                  return Container(
-                                    decoration: const BoxDecoration(
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: CircleAvatar(
-                                      radius: 55.0,
-                                      backgroundColor: const Color.fromRGBO(
-                                          120, 122, 124, 0.2),
+                                  Provider.of<ConversationRoomViewModel>(
+                                          context,
+                                          listen: false)
+                                      .setIsTyping();
+                                },
+                                onTap: () {
+                                  // analyticInstance.logEvent(
+                                  //     name:
+                                  //         "clicked_record_button_in_speak_modal_conversation_room_view_for_speaking");
+                                  // Provider.of<ConversationRoomViewModel>(
+                                  //         context,
+                                  //         listen: false)
+                                  //     .setText("loading");
+
+                                  // textViewModel.isSpeaking = true;
+                                  // Provider.of<TextToSpeechViewModel>(context,
+                                  //         listen: false)
+                                  //     .selectedIndex = -1;
+                                  // textViewModel.stop();
+                                  // Provider.of<ConversationRoomViewModel>(
+                                  //         context,
+                                  //         listen: false)
+                                  //     .setIsRecord();
+                                  // Provider.of<ConversationRoomViewModel>(
+                                  //         context,
+                                  //         listen: false)
+                                  //     .setSpeaking();
+                                  // if (Provider.of<ConversationRoomViewModel>(
+                                  //         context,
+                                  //         listen: false)
+                                  //     .isRecording) {
+                                  //   _startRecording(
+                                  //       Provider.of<ConversationRoomViewModel>(
+                                  //           context,
+                                  //           listen: false));
+                                  // } else {
+                                  //   _stopRecording(
+                                  //       Provider.of<ConversationRoomViewModel>(
+                                  //           context,
+                                  //           listen: false));
+                                  //   Provider.of<ConversationRoomViewModel>(
+                                  //           context,
+                                  //           listen: false)
+                                  //       .setIsTyping();
+                                  // }
+                                },
+                                child: Consumer<ConversationRoomViewModel>(
+                                  builder: (context, state, child) {
+                                    return Container(
+                                      decoration: const BoxDecoration(
+                                        shape: BoxShape.circle,
+                                      ),
                                       child: CircleAvatar(
-                                        radius: 40.0,
+                                        radius: 55.0,
                                         backgroundColor: const Color.fromRGBO(
-                                            120, 122, 124, 0.4),
+                                            120, 122, 124, 0.2),
                                         child: CircleAvatar(
+                                          radius: 40.0,
                                           backgroundColor: const Color.fromRGBO(
-                                              172, 173, 177, 1),
-                                          foregroundColor: Colors.red,
-                                          radius: 30.0,
-                                          child: SvgPicture.asset(
-                                              IconConstant.instance.iconVoice),
+                                              120, 122, 124, 0.4),
+                                          child: CircleAvatar(
+                                            backgroundColor:
+                                                const Color.fromRGBO(
+                                                    172, 173, 177, 1),
+                                            foregroundColor: Colors.red,
+                                            radius: 30.0,
+                                            child: SvgPicture.asset(IconConstant
+                                                .instance.iconVoice),
+                                          ),
                                         ),
                                       ),
-                                    ),
-                                  );
-                                },
+                                    );
+                                  },
+                                ),
                               ),
                             ),
                           ),
                         ),
                         const SizedBox(height: 10.0),
-                        InkWell(
-                          onTap: () {
-                            viewModel.sendTextController.text = "";
-                            Provider.of<ConversationRoomViewModel>(context,
-                                    listen: false)
-                                .selectVoice(false);
-                            Navigator.pop(context);
-                          },
-                          child: Container(
-                            width: 40.0,
-                            height: 40.0,
-                            decoration: BoxDecoration(
-                              color: Colors.transparent,
-                              borderRadius: BorderRadius.circular(50.0),
-                              border: Border.all(
-                                color: ColorConstant.instance.additionalWhite,
+                        Positioned(
+                          bottom: 0.0,
+                          left: 0.0,
+                          child: InkWell(
+                            onTap: () {
+                              analyticInstance.logEvent(
+                                  name:
+                                      "clicked_keyboard_button_in_speak_modal_conversation_room_view_for_open_input");
+                              viewModel.sendTextController.text = "";
+                              Provider.of<ConversationRoomViewModel>(context,
+                                      listen: false)
+                                  .selectVoice(false);
+                              Navigator.pop(context);
+                            },
+                            child: Container(
+                              width: 40.0,
+                              height: 40.0,
+                              decoration: BoxDecoration(
+                                color: Colors.transparent,
+                                borderRadius: BorderRadius.circular(50.0),
+                                border: Border.all(
+                                  color: ColorConstant.instance.additionalWhite,
+                                ),
                               ),
-                            ),
-                            child: Center(
-                              child: SvgPicture.asset(
-                                IconConstant.instance.iconKeyboard,
-                                width: 15.0,
-                                height: 15.0,
-                                fit: BoxFit.cover,
+                              child: Center(
+                                child: SvgPicture.asset(
+                                  IconConstant.instance.iconKeyboard,
+                                  width: 15.0,
+                                  height: 15.0,
+                                  fit: BoxFit.cover,
+                                ),
                               ),
                             ),
                           ),
                         ),
                       ],
                     ),
-                    SizedBox(height: 20.0),
+                    const SizedBox(height: 20.0),
                   ],
                 ),
               ),
@@ -1107,6 +1273,8 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
               backgroundColor: ColorConstant.instance.paletteBackground,
               child: IconButton(
                 onPressed: () {
+                  analyticInstance.logEvent(name: "closed_speak_modal");
+                  textViewModel.stop();
                   Navigator.pop(context);
                 },
                 icon: Icon(
@@ -1200,6 +1368,7 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
     required int conversationId,
     required int messageId,
   }) {
+    analyticInstance.logEvent(name: "opened_pronunciation_and_grammar_modal");
     return showModalBottomSheet(
       isDismissible: false,
       isScrollControlled: true,
@@ -1278,6 +1447,7 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
                   alignment: Alignment.centerRight,
                   child: InkWell(
                     onTap: () {
+                      analyticInstance.logEvent(name: "closed_pronunciation");
                       Navigator.pop(context);
                     },
                     child: Container(
@@ -1364,6 +1534,8 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
                                         state: state,
                                         avatarPhoto: profilePhoto,
                                         onPressed: () async {
+                                          analyticInstance.logEvent(
+                                              name: "clicked_play_user_sound");
                                           state.setAvatarAISelect(false);
                                           state.setAvatarSelect(true);
                                           textViewModel.stop();
@@ -1392,9 +1564,9 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
                           alignment: Alignment.center,
                           child: AvatarGlow(
                             endRadius: 75.0,
-                            animate: Provider.of<ConversationRoomViewModel>(
-                                    context)
-                                .isRecording,
+                            animate:
+                                Provider.of<ConversationRoomViewModel>(context)
+                                    .isRecording,
                             duration: const Duration(milliseconds: 500),
                             glowColor: const Color.fromRGBO(71, 115, 254, 1),
                             repeat: true,
@@ -1403,34 +1575,75 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
                             showTwoGlows: true,
                             curve: Curves.fastOutSlowIn,
                             child: GestureDetector(
-                              onTap: () {
+                              onLongPress: () {
+                                analyticInstance.logEvent(
+                                    name: "press_play_record_sound_practice");
                                 textViewModel.isSpeaking = true;
                                 Provider.of<TextToSpeechViewModel>(context,
                                         listen: false)
                                     .selectedIndex = -1;
                                 textViewModel.stop();
-                                Provider.of<ConversationRoomViewModel>(
-                                        context,
+                                Provider.of<ConversationRoomViewModel>(context,
                                         listen: false)
                                     .setIsRecord();
-                                Provider.of<ConversationRoomViewModel>(
-                                        context,
+                                Provider.of<ConversationRoomViewModel>(context,
                                         listen: false)
                                     .setSpeaking();
-                                if (Provider.of<ConversationRoomViewModel>(
+                                _startRecording(
+                                    Provider.of<ConversationRoomViewModel>(
                                         context,
+                                        listen: false));
+                              },
+                              onLongPressEnd: (_) {
+                                analyticInstance.logEvent(
+                                    name:
+                                        "press_end_play_record_sound_practice");
+                                textViewModel.isSpeaking = true;
+                                Provider.of<TextToSpeechViewModel>(context,
                                         listen: false)
-                                    .isRecording) {
-                                  _startRecording(
-                                      Provider.of<ConversationRoomViewModel>(
-                                          context,
-                                          listen: false));
-                                } else {
-                                  _stopRecording(
-                                      Provider.of<ConversationRoomViewModel>(
-                                          context,
-                                          listen: false));
-                                }
+                                    .selectedIndex = -1;
+                                textViewModel.stop();
+                                Provider.of<ConversationRoomViewModel>(context,
+                                        listen: false)
+                                    .setIsRecord();
+                                Provider.of<ConversationRoomViewModel>(context,
+                                        listen: false)
+                                    .setSpeaking();
+
+                                _stopRecording(
+                                    Provider.of<ConversationRoomViewModel>(
+                                        context,
+                                        listen: false));
+                              },
+                              onTap: () {
+                                // analyticInstance.logEvent(
+                                //     name:
+                                //         "clicked_play_record_sound_practice_in_pronunciation_and_grammar_modal_conversation_room_view");
+                                // textViewModel.isSpeaking = true;
+                                // Provider.of<TextToSpeechViewModel>(context,
+                                //         listen: false)
+                                //     .selectedIndex = -1;
+                                // textViewModel.stop();
+                                // Provider.of<ConversationRoomViewModel>(context,
+                                //         listen: false)
+                                //     .setIsRecord();
+                                // Provider.of<ConversationRoomViewModel>(context,
+                                //         listen: false)
+                                //     .setSpeaking();
+                                // if (Provider.of<ConversationRoomViewModel>(
+                                //         context,
+                                //         listen: false)
+                                //     .isRecording) {
+                                //   _startRecording(
+                                //       Provider.of<ConversationRoomViewModel>(
+                                //           context,
+                                //           listen: false));
+                                // } else {
+                                //   _stopRecording(
+                                //       Provider.of<ConversationRoomViewModel>(
+                                //           context,
+                                //           listen: false));
+                                // }
                               },
                               child: Consumer<ConversationRoomViewModel>(
                                 builder: (context, state, child) {
@@ -1447,13 +1660,12 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
                                         backgroundColor: const Color.fromRGBO(
                                             120, 122, 124, 0.4),
                                         child: CircleAvatar(
-                                          backgroundColor:
-                                              const Color.fromRGBO(
-                                                  172, 173, 177, 1),
+                                          backgroundColor: const Color.fromRGBO(
+                                              172, 173, 177, 1),
                                           foregroundColor: Colors.red,
                                           radius: 30.0,
-                                          child: SvgPicture.asset(IconConstant
-                                              .instance.iconVoice),
+                                          child: SvgPicture.asset(
+                                              IconConstant.instance.iconVoice),
                                         ),
                                       ),
                                     ),
@@ -1540,15 +1752,6 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
                             progressColor: ColorConstant.instance.palettePurple,
                             backgroundColor: ColorConstant.instance.paletteGrey,
                           ),
-                          // const SizedBox(height: 5.0),
-                          // Text(
-                          //   "Good",
-                          //   style: currentTextTheme.titleMedium?.copyWith(
-                          //     fontWeight: FontWeight.w600,
-                          //     color: ColorConstant.instance.additionalWhite,
-                          //     fontSize: 20.0,
-                          //   ),
-                          // ),
                           const Expanded(child: SizedBox()),
                           Text(
                             userMessage,
@@ -1582,6 +1785,9 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
                                           state: state,
                                           avatarPhoto: profilePhoto,
                                           onPressed: () async {
+                                            analyticInstance.logEvent(
+                                                name:
+                                                    "clicked_play_user_sound<_in_pronunciation_and_grammar_modal_conversation_room_view");
                                             state.setAvatarAISelect(false);
                                             state.setAvatarSelect(true);
                                             textViewModel.stop();
@@ -1621,6 +1827,9 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
                               curve: Curves.fastOutSlowIn,
                               child: GestureDetector(
                                 onTap: () {
+                                  analyticInstance.logEvent(
+                                      name:
+                                          "clicked_play_record_sound_practice_in_pronunciation_and_grammar_modal_conversation_room_view");
                                   textViewModel.isSpeaking = true;
                                   Provider.of<TextToSpeechViewModel>(context,
                                           listen: false)
@@ -1757,6 +1966,7 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
           ),
         ),
         onPressed: () async {
+          analyticInstance.logEvent(name: "clicked_play_ai_sound");
           state.setAvatarSelect(false);
           state.setAvatarAISelect(true);
           textViewModel.stop();
@@ -1884,6 +2094,8 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
                       backgroundColor: const Color.fromRGBO(60, 70, 72, 1),
                       child: IconButton(
                         onPressed: () async {
+                          analyticInstance.logEvent(
+                              name: "clicked_play_translate_button");
                           await viewModel.translate(
                             conversationId: widget.conversationId,
                             messageId: messageId,
@@ -1909,6 +2121,8 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
                       backgroundColor: const Color.fromRGBO(60, 70, 72, 1),
                       child: IconButton(
                         onPressed: () {
+                          analyticInstance.logEvent(
+                              name: "clicked_play_ai_speak_to_text_button");
                           Provider.of<TextToSpeechViewModel>(context,
                                   listen: false)
                               .speak(betterMessage);
@@ -2032,10 +2246,15 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           IconButton(
-                            onPressed: () {
+                            onPressed: () async {
+                              analyticInstance.logEvent(
+                                  name: "clicked_open_translate");
+                              await viewModel.getAllMessages(
+                                  conversationId: widget.conversationId);
                               textViewModel.stop();
                               chatProvider.translateMessage =
                                   chatProvider.chatList[index].message;
+
                               showTranslateMessage(context, index);
                             },
                             icon: Icon(
@@ -2046,6 +2265,8 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
                           ),
                           IconButton(
                             onPressed: () async {
+                              analyticInstance.logEvent(
+                                  name: "clicked_open_pro_and_grammar_modal");
                               textViewModel.stop();
                               Provider.of<ConversationRoomViewModel>(context,
                                       listen: false)
@@ -2056,25 +2277,21 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
                               Provider.of<ConversationRoomViewModel>(context,
                                       listen: false)
                                   .setAvatarSelect(false);
-                              await Provider.of<ConversationRoomViewModel>(
-                                      context,
-                                      listen: false)
-                                  .getAllMessages(
+                              await viewModel.getAllMessages(
                                 conversationId: widget.conversationId,
                               );
                               pronunciationAndGrammer(
-                                correctMessage: chatProvider
-                                    .chatList[index].correctSentence,
-                                userMessage:
-                                    chatProvider.chatList[index].message,
+                                correctMessage:
+                                    viewModel.chatList[index].correctSentence,
+                                userMessage: viewModel.chatList[index].message,
                                 betterMessage:
-                                    chatProvider.chatList[index].betterSentence,
+                                    viewModel.chatList[index].betterSentence,
                                 voiceRatio:
-                                    chatProvider.chatList[index].soundRatio,
-                                userSound: chatProvider.chatList[index].sound,
+                                    viewModel.chatList[index].soundRatio,
+                                userSound: viewModel.chatList[index].sound,
                                 profilePhoto: widget.profilePhoto,
                                 conversationId: widget.conversationId,
-                                messageId: chatProvider.chatList[index].id,
+                                messageId: viewModel.chatList[index].id,
                               );
                             },
                             icon: SvgPicture.asset(
@@ -2102,6 +2319,7 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
   }
 
   Future<dynamic> selectLanguageModal() {
+    analyticInstance.logEvent(name: "opened_select_language");
     return showModalBottomSheet(
       isDismissible: true,
       isScrollControlled: true,
@@ -2165,6 +2383,9 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
                                               .instance.paletteGrey)),
                                 ),
                                 onPressed: () {
+                                  analyticInstance.logEvent(
+                                      name:
+                                          "selected_${viewModel.languages[index].title!}");
                                   viewModel.selectedLanguageId =
                                       viewModel.languages[index].id!;
                                   viewModel.selectedLanguageCode =
@@ -2172,12 +2393,13 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
                                   viewModel.selectedIndex = index;
                                   viewModel.nativeLanguage =
                                       viewModel.languages[index].title!;
-              
-                                  Provider.of<ConversationRoomViewModel>(context,
+
+                                  Provider.of<ConversationRoomViewModel>(
+                                          context,
                                           listen: false)
                                       .selectLanguageText(
                                           viewModel.languages[index].title!);
-              
+
                                   Navigator.pop(context);
                                 },
                                 child: Text(
@@ -2185,7 +2407,8 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
                                   style: currentTextTheme.caption?.copyWith(
                                     fontWeight: FontWeight.w400,
                                     fontSize: 20.0,
-                                    color: ColorConstant.instance.additionalWhite,
+                                    color:
+                                        ColorConstant.instance.additionalWhite,
                                   ),
                                 ),
                               ),
@@ -2208,6 +2431,9 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
                                 ),
                               )),
                           onPressed: () {
+                            analyticInstance.logEvent(
+                                name:
+                                    "clicked_cancel_button_in_select_language_modal_in_conversation_room_view");
                             Navigator.pop(context);
                           },
                           child: Text(
@@ -2236,6 +2462,7 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
     if (index == chatProvider.getChatList.length - 1 &&
         !textViewModel.isSpeaking &&
         chatProvider.isReadMessage) {
+      analyticInstance.logEvent(name: "voiced_message_worked");
       textViewModel.speak(chatProvider.chatList[index].message);
     }
     return Column(
@@ -2278,6 +2505,9 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
                       child: IconButton(
                         iconSize: 18.0,
                         onPressed: () async {
+                          analyticInstance.logEvent(name: "clicked_translate");
+                          await viewModel.getAllMessages(
+                              conversationId: widget.conversationId);
                           textViewModel.stop();
                           chatProvider.translateMessage =
                               chatProvider.chatList[index].message;
@@ -2296,13 +2526,12 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
                       child: IconButton(
                         iconSize: 18.0,
                         onPressed: () async {
+                          analyticInstance.logEvent(
+                              name: "clicked_voice_message");
                           HapticFeedback.heavyImpact();
-                          var state = Provider.of<TextToSpeechViewModel>(
-                              context,
-                              listen: false);
-
-                          state.speak(chatProvider.chatList[index].message);
-                          state.changeSelectedIndex(index);
+                          Provider.of<TextToSpeechViewModel>(context,
+                                  listen: false)
+                              .speak(chatProvider.chatList[index].message);
                         },
                         icon: Icon(
                           Icons.mic,
@@ -2329,15 +2558,7 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
   Future<void> sendMessage(BuildContext context,
       {required ConversationRoomViewModel chatProvider}) async {
     HapticFeedback.heavyImpact();
-
-    ConversationRoomViewModel provider =
-        Provider.of<ConversationRoomViewModel>(context, listen: false);
-
-    // provider.isListening = false;
-
-    // if (!provider.isListening) {
-    //   provider.speechToText.stop();
-    // }
+    analyticInstance.logEvent(name: "worked_send_message_func");
 
     if (viewModel.isTyping) {
       showTopSnackBar(
@@ -2350,12 +2571,12 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
     }
 
     if (viewModel.sendTextController.text.isEmpty) {
-      // chatProvider.chatList.removeLast();
-      // chatProvider.addUserMessage(message: "Please send audio");
+      analyticInstance.logEvent(
+          name: "worked_empty_text_validate_in_conversation_room_view");
       showTopSnackBar(
         Overlay.of(context),
         const CustomSnackBar.error(
-          message: "Please send audio",
+          message: "Please send message",
         ),
       );
       return;
@@ -2376,17 +2597,23 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
         soundRatio: "soundRatio",
       );
 
+      viewModel.sendMessageFocusNode.unfocus();
+
       focusNode.unfocus();
 
       await chatProvider.sendMessageAndGetAnswers(
+        context,
         soundRatio: voiceRatio,
         sound: _path,
         message: msg,
         conversationId: widget.conversationId,
       );
       textViewModel.isSpeaking = false;
+
       // chatProvider.tempList = chatProvider.chatList;
     } catch (error) {
+      analyticInstance.logEvent(
+          name: "error_send_message_func_in_conversation_room_view");
       // ScaffoldMessenger.of(context).showSnackBar(
       //   SnackBar(
       //     content: TextWidget(
@@ -2396,6 +2623,7 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
       //   ),
       // );
     } finally {
+      analyticInstance.logEvent(name: "finally_send_message_func");
       scrollListToEND();
       viewModel.isTyping = false;
     }
@@ -2403,6 +2631,7 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
 
   Future<dynamic> rateDialog(
       BuildContext context, ConversationRoomViewModel state) {
+    analyticInstance.logEvent(name: "opened_rate_dialog_modal");
     return showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -2437,6 +2666,8 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
                           ),
                           TextButton(
                             onPressed: () {
+                              analyticInstance.logEvent(
+                                  name: "clicked_skip_ratel");
                               Navigator.pushReplacement(
                                   context,
                                   MaterialPageRoute(
@@ -2463,6 +2694,9 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
                             return Material(
                               child: InkWell(
                                 onTap: () async {
+                                  analyticInstance.logEvent(
+                                      name:
+                                          "clicked_rate_${state.rates[index].id!}");
                                   await state.sendToBackendRateId(
                                     context,
                                     conversationId: widget.conversationId,
@@ -2506,6 +2740,7 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
   }
 
   Future<dynamic> showTranslateMessage(BuildContext context, int index) {
+    analyticInstance.logEvent(name: "opened_translate_message");
     return showModalBottomSheet(
       isDismissible: false,
       isScrollControlled: true,
@@ -2515,33 +2750,44 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
           filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
           child: Consumer<ConversationRoomViewModel>(
             builder: (context, state, child) {
-              return FractionallySizedBox(
-                heightFactor: 0.9,
-                child: Container(
-                  width: width(1.0),
-                  decoration: BoxDecoration(
-                    color: ColorConstant.instance.paletteBackground,
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(20.0),
-                      topRight: Radius.circular(20.0),
+              return DraggableScrollableSheet(
+                expand: false,
+                initialChildSize: 0.9,
+                builder: (BuildContext context, ScrollController scroll) {
+                  return Container(
+                    width: width(1.0),
+                    decoration: BoxDecoration(
+                      color: ColorConstant.instance.paletteBackground,
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(20.0),
+                        topRight: Radius.circular(20.0),
+                      ),
                     ),
-                  ),
-                  child: Stack(
-                    children: [
-                      Positioned(
-                        bottom: 0.0,
-                        left: 0.0,
-                        right: 0.0,
-                        child: Image.asset(
-                          ImageConstant.instance.imageBottomEllipse,
-                          width: width(1.0),
-                          fit: BoxFit.cover,
+                    child: SingleChildScrollView(
+                      physics: const ClampingScrollPhysics(),
+                      controller: scroll,
+                      child: SizedBox(
+                        width: width(1.0),
+                        height: height(1.0),
+                        child: Stack(
+                          children: [
+                            Positioned(
+                              bottom: 0.0,
+                              left: 0.0,
+                              right: 0.0,
+                              child: Image.asset(
+                                ImageConstant.instance.imageBottomEllipse,
+                                width: width(1.0),
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                            translate(index, state),
+                          ],
                         ),
                       ),
-                      translate(state, index),
-                    ],
-                  ),
-                ),
+                    ),
+                  );
+                },
               );
             },
           ),
@@ -2550,7 +2796,7 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
     );
   }
 
-  Padding translate(ConversationRoomViewModel state, int index) {
+  Padding translate(int index, ConversationRoomViewModel state) {
     return Padding(
       padding: const EdgeInsets.symmetric(
         horizontal: 24.0,
@@ -2559,7 +2805,7 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
       child: FutureBuilder(
         future: viewModel.translate(
           conversationId: widget.conversationId,
-          messageId: state.chatList[index].id,
+          messageId: viewModel.chatList[index].id,
           translateTitle: viewModel.nativeLanguage,
         ),
         builder: (context, snapshot) {
@@ -2610,231 +2856,118 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView> {
               ],
             );
           } else if (snapshot.connectionState == ConnectionState.done) {
-            return SingleChildScrollView(
-              physics: const ClampingScrollPhysics(),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 15.0),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: InkWell(
-                      onTap: () {
-                        Navigator.pop(context);
+            return Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 15.0),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: InkWell(
+                    onTap: () {
+                      analyticInstance.logEvent(
+                          name: "closed_translate_message");
+                      Navigator.pop(context);
+                    },
+                    child: Container(
+                      width: 24.0,
+                      height: 24.0,
+                      decoration: BoxDecoration(
+                        color: Colors.transparent,
+                        borderRadius: BorderRadius.circular(50.0),
+                        border: Border.all(
+                            color: ColorConstant.instance.paletteGrey),
+                      ),
+                      child: Center(
+                        child: Icon(
+                          Icons.close,
+                          size: 15.0,
+                          color: ColorConstant.instance.paletteGrey,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10.0),
+                Text(
+                  LocaleKeys.message.tr(),
+                  style: currentTextTheme.displayLarge?.copyWith(
+                    fontSize: 16.0,
+                    fontWeight: FontWeight.w600,
+                    color: ColorConstant.instance.additionalWhite,
+                  ),
+                ),
+                const SizedBox(height: 16.0),
+                Text(
+                  state.translateMessage,
+                  style: currentTextTheme.displayLarge?.copyWith(
+                    fontSize: 16.0,
+                    fontWeight: FontWeight.w400,
+                    color: ColorConstant.instance.additionalWhite,
+                  ),
+                ),
+                const SizedBox(height: 24.0),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Text(
+                      LocaleKeys.translate_to.tr(),
+                      style: currentTextTheme.displayLarge?.copyWith(
+                        fontSize: 20.0,
+                        fontWeight: FontWeight.w600,
+                        color: ColorConstant.instance.additionalWhite,
+                      ),
+                    ),
+                    const SizedBox(width: 10.0),
+                    TextButton(
+                      style: TextButton.styleFrom(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10.0),
+                          side: BorderSide(
+                              width: 1.0,
+                              color: ColorConstant.instance.additionalWhite),
+                        ),
+                      ),
+                      onPressed: () {
+                        analyticInstance.logEvent(
+                            name: "clicked_select_language");
+                        // changeLanguage(context);
+                        selectLanguageModal();
                       },
-                      child: Container(
-                        width: 24.0,
-                        height: 24.0,
-                        decoration: BoxDecoration(
-                          color: Colors.transparent,
-                          borderRadius: BorderRadius.circular(50.0),
-                          border: Border.all(
-                              color: ColorConstant.instance.paletteGrey),
-                        ),
-                        child: Center(
-                          child: Icon(
-                            Icons.close,
-                            size: 15.0,
-                            color: ColorConstant.instance.paletteGrey,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 10.0),
-                  Text(
-                    LocaleKeys.message.tr(),
-                    style: currentTextTheme.displayLarge?.copyWith(
-                      fontSize: 16.0,
-                      fontWeight: FontWeight.w600,
-                      color: ColorConstant.instance.additionalWhite,
-                    ),
-                  ),
-                  const SizedBox(height: 16.0),
-                  Text(
-                    state.translateMessage,
-                    style: currentTextTheme.displayLarge?.copyWith(
-                      fontSize: 16.0,
-                      fontWeight: FontWeight.w400,
-                      color: ColorConstant.instance.additionalWhite,
-                    ),
-                  ),
-                  const SizedBox(height: 24.0),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Text(
-                        LocaleKeys.translate_to.tr(),
-                        style: currentTextTheme.displayLarge?.copyWith(
-                          fontSize: 20.0,
-                          fontWeight: FontWeight.w600,
-                          color: ColorConstant.instance.additionalWhite,
-                        ),
-                      ),
-                      const SizedBox(width: 10.0),
-                      TextButton(
-                        style: TextButton.styleFrom(
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10.0),
-                            side: BorderSide(
-                                width: 1.0,
-                                color: ColorConstant.instance.additionalWhite),
-                          ),
-                        ),
-                        onPressed: () {
-                          // changeLanguage(context);
-                          selectLanguageModal();
+                      child: Consumer<ConversationRoomViewModel>(
+                        builder: (context, stateCo, child) {
+                          return Text(
+                            stateCo.nativeLanguage == ''
+                                ? viewModel
+                                    .conversationModel.nativeLanguage!.title!
+                                : stateCo.nativeLanguage,
+                            style: currentTextTheme.displaySmall?.copyWith(
+                              fontSize: 14.0,
+                              fontWeight: FontWeight.w400,
+                              color: ColorConstant.instance.additionalWhite,
+                            ),
+                          );
                         },
-                        child: Consumer<ConversationRoomViewModel>(
-                          builder: (context, stateCo, child) {
-                            return Text(
-                              stateCo.nativeLanguage == ''
-                                  ? state
-                                      .conversationModel.nativeLanguage!.title!
-                                  : stateCo.nativeLanguage,
-                              style: currentTextTheme.displaySmall?.copyWith(
-                                fontSize: 14.0,
-                                fontWeight: FontWeight.w400,
-                                color: ColorConstant.instance.additionalWhite,
-                              ),
-                            );
-                          },
-                        ),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 16.0),
-                  Text(
-                    viewModel.translateModel.message!,
-                    style: currentTextTheme.displayLarge?.copyWith(
-                      fontSize: 16.0,
-                      fontWeight: FontWeight.w400,
-                      color: ColorConstant.instance.additionalWhite,
                     ),
+                  ],
+                ),
+                const SizedBox(height: 16.0),
+                Text(
+                  viewModel.translateModel.message!,
+                  style: currentTextTheme.displayLarge?.copyWith(
+                    fontSize: 16.0,
+                    fontWeight: FontWeight.w400,
+                    color: ColorConstant.instance.additionalWhite,
                   ),
-                ],
-              ),
+                ),
+              ],
             );
           } else {
             return const Text('error');
           }
         },
       ),
-    );
-  }
-
-  Future<dynamic> changeLanguage(BuildContext context) {
-    return showModalBottomSheet(
-      isScrollControlled: true,
-      context: context,
-      builder: (BuildContext context) {
-        return FractionallySizedBox(
-          heightFactor: 0.88,
-          child: Container(
-            width: width(1.0),
-            decoration: BoxDecoration(
-                color: ColorConstant.instance.additionalWhite,
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(20.0),
-                  topRight: Radius.circular(20.0),
-                )),
-            child: SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24.0,
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 15.0),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: CircleAvatar(
-                        backgroundColor: ColorConstant.instance.greyScale300,
-                        radius: 15.0,
-                        child: IconButton(
-                            onPressed: () {
-                              Navigator.pop(context);
-                            },
-                            icon: Icon(
-                              Icons.close,
-                              color: ColorConstant.instance.greyScale900,
-                              size: 15.0,
-                            )),
-                      ),
-                    ),
-                    const SizedBox(height: 24.0),
-                    Text(
-                      LocaleKeys.all_lang.tr(),
-                      style: currentTextTheme.displaySmall?.copyWith(
-                        fontWeight: FontWeight.w500,
-                        color: ColorConstant.instance.greyScale600,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 15.0),
-                    ListView.builder(
-                      shrinkWrap: true,
-                      physics: const ClampingScrollPhysics(),
-                      itemCount: viewModel.languages.length,
-                      itemBuilder: (context, index) {
-                        return Consumer<ConversationRoomViewModel>(
-                          builder: (context, state, child) {
-                            return Column(
-                              children: [
-                                LanguageButton(
-                                  image: viewModel.languages[index].flag!,
-                                  languageId: index + 1,
-                                  selectedIndex: state.selectedIndex,
-                                  onTap: () {
-                                    viewModel.selectedLanguageId =
-                                        viewModel.languages[index].id!;
-                                    viewModel.selectedLanguageCode =
-                                        viewModel.languages[index].code!;
-                                    state.changeCheckboxStatus(index: index);
-                                    viewModel.selectedIndex = index;
-                                    viewModel.nativeLanguage =
-                                        viewModel.languages[index].title!;
-                                  },
-                                  widthValue: width(1.0),
-                                  heightValue: height(0.07),
-                                  backgroundColor:
-                                      ColorConstant.instance.additionalWhite,
-                                  borderRadius: 66.0,
-                                  text: viewModel.languages[index].title!,
-                                  textStyle: currentTextTheme.displaySmall
-                                          ?.copyWith(
-                                              fontWeight: FontWeight.w400,
-                                              color: ColorConstant
-                                                  .instance.greyScale900) ??
-                                      const TextStyle(),
-                                  onChangedCheckBox: (value) {
-                                    viewModel.selectedLanguageId =
-                                        viewModel.languages[index].id!;
-                                    viewModel.selectedLanguageCode =
-                                        viewModel.languages[index].code!;
-                                    state.changeCheckboxStatus(index: index);
-                                    viewModel.selectedIndex = index;
-                                    viewModel.nativeLanguage =
-                                        viewModel.languages[index].title!;
-                                  },
-                                ),
-                                const SizedBox(height: 15.0),
-                              ],
-                            );
-                          },
-                        );
-                      },
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        );
-      },
     );
   }
 }

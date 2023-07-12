@@ -5,6 +5,7 @@ import 'package:chatbot/core/view/base/base_state.dart';
 import 'package:chatbot/core/view/widget/button/app_button.dart';
 import 'package:chatbot/product/auth/language/viewmodel/language_view_model.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
@@ -14,14 +15,8 @@ import '../../../../core/constants/image_constant.dart';
 import '../../../../core/language/locale_keys.g.dart';
 
 class LanguageLevelView extends StatefulWidget {
-  final String email;
-  final String password;
-  final String name;
   final String languageCode;
   const LanguageLevelView({
-    required this.email,
-    required this.password,
-    required this.name,
     required this.languageCode,
   });
 
@@ -32,6 +27,7 @@ class LanguageLevelView extends StatefulWidget {
 class _LanguageLevelViewState extends BaseState<LanguageLevelView>
     with TickerProviderStateMixin {
   LanguageViewModel viewModel = LanguageViewModel();
+  FirebaseAnalytics analyticInstance = FirebaseAnalytics.instance;
 
   late final AnimationController _controller = AnimationController(
     duration: const Duration(seconds: 1),
@@ -40,6 +36,7 @@ class _LanguageLevelViewState extends BaseState<LanguageLevelView>
 
   @override
   Widget build(BuildContext context) {
+    analyticInstance.logEvent(name: "opened_language_level_view");
     Provider.of<LanguageViewModel>(context, listen: false).setActiveLevelPage();
     return Scaffold(
       backgroundColor: ColorConstant.instance.paletteBackground,
@@ -80,6 +77,8 @@ class _LanguageLevelViewState extends BaseState<LanguageLevelView>
                 alignment: Alignment.centerLeft,
                 child: InkWell(
                   onTap: () {
+                    analyticInstance.logEvent(
+                        name: "closed_language_level_view");
                     Navigator.pop(context);
                   },
                   child: Container(
@@ -121,12 +120,8 @@ class _LanguageLevelViewState extends BaseState<LanguageLevelView>
                 ),
                 textAlign: TextAlign.center,
               ),
-              // Expanded(
-              //   flex: 2,
-              //   child: Image.asset(ImageConstant.instance.imageAI),
-              // ),
               Expanded(
-                flex: 5,
+                  flex: 5,
                   child: Image.asset("assets/images/image_circle_loop.gif")),
               Consumer<LanguageViewModel>(
                 builder: (context, state, child) {
@@ -196,27 +191,29 @@ class _LanguageLevelViewState extends BaseState<LanguageLevelView>
                     return SizedBox(
                       width: double.maxFinite,
                       child: Slider(
-                        inactiveColor: const Color.fromRGBO(32, 33, 35, 1),
-                        activeColor: const Color.fromRGBO(32, 33, 35, 1),
-                        thumbColor: const Color.fromRGBO(174, 175, 177, 0.6),
-                        overlayColor: MaterialStateProperty.all(
-                            const Color.fromRGBO(174, 175, 177, 0.6)),
-                        divisions: 5,
-                        max: 5,
-                        label: state.sliderValue == 0
-                            ? 'A1'
-                            : state.sliderValue == 1
-                                ? "A2"
-                                : state.sliderValue == 2
-                                    ? "B1"
-                                    : state.sliderValue == 3
-                                        ? "B2"
-                                        : state.sliderValue == 4
-                                            ? "C1"
-                                            : "C2",
-                        value: state.sliderValue,
-                        onChanged: (value) => state.changeSliderValue(value),
-                      ),
+                          inactiveColor: const Color.fromRGBO(32, 33, 35, 1),
+                          activeColor: const Color.fromRGBO(32, 33, 35, 1),
+                          thumbColor: const Color.fromRGBO(174, 175, 177, 0.6),
+                          overlayColor: MaterialStateProperty.all(
+                              const Color.fromRGBO(174, 175, 177, 0.6)),
+                          divisions: 5,
+                          max: 5,
+                          label: state.sliderValue == 0
+                              ? 'A1'
+                              : state.sliderValue == 1
+                                  ? "A2"
+                                  : state.sliderValue == 2
+                                      ? "B1"
+                                      : state.sliderValue == 3
+                                          ? "B2"
+                                          : state.sliderValue == 4
+                                              ? "C1"
+                                              : "C2",
+                          value: state.sliderValue,
+                          onChanged: (value) {
+                            analyticInstance.logEvent(name: "select_$value");
+                            state.changeSliderValue(value);
+                          }),
                     );
                   },
                 ),
@@ -238,12 +235,9 @@ class _LanguageLevelViewState extends BaseState<LanguageLevelView>
                     fontWeight: FontWeight.w400,
                   ),
                   onTap: () async {
-                    await viewModel.register({
-                      "email": widget.email,
-                      "password": widget.password,
-                      "name": widget.name,
+                    analyticInstance.logEvent(name: "clicked_create_profile");
+                    await viewModel.updateProfileInfo({
                       "native_language_code": widget.languageCode,
-                      // "learn_language_id": learnId.toString(),
                       "learn_language_proficiency_cefr":
                           state.learnLanguageProficiencyCefr,
                     }, context);

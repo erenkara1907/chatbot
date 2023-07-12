@@ -273,15 +273,32 @@ class HomeViewModel extends ChangeNotifier {
 
     if (response.result == true) {
       conversation = response.data!.conversation!;
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
+      Navigator.pushAndRemoveUntil(context, MaterialPageRoute(
           builder: (context) => ConversationRoomView(
             conversationId: conversation.id!,
             scenarioTitle: scenarioTitle,
             profilePhoto: profilePhoto,
           ),
-        ),
-      );
+        ), (route) => false);
+      // Navigator.pushReplacement(
+      //   context,
+      //   MaterialPageRoute(
+      //     builder: (context) => ConversationRoomView(
+      //       conversationId: conversation.id!,
+      //       scenarioTitle: scenarioTitle,
+      //       profilePhoto: profilePhoto,
+      //     ),
+      //   ),
+      // );
+      // Navigator.of(context).pushReplacement(
+      //   MaterialPageRoute(
+      //     builder: (context) => ConversationRoomView(
+      //       conversationId: conversation.id!,
+      //       scenarioTitle: scenarioTitle,
+      //       profilePhoto: profilePhoto,
+      //     ),
+      //   ),
+      // );
     }
 
     return response;

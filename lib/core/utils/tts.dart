@@ -46,6 +46,7 @@ class TextToSpeechViewModel extends ChangeNotifier {
     tts.setLanguage("en-US");
     tts.setPitch(1.0);
     tts.setSpeechRate(0.4);
+    await tts.setVoice({"name": "Aaron", "locale": "en-US"});
   }
 
   stop() {
@@ -84,3 +85,60 @@ class TextToSpeechViewModel extends ChangeNotifier {
     tts.speak(text);
   }
 }
+
+// import 'package:flutter/material.dart';
+// import 'package:flutter_tts/flutter_tts.dart';
+
+// class TextToSpeechViewModel extends ChangeNotifier {
+//   static FlutterTts tts = FlutterTts();
+
+//   bool isCompleted = true;
+//   int selectedIndex = -1;
+//   bool isSpeaking = false;
+
+//   changeSelectedIndex(int index) {
+//     selectedIndex = index;
+//     notifyListeners();
+//   }
+
+//   static initTTS() async {
+//     tts.setLanguage("en-US");
+//     tts.setPitch(1.0);
+//     tts.setSpeechRate(0.4);
+//     await tts.setVoice({"name": "Aaron", "locale": "en-US"});
+//   }
+
+//   stop() {
+//     tts.stop();
+//     isCompleted = true;
+//     notifyListeners();
+//   }
+
+//   speak(String text) async {
+//     await tts.setIosAudioCategory(IosTextToSpeechAudioCategory.playAndRecord,
+//         [IosTextToSpeechAudioCategoryOptions.defaultToSpeaker]);
+//     tts.setStartHandler(() {
+//       isCompleted = false;
+//          print("completedd : $isCompleted");
+//       notifyListeners();
+//     });
+
+ 
+
+//     tts.setCompletionHandler(() {
+//       isCompleted = true;
+//       isSpeaking = true;
+//       notifyListeners();
+//     });
+
+//     print("completedd 2 : $isCompleted");
+
+//     // tts.setErrorHandler((message) {
+//     //   print("TTS ERROR : $message");
+//     // });
+
+//     await tts.awaitSpeakCompletion(true);
+
+//     tts.speak(text);
+//   }
+// }

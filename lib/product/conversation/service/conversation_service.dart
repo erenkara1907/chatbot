@@ -5,10 +5,15 @@ import 'package:chatbot/core/constants/api_constant.dart';
 import 'package:chatbot/product/conversation/model/conversation_model.dart';
 import 'package:chatbot/product/conversation/model/conversation_room_model.dart';
 import 'package:chatbot/product/conversation/model/conversation_store_model.dart';
+import 'package:chatbot/product/conversation/model/sound_model.dart';
+import 'package:chatbot/product/conversation/model/transcription_model.dart';
 import 'package:chatbot/product/conversation/model/translate_model.dart';
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'package:path/path.dart';
+import 'package:top_snackbar_flutter/custom_snack_bar.dart';
+import 'package:top_snackbar_flutter/top_snack_bar.dart';
 
 import '../model/chat_model.dart';
 import '../model/one_message_model.dart';
@@ -59,30 +64,11 @@ class ConversationService {
       },
     );
 
-    print("cId : $conversationId");
-    print("mId : $messageId");
-    print("token : $token");
-
-    print("response : ${response.body}");
     return OneMessageModel.fromJson(jsonDecode(response.body));
   }
 
-  // Future<ConversationMessageSendModel> sendMessage(String token,
-  //     {required String message, required int conversationId}) async {
-  //   final response = await http.post(
-  //       Uri.parse(
-  //           '${ApiConstant.instance.conversationUrl}/$conversationId/message'),
-  //       headers: {
-  //         'Authorization': 'Bearer $token',
-  //       },
-  //       body: {
-  //         'message': message,
-  //       });
-
-  //   return ConversationMessageSendModel.fromJson(jsonDecode(response.body));
-  // }
-
-  Future<List<ChatModel>> sendMessage({
+  Future<List<ChatModel>> sendMessage(
+    BuildContext context, {
     required String message,
     required int conversationId,
     required String token,
@@ -106,14 +92,6 @@ class ConversationService {
       request.fields['sound_ratio'] = soundRatio;
       request.fields['message'] = message;
 
-      // request.files.add(await http.MultipartFile.fromPath(
-      //   'sound_file',
-      //   soundFile.path,
-      //   contentType: MediaType(
-      //       'audio', 'wav'), // Dosya türünüze uygun olarak değiştirin
-      // ));
-
-      // Dosya varlığı kontrolü
       if (await soundFile.exists()) {
         final bytes = await soundFile.readAsBytes();
         final file = http.MultipartFile.fromBytes(
@@ -124,21 +102,7 @@ class ConversationService {
         );
 
         request.files.add(file);
-
-        // Dosya yolunu kontrol edin
-        final path = soundFile.path;
-
-        // Dosya uzantısını kontrol edin
-        final extension = path.split('.').last;
-        print('Dosya uzantısı: $extension');
       }
-
-      // final file = await http.MultipartFile.fromPath(
-      //   "sound_file",
-      //   soundFile.path,
-      //   contentType: MediaType('audio', 'wav'),
-      // );
-      // request.files.add(file);
 
       final response = await request.send();
       final responseBody = await response.stream.bytesToString();
@@ -170,8 +134,12 @@ class ConversationService {
 
       return chatList;
     } catch (e) {
-      print(
-          "sendMessage fonksiyonunda bir hata meydana geldi: ${e.toString()}");
+      showTopSnackBar(
+        Overlay.of(context),
+        const CustomSnackBar.error(
+          message: "Something went wrong",
+        ),
+      );
       rethrow;
     }
   }
@@ -188,6 +156,57 @@ class ConversationService {
         });
 
     return TranslateModel.fromJson(jsonDecode(response.body));
+  }
+
+  Future<TranscriptionModel> sendTextToPlayAPI(
+      {required String content}) async {
+    final response = await http.post(
+      Uri.parse("https://play.ht/api/v1/convert"),
+      headers: {
+        'Authorization': '6f6a715ecf6149f2b04e275e675c89d0',
+        'X-User-Id': 'UUoygIEjkvc71ChSDjOJxazkg192',
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        "content": [content],
+        "voice": "Amy"
+      }),
+    );
+
+    return TranscriptionModel.fromJson(jsonDecode(response.body));
+  }
+
+  Future<SoundModel> sendTranscriptionIdToPlayAPI(
+      {required String transcriptionId}) async {
+    SoundModel? soundModel;
+    int attempts = 0;
+    while (soundModel == null && attempts < 10) {
+      final response = await http.get(
+        Uri.parse(
+            "https://play.ht/api/v1/articleStatus?transcriptionId=$transcriptionId"),
+        headers: {
+          'Authorization': '6f6a715ecf6149f2b04e275e675c89d0',
+          'X-User-Id': 'UUoygIEjkvc71ChSDjOJxazkg192',
+          'Accept': 'application/json',
+        },
+      );
+
+      var data = jsonDecode(response.body);
+      if (data["converted"] == true) {
+        soundModel = SoundModel.fromJson(data);
+      } else {
+        attempts++;
+        await Future.delayed(
+            const Duration(microseconds: 100)); // wait for 5 seconds
+      }
+    }
+    if (soundModel != null) {
+      return soundModel;
+    } else {
+      throw Exception(
+          "Failed to fetch transcription status after $attempts attempts");
+    }
   }
 
   Future<RateModel> getRates(String token) async {

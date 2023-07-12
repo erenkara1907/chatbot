@@ -6,6 +6,7 @@ import 'package:chatbot/core/utils/page_transition.dart';
 import 'package:chatbot/core/view/base/base_stateless.dart';
 import 'package:chatbot/product/auth/login/viewmodel/login_view_model.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -17,9 +18,11 @@ import '../../register/view/register_view.dart';
 
 class LoginView extends BaseStateless {
   LoginViewModel viewModel = LoginViewModel();
+  FirebaseAnalytics analyticInstance = FirebaseAnalytics.instance;
 
   @override
   Widget build(BuildContext context) {
+    analyticInstance.logEvent(name: "opened_login_view");
     Provider.of<LoginViewModel>(context, listen: false).setActivePage();
     return GestureDetector(
       onTap: () => viewModel.startFocusNode(),
@@ -74,7 +77,7 @@ class LoginView extends BaseStateless {
                   children: [
                     Text(
                       LocaleKeys.sign_in.tr(),
-                      style: currentTextTheme(context).headline3?.copyWith(
+                      style: currentTextTheme(context).displaySmall?.copyWith(
                             fontWeight: FontWeight.w500,
                             color: ColorConstant.instance.greyScale600,
                           ),
@@ -83,7 +86,7 @@ class LoginView extends BaseStateless {
                     const SizedBox(height: 4.0),
                     Text(
                       LocaleKeys.enter_information.tr(),
-                      style: currentTextTheme(context).headline1?.copyWith(
+                      style: currentTextTheme(context).displayLarge?.copyWith(
                             fontWeight: FontWeight.w500,
                             color: ColorConstant.instance.additionalWhite,
                           ),
@@ -152,6 +155,7 @@ class LoginView extends BaseStateless {
                       padding: const EdgeInsets.symmetric(horizontal: 21.0),
                       child: AppButton(
                         onTap: () async {
+                          analyticInstance.logEvent(name: "clicked_login_button__login_view");
                           await viewModel.login({
                             'email': viewModel.emailController.text,
                             'password': viewModel.passwordController.text,
@@ -166,7 +170,7 @@ class LoginView extends BaseStateless {
                         borderColor: ColorConstant.instance.paletteBlue,
                         text: LocaleKeys.sign_in.tr(),
                         textStyle: currentTextTheme(context)
-                                .headline3
+                                .displaySmall
                                 ?.copyWith(
                                   fontWeight: FontWeight.w400,
                                   color: ColorConstant.instance.additionalWhite,
@@ -177,6 +181,7 @@ class LoginView extends BaseStateless {
                     const SizedBox(height: 8.0),
                     InkWell(
                       onTap: () {
+                        analyticInstance.logEvent(name: "clicked_go_to_register");
                         Navigator.of(context)
                             .push(createRoute(page: RegisterView()));
                       },
@@ -187,17 +192,17 @@ class LoginView extends BaseStateless {
                           Text(
                             LocaleKeys.dont_account.tr(),
                             style: currentTextTheme(context)
-                                .headline6
+                                .titleLarge
                                 ?.copyWith(
                                   fontWeight: FontWeight.w500,
                                   color: ColorConstant.instance.additionalWhite,
                                 ),
                           ),
-                          const SizedBox(width: 2.0),
+                          const SizedBox(width: 6.0),
                           Text(
                             LocaleKeys.sign_up.tr(),
                             style:
-                                currentTextTheme(context).headline6?.copyWith(
+                                currentTextTheme(context).titleLarge?.copyWith(
                                       fontWeight: FontWeight.w800,
                                       color: ColorConstant.instance.paletteBlue,
                                     ),

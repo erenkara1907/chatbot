@@ -8,42 +8,96 @@ import 'package:chatbot/core/language/locale_keys.g.dart';
 import 'package:chatbot/core/view/base/base_stateless.dart';
 import 'package:chatbot/product/conversation/viewmodel/conversation_view_model.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
 import 'package:skeletons/skeletons.dart';
 
 import '../../../core/constants/icon_constant.dart';
 import '../../../core/constants/image_constant.dart';
+import '../../../core/utils/connectivity_sevice.dart';
 import '../../home/model/category_model.dart';
 import '../../home/viewmodel/home_view_model.dart';
 import 'conversation_room_view.dart';
 
 class ConversationView extends BaseStateless {
   HomeViewModel viewModel = HomeViewModel();
+  FirebaseAnalytics analyticInstance = FirebaseAnalytics.instance;
   @override
   Widget build(BuildContext context) {
+    final connectivityService =
+        Provider.of<ConnectivityService>(context, listen: true);
+    analyticInstance.logEvent(name: "conversation_view_opened");
     Provider.of<ConversationViewModel>(context, listen: false).setActivePage();
-    return DefaultTabController(
-      length: 2,
-      child: Scaffold(
-        backgroundColor: ColorConstant.instance.paletteBackground,
-        body: Stack(
-          children: [
-            Positioned(
-              top: 0.0,
-              left: 0.0,
-              right: 0.0,
-              child: Image.asset(
-                ImageConstant.instance.imageTopEllipse,
-                width: width(context: context, value: 1.0),
-                fit: BoxFit.cover,
-              ),
-            ),
-            messageList(context),
-          ],
+    return WillPopScope(
+      onWillPop: () async {
+        return false;
+      },
+      child: DefaultTabController(
+        length: 2,
+        child: Scaffold(
+          backgroundColor: ColorConstant.instance.paletteBackground,
+          body: connectionStatusWidget(
+              connectivityService.connectionStatus, context),
         ),
       ),
+    );
+  }
+
+  Widget connectionStatusWidget(
+      ConnectionStatus connectionStatus, BuildContext context) {
+    switch (connectionStatus) {
+      case ConnectionStatus.Online:
+        return conversationBody(context);
+      case ConnectionStatus.Offline:
+        return offlineNetwork(context);
+    }
+  }
+
+  SizedBox offlineNetwork(BuildContext context) {
+    return SizedBox(
+      width: width(context: context, value: 1.0),
+      height: height(context: context, value: 1.0),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          SizedBox(
+            width: 250.0,
+            height: 250.0,
+            child: Lottie.asset(
+              "assets/lottie/lottie_network.json",
+              fit: BoxFit.contain,
+            ),
+          ),
+          const SizedBox(height: 10.0),
+          const Text(
+            'Please check your internet connection',
+            style: TextStyle(fontSize: 18, color: Colors.white),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Stack   conversationBody(BuildContext context) {
+    return Stack(
+      children: [
+        Positioned(
+          top: 0.0,
+          left: 0.0,
+          right: 0.0,
+          child: Image.asset(
+            ImageConstant.instance.imageTopEllipse,
+            width: width(context: context, value: 1.0),
+            fit: BoxFit.cover,
+          ),
+        ),
+        messageList(context),
+      ],
     );
   }
 
@@ -55,6 +109,7 @@ class ConversationView extends BaseStateless {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return skeletonLoading();
         } else if (snapshot.connectionState == ConnectionState.done) {
+          analyticInstance.logEvent(name: "conversation_view_data_came");
           return Padding(
             padding: const EdgeInsets.only(
               bottom: 80.0,
@@ -103,6 +158,7 @@ class ConversationView extends BaseStateless {
                                   color: ColorConstant.instance.additionalWhite,
                                 ),
                         onTap: (index) {
+                          analyticInstance.logEvent(name: "selected_$index");
                           state.selectTab(index);
                         },
                         tabs: const [
@@ -137,6 +193,7 @@ class ConversationView extends BaseStateless {
             ),
           );
         } else {
+          analyticInstance.logEvent(name: "conversation_view_data_not_came");
           return const Text('error');
         }
       },
@@ -189,6 +246,7 @@ class ConversationView extends BaseStateless {
   }
 
   Padding noMessage(BuildContext context) {
+    analyticInstance.logEvent(name: "no_message_open");
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 108.0),
       child: Column(
@@ -211,6 +269,7 @@ class ConversationView extends BaseStateless {
   }
 
   Padding noMCompleteessage(BuildContext context) {
+    analyticInstance.logEvent(name: "no_complete_message");
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 108.0),
       child: Column(
@@ -231,6 +290,7 @@ class ConversationView extends BaseStateless {
   }
 
   CircleAvatar createMessage(BuildContext context) {
+    analyticInstance.logEvent(name: "create_message_open");
     return CircleAvatar(
       radius: 50.0,
       backgroundColor: const Color.fromRGBO(120, 122, 124, 0.2),
@@ -242,53 +302,71 @@ class ConversationView extends BaseStateless {
           radius: 25.0,
           child: IconButton(
             onPressed: () {
+              analyticInstance.logEvent(name: "create_message_button");
               // showScenarios(context);
               showModalBottomSheet(
                 isScrollControlled: true,
                 enableDrag: true,
                 context: context,
                 builder: (BuildContext context) {
-                  return FractionallySizedBox(
-                    heightFactor: 0.9,
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
-                      child: Container(
-                        width: width(context: context, value: 1.0),
-                        decoration: BoxDecoration(
-                          color: ColorConstant.instance.paletteBackground,
-                          borderRadius: const BorderRadius.only(
-                            topLeft: Radius.circular(20.0),
-                            topRight: Radius.circular(20.0),
+                  return DraggableScrollableSheet(
+                    initialChildSize: 0.9,
+                    expand: false,
+                    builder: (BuildContext context,
+                        ScrollController scrollController) {
+                      return BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: ColorConstant.instance.paletteBackground,
+                            borderRadius: const BorderRadius.only(
+                              topLeft: Radius.circular(20.0),
+                              topRight: Radius.circular(20.0),
+                            ),
+                          ),
+                          child: SingleChildScrollView(
+                            controller: scrollController,
+                            physics: const ClampingScrollPhysics(),
+                            child: FutureBuilder(
+                              future: viewModel.getCategories(),
+                              builder: (context, snapshot) {
+                                if (snapshot.connectionState ==
+                                    ConnectionState.waiting) {
+                                  return SingleChildScrollView(
+                                    physics:
+                                        const NeverScrollableScrollPhysics(),
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(
+                                        top: 35.0,
+                                        left: 24.0,
+                                        right: 24.0,
+                                      ),
+                                      child: Column(
+                                        children: [
+                                          skeletonHorizontalLoading(),
+                                          skeletonHorizontalLoading(),
+                                          skeletonHorizontalLoading(),
+                                          skeletonHorizontalLoading(),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                } else if (snapshot.connectionState ==
+                                    ConnectionState.done) {
+                                  analyticInstance.logEvent(
+                                      name: "category_data_came");
+                                  return hasData(context);
+                                } else {
+                                  analyticInstance.logEvent(
+                                      name: "category_data_not_came");
+                                  return const Text("error");
+                                }
+                              },
+                            ),
                           ),
                         ),
-                        child: SingleChildScrollView(
-                          physics: const ClampingScrollPhysics(),
-                          child: FutureBuilder(
-                            future: viewModel.getCategories(),
-                            builder: (context, snapshot) {
-                              if (snapshot.connectionState ==
-                                  ConnectionState.waiting) {
-                                return SingleChildScrollView(
-                                  physics: const NeverScrollableScrollPhysics(),
-                                  child: Column(
-                                    children: [
-                                      skeletonHorizontalLoading(),
-                                      skeletonHorizontalLoading(),
-                                      skeletonHorizontalLoading(),
-                                    ],
-                                  ),
-                                );
-                              } else if (snapshot.connectionState ==
-                                  ConnectionState.done) {
-                                return hasData(context);
-                              } else {
-                                return const Text("error");
-                              }
-                            },
-                          ),
-                        ),
-                      ),
-                    ),
+                      );
+                    },
                   );
                 },
               );
@@ -380,7 +458,7 @@ class ConversationView extends BaseStateless {
     );
   }
 
-  SingleChildScrollView hasData(BuildContext context) {
+  Widget hasData(BuildContext context) {
     return SingleChildScrollView(
       physics: const ClampingScrollPhysics(),
       child: Padding(
@@ -391,7 +469,10 @@ class ConversationView extends BaseStateless {
           children: [
             const SizedBox(height: 30.0),
             InkWell(
-              onTap: () => Navigator.pop(context),
+              onTap: () {
+                analyticInstance.logEvent(name: "closed_create_message");
+                Navigator.pop(context);
+              },
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: Container(
@@ -416,9 +497,9 @@ class ConversationView extends BaseStateless {
             const SizedBox(height: 15.0),
             ListView.builder(
               itemCount: viewModel.categories.length,
+              shrinkWrap: true,
               addAutomaticKeepAlives: false,
               addRepaintBoundaries: false,
-              shrinkWrap: true,
               padding: EdgeInsets.zero,
               physics: const ClampingScrollPhysics(),
               itemBuilder: (context, indexCategory) {
@@ -466,6 +547,7 @@ class ConversationView extends BaseStateless {
 
   SingleChildScrollView scenarioOfCategory(BuildContext context,
       String categoryName, List<ScenariosOfCategory> scenarios) {
+    analyticInstance.logEvent(name: "opened_category");
     return SingleChildScrollView(
       physics: const ClampingScrollPhysics(),
       child: Padding(
@@ -480,7 +562,10 @@ class ConversationView extends BaseStateless {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 InkWell(
-                  onTap: () => Navigator.pop(context),
+                  onTap: () {
+                    analyticInstance.logEvent(name: "closed_category");
+                    Navigator.pop(context);
+                  },
                   child: Container(
                     width: 24.0,
                     height: 24.0,
@@ -555,31 +640,44 @@ class ConversationView extends BaseStateless {
           ),
         ),
         onPressed: () {
+          analyticInstance.logEvent(name: "clicked_scenario_category");
           showModalBottomSheet(
             isDismissible: true,
             isScrollControlled: true,
             context: context,
             builder: (BuildContext context) {
+              analyticInstance.logEvent(name: "opened_level_view");
               return BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
-                child: FractionallySizedBox(
-                  heightFactor: 0.8,
-                  child: Container(
-                    width: width(context: context, value: 1.0),
-                    decoration: BoxDecoration(
-                      color: ColorConstant.instance.paletteBackground,
-                      borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(20.0),
-                        topRight: Radius.circular(20.0),
+                child: WillPopScope(
+                  onWillPop: () async => false,
+                  child: NotificationListener<ScrollNotification>(
+                    onNotification: (details) {
+                      if (details.metrics.pixels < 0 &&
+                              ModalRoute.of(context)!.isCurrent ??
+                          false) {
+                        Navigator.pop(context);
+                        return true;
+                      }
+                      return false;
+                    },
+                    child: Container(
+                      height: MediaQuery.of(context).size.height * 0.8,
+                      decoration: BoxDecoration(
+                        color: ColorConstant.instance.paletteBackground,
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(20.0),
+                          topRight: Radius.circular(20.0),
+                        ),
                       ),
-                    ),
-                    child: level(
-                      context,
-                      title,
-                      icon,
-                      scenario,
-                      levels,
-                      scenarioId: scenarioId,
+                      child: level(
+                        context,
+                        title,
+                        icon,
+                        scenario,
+                        levels,
+                        scenarioId: scenarioId,
+                      ),
                     ),
                   ),
                 ),
@@ -651,36 +749,49 @@ class ConversationView extends BaseStateless {
           ),
         ),
         onPressed: () {
+          analyticInstance.logEvent(name: "clicked_scenario");
           showModalBottomSheet(
             isDismissible: true,
             isScrollControlled: true,
             context: context,
             builder: (BuildContext context) {
+              analyticInstance.logEvent(name: "opened_level_view");
               return BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
-                child: FractionallySizedBox(
-                  heightFactor: 0.8,
-                  child: Container(
-                    width: width(context: context, value: 1.0),
-                    decoration: BoxDecoration(
-                      color: ColorConstant.instance.paletteBackground,
-                      borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(20.0),
-                        topRight: Radius.circular(20.0),
+                child: WillPopScope(
+                  onWillPop: () async => false,
+                  child: NotificationListener<ScrollNotification>(
+                    onNotification: (details) {
+                      if (details.metrics.pixels < 0 &&
+                              ModalRoute.of(context)!.isCurrent ??
+                          false) {
+                        Navigator.pop(context);
+                        return true;
+                      }
+                      return false;
+                    },
+                    child: Container(
+                      height: MediaQuery.of(context).size.height * 0.8,
+                      decoration: BoxDecoration(
+                        color: ColorConstant.instance.paletteBackground,
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(20.0),
+                          topRight: Radius.circular(20.0),
+                        ),
                       ),
+                      child: level(
+                          context,
+                          viewModel
+                              .categories[indexCategory].scenarios[index].title,
+                          viewModel
+                              .categories[indexCategory].scenarios[index].icon,
+                          viewModel.categories[indexCategory].scenarios[index]
+                              .scenario,
+                          viewModel.categories[indexCategory].scenarios[index]
+                              .levels,
+                          scenarioId: viewModel
+                              .categories[indexCategory].scenarios[index].id),
                     ),
-                    child: level(
-                        context,
-                        viewModel
-                            .categories[indexCategory].scenarios[index].title,
-                        viewModel
-                            .categories[indexCategory].scenarios[index].icon,
-                        viewModel.categories[indexCategory].scenarios[index]
-                            .scenario,
-                        viewModel
-                            .categories[indexCategory].scenarios[index].levels,
-                        scenarioId: viewModel
-                            .categories[indexCategory].scenarios[index].id),
                   ),
                 ),
               );
@@ -755,6 +866,7 @@ class ConversationView extends BaseStateless {
         ),
         IconButton(
           onPressed: () {
+            analyticInstance.logEvent(name: "clicked_$category");
             showModalBottomSheet(
               isDismissible: true,
               isScrollControlled: true,
@@ -801,6 +913,7 @@ class ConversationView extends BaseStateless {
       children: [
         InkWell(
           onTap: () {
+            analyticInstance.logEvent(name: "closed_level");
             Navigator.pop(context);
           },
           child: Container(
@@ -851,88 +964,92 @@ class ConversationView extends BaseStateless {
     required int scenarioId,
   }) {
     return SingleChildScrollView(
-      physics: const ClampingScrollPhysics(),
+      physics: const BouncingScrollPhysics(),
       child: Padding(
         padding: const EdgeInsets.only(left: 24.0, right: 24.0),
-        child: SingleChildScrollView(
-          physics: const ClampingScrollPhysics(),
-          child: Column(
-            children: [
-              const SizedBox(height: 35.0),
-              header(context, scenarioName),
-              const SizedBox(height: 35.0),
-              Column(
-                children: [
-                  SvgPicture.network(
-                    scenarioIcon,
-                    width: 62.0,
-                    height: 62.0,
-                  ),
-                  const SizedBox(height: 26.0),
-                  Text(
-                    scenario,
-                    style: currentTextTheme(context).bodySmall?.copyWith(
-                          fontWeight: FontWeight.w300,
-                          color: ColorConstant.instance.additionalWhite,
-                          fontSize: 16.0,
+        child: Column(
+          children: [
+            const SizedBox(height: 35.0),
+            header(context, scenarioName),
+            const SizedBox(height: 35.0),
+            Column(
+              children: [
+                SvgPicture.network(
+                  scenarioIcon,
+                  width: 62.0,
+                  height: 62.0,
+                ),
+                const SizedBox(height: 26.0),
+                Text(
+                  scenario,
+                  style: currentTextTheme(context).bodySmall?.copyWith(
+                        fontWeight: FontWeight.w300,
+                        color: ColorConstant.instance.additionalWhite,
+                        fontSize: 16.0,
+                      ),
+                  textAlign: TextAlign.center,
+                )
+              ],
+            ),
+            const SizedBox(height: 35.0),
+            ListView.builder(
+              shrinkWrap: true,
+              itemCount: levels.length,
+              addAutomaticKeepAlives: false,
+              addRepaintBoundaries: false,
+              itemBuilder: (context, index) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 20.0),
+                  child: SizedBox(
+                    width: width(context: context, value: 1.0),
+                    height: height(context: context, value: 0.09),
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: ColorConstant.instance.paletteCard,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20.0),
                         ),
-                    textAlign: TextAlign.center,
-                  )
-                ],
-              ),
-              const SizedBox(height: 35.0),
-              ListView.builder(
-                shrinkWrap: true,
-                itemCount: levels.length,
-                addAutomaticKeepAlives: false,
-                addRepaintBoundaries: false,
-                physics: const ClampingScrollPhysics(),
-                itemBuilder: (context, index) {
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 20.0),
-                    child: SizedBox(
-                      width: width(context: context, value: 1.0),
-                      height: height(context: context, value: 0.09),
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: ColorConstant.instance.paletteCard,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20.0),
-                          ),
+                      ),
+                      onPressed: () {
+                        analyticInstance.logEvent(
+                            name: "clicked_${levels[index].scale}");
+                        analyticInstance.logEvent(
+                            name: "go_to_conversation_room_view");
+                        Provider.of<HomeViewModel>(context, listen: false)
+                            .selectCefr(levels[index].cefr);
+                        Provider.of<HomeViewModel>(context, listen: false)
+                            .createConversation(
+                          context,
+                          scenarioId: scenarioId.toString(),
+                          cefr:
+                              Provider.of<HomeViewModel>(context, listen: false)
+                                  .selectedCefr,
+                          scenarioTitle: scenarioName,
+                          profilePhoto: Provider.of<ConversationViewModel>(
+                                  context,
+                                  listen: false)
+                              .profileModel
+                              .data!
+                              .user!
+                              .profilePhoto!,
+                        );
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16.0,
+                          vertical: 16.0,
                         ),
-                        onPressed: () {
-                          Provider.of<HomeViewModel>(context, listen: false)
-                              .selectCefr(levels[index].cefr);
-                          Provider.of<HomeViewModel>(context, listen: false)
-                              .createConversation(
-                            context,
-                            scenarioId: scenarioId.toString(),
-                            cefr: Provider.of<HomeViewModel>(context,
-                                    listen: false)
-                                .selectedCefr,
-                            scenarioTitle: scenarioName,
-                            profilePhoto: Provider.of<ConversationViewModel>(
-                                    context,
-                                    listen: false)
-                                .profileModel
-                                .data!
-                                .user!
-                                .profilePhoto!,
-                          );
-                        },
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16.0,
-                            vertical: 16.0,
-                          ),
-                          child: SizedBox(
-                            height: height(context: context, value: 0.09),
-                            width: width(context: context, value: 1.0),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                Expanded(
+                        child: SizedBox(
+                          height: height(context: context, value: 0.09),
+                          width: width(context: context, value: 1.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Expanded(
+                                child: SizedBox(
+                                  width: 18.0,
+                                  height: 20.0,
                                   child: Text(
                                     levels[index].cefr,
                                     style: currentTextTheme(context)
@@ -941,75 +1058,73 @@ class ConversationView extends BaseStateless {
                                           fontWeight: FontWeight.w500,
                                           color: ColorConstant
                                               .instance.additionalWhite,
-                                          fontSize: width(context: context, value: 1.0) % 18,
+                                          fontSize: 18,
                                         ),
                                   ),
                                 ),
-                                const SizedBox(width: 18.0),
-                                Expanded(
-                                  flex: 5,
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Expanded(
-                                        child: Text(
-                                          levels[index].scale,
-                                          style: currentTextTheme(context)
-                                              .bodySmall
-                                              ?.copyWith(
-                                                fontWeight: FontWeight.w600,
-                                                color: ColorConstant
-                                                    .instance.additionalWhite,
-                                                fontSize: width(context: context, value: 1.0) % 13,
-                                              ),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 6.0),
-                                      Expanded(
-                                        child: SizedBox(
-                                          width:
-                                              width(context: context, value: 5.0),
-                                          child: ClipRRect(
-                                            borderRadius:
-                                                BorderRadius.circular(10.0),
-                                            child: LinearProgressIndicator(
-                                              backgroundColor:
-                                                  const Color.fromRGBO(
-                                                      69, 70, 72, 1),
-                                              color: ColorConstant
-                                                  .instance.paletteBlue,
-                                              value: double.parse(
-                                                levels[index]
-                                                    .conversationCompleted,
-                                              ),
-                                            ),
+                              ),
+                              const SizedBox(width: 18.0),
+                              Expanded(
+                                flex: 5,
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Expanded(child: SizedBox()),
+                                    Text(
+                                      levels[index].scale,
+                                      style: currentTextTheme(context)
+                                          .bodySmall
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.w600,
+                                            color: ColorConstant
+                                                .instance.additionalWhite,
+                                            fontSize: width(
+                                                    context: context,
+                                                    value: 1.0) %
+                                                13,
+                                          ),
+                                    ),
+                                    const Expanded(child: SizedBox()),
+                                    SizedBox(
+                                      width:
+                                          width(context: context, value: 50.0),
+                                      child: ClipRRect(
+                                        borderRadius:
+                                            BorderRadius.circular(10.0),
+                                        child: LinearProgressIndicator(
+                                          backgroundColor: const Color.fromRGBO(
+                                              69, 70, 72, 1),
+                                          color: ColorConstant
+                                              .instance.paletteBlue,
+                                          value: double.parse(
+                                            levels[index].conversationCompleted,
                                           ),
                                         ),
                                       ),
-                                    ],
-                                  ),
+                                    ),
+                                    const Expanded(child: SizedBox()),
+                                  ],
                                 ),
-                                const SizedBox(width: 20.0),
-                                Expanded(
-                                  child: SvgPicture.asset(
-                                    IconConstant.instance.iconBubble,
-                                    width: 24.0,
-                                    height: 24.0,
-                                  ),
+                              ),
+                              const SizedBox(width: 20.0),
+                              Expanded(
+                                child: SvgPicture.asset(
+                                  IconConstant.instance.iconBubble,
+                                  width: 24.0,
+                                  height: 24.0,
                                 ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
                     ),
-                  );
-                },
-              ),
-            ],
-          ),
+                  ),
+                );
+              },
+            ),
+          ],
         ),
       ),
     );

@@ -3,9 +3,8 @@
 import 'package:chatbot/core/constants/color_constant.dart';
 import 'package:chatbot/core/enum/preference_keys.dart';
 import 'package:chatbot/product/auth/language/model/language_model.dart';
-import 'package:chatbot/product/auth/register/service/register_service.dart';
-import 'package:chatbot/product/auth/register/view/register_view.dart';
 import 'package:chatbot/product/bottom_bar/view/bottom_bar_view.dart';
+import 'package:chatbot/product/profile/service/profile_service.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -14,36 +13,12 @@ import '../../../../core/constants/icon_constant.dart';
 import '../../../../core/language/locale_keys.g.dart';
 
 class LanguageViewModel extends ChangeNotifier {
-  // TextEditingController searchController = TextEditingController();
-
-  // FocusNode searchFocusNode = FocusNode();
-
-  // String selectedLearnTitle = '';
-  // String selectedLearnTitlePopular = '';
-
-  // bool isCheck = false;
-  // bool isCheckedValue = false;
-
   int selectedIndex = -1;
-  // int selectedPopularIndex = -1;
-  // int selectedLevelIndex = -1;
 
   int selectedLanguageId = -1;
   String selectedLanguageCode = "en";
-  // int selectedPopularLanguageId = -1;
 
-  // int selectedLearnIndex = -1;
-  // int selectedLearnPopularIndex = -1;
-  // int selectedLearnLevelIndex = -1;
-
-  // int selectedLearnLanguageId = -1;
-  // int selectedLearnPopularLanguageId = -1;
-  // int selectedLanguageLevelId = -1;
-
-  // String nativeLanguage = 'turkish';
-
-  // LanguageService service = LanguageService();
-  RegisterService registerService = RegisterService();
+  ProfileService service = ProfileService();
 
   List<LanguageModel> languages = [
     LanguageModel(
@@ -96,15 +71,6 @@ class LanguageViewModel extends ChangeNotifier {
     ),
   ];
 
-  // List<String> popularLanguageTitles = [];
-  // List<String> popularLanguageImages = [];
-  // List<int> popularLanguageIds = [];
-  // List<LanguageProficiencyLevels> languageLevels = [];
-
-  // bool isGetLanguage = true;
-
-  // bool isFullSearch = false;
-
   double sliderValue = 0.0;
   bool isActivePage = false;
   bool isActiveLevelPage = false;
@@ -130,32 +96,6 @@ class LanguageViewModel extends ChangeNotifier {
 
     notifyListeners();
   }
-
-  // List<Languages> searchLanguages = [];
-  // searchLanguageFromList() {
-  //   if (searchController.text.isNotEmpty) {
-  //     for (var i = 0; i < languages.length; i++) {
-  //       if (languages[i]
-  //           .title!
-  //           .toLowerCase()
-  //           .contains(searchController.text.toLowerCase())) {
-  //         searchLanguages.add(languages[i]);
-  //       }
-  //       print('length: ${searchLanguages.length}');
-  //     }
-  //   }
-  // }
-
-  // setSearchList() {
-  //   print('girdi');
-  //   searchLanguageFromList();
-  //   isFullSearch = true;
-  //   notifyListeners();
-  // }
-
-  // startFocusNode() {
-  //   searchFocusNode.unfocus();
-  // }
 
   changeCheckboxStatus({required int index}) {
     selectedIndex = index;
@@ -244,16 +184,18 @@ class LanguageViewModel extends ChangeNotifier {
     }
   }
 
-  Future register(Map<String, dynamic> user, BuildContext context) async {
-    final response = await registerService.register(user);
-
+  Future updateProfileInfo(
+      Map<String, dynamic> user, BuildContext context) async {
     final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
     final SharedPreferences prefs = await _prefs;
 
-    if (response.result == true) {
-      await prefs.setString(
-          PreferencesKeys.TOKEN.toString(), response.data!.token!);
+    String token = prefs.getString(PreferencesKeys.TOKEN.toString())!;
+    final response = await service.updateProfile(
+      token,
+      user,
+    );
 
+    if (response.result == true) {
       selectedIndex = -1;
       learnLanguageProficiencyCefr = "A1";
       sliderValue = 0;
@@ -263,19 +205,6 @@ class LanguageViewModel extends ChangeNotifier {
       selectedIndex = -1;
       learnLanguageProficiencyCefr = "A1";
       sliderValue = 0;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(response.validationError!.email![0]),
-        ),
-      );
-
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => RegisterView(),
-        ),
-      );
     }
   }
 }

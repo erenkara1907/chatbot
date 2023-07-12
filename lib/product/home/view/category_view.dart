@@ -2,6 +2,7 @@ import 'package:chatbot/core/constants/color_constant.dart';
 import 'package:chatbot/core/constants/image_constant.dart';
 import 'package:chatbot/core/view/base/base_state.dart';
 import 'package:chatbot/product/home/model/category_model.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 
@@ -24,11 +25,13 @@ class CategoryView extends StatefulWidget {
 }
 
 class _CategoryViewState extends BaseState<CategoryView> {
+  FirebaseAnalytics analyticInstance = FirebaseAnalytics.instance;
   @override
   Widget build(BuildContext context) {
+    analyticInstance.logEvent(name: 'category_view_opened');
     return Scaffold(
       backgroundColor: ColorConstant.instance.paletteBackground,
-      body: Stack(  
+      body: Stack(
         children: [
           Positioned(
             top: -170.0,
@@ -66,6 +69,11 @@ class _CategoryViewState extends BaseState<CategoryView> {
           ),
         ),
         onPressed: () {
+          analyticInstance.logEvent(
+              name:
+                  'clicked_${widget.scenariosOfCategory[index].title}_scenario_from_category_view');
+          analyticInstance.logEvent(
+              name: 'go_to_level_view_from_category_view');
           Navigator.push(
             context,
             MaterialPageRoute(
@@ -143,6 +151,7 @@ class _CategoryViewState extends BaseState<CategoryView> {
                     backgroundColor: ColorConstant.instance.paletteBackground,
                     child: IconButton(
                       onPressed: () {
+                        analyticInstance.logEvent(name: 'closed_category_view');
                         Navigator.of(context).pop();
                       },
                       icon: Icon(

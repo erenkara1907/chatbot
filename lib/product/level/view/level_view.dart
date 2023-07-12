@@ -5,6 +5,7 @@ import 'package:chatbot/core/constants/icon_constant.dart';
 import 'package:chatbot/core/view/base/base_state.dart';
 import 'package:chatbot/product/conversation/view/conversation_room_view.dart';
 import 'package:chatbot/product/home/viewmodel/home_view_model.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
@@ -35,8 +36,10 @@ class LevelView extends StatefulWidget {
 }
 
 class _LevelViewState extends BaseState<LevelView> {
+  FirebaseAnalytics analyticInstance = FirebaseAnalytics.instance;
   @override
   Widget build(BuildContext context) {
+    analyticInstance.logEvent(name: "level_view_opened");
     return Scaffold(
       backgroundColor: ColorConstant.instance.paletteBackground,
       body: SingleChildScrollView(
@@ -104,8 +107,18 @@ class _LevelViewState extends BaseState<LevelView> {
                       ),
                     ),
                     onPressed: () {
+                      analyticInstance.logEvent(
+                          name: "go_to_converastion_room_view");
                       Provider.of<HomeViewModel>(context, listen: false)
                           .selectCefr(widget.levels[index].cefr);
+
+                      widget.levels[index].conversationId != "null" &&
+                              widget.levels[index].conversationCompleted !=
+                                  "1.00"
+                          ? analyticInstance.logEvent(
+                              name: "go_to_${widget.scenarioName}")
+                          : analyticInstance.logEvent(
+                              name: "created_conversation_from_level_view");
 
                       widget.levels[index].conversationId != "null" &&
                               widget.levels[index].conversationCompleted !=
@@ -145,12 +158,17 @@ class _LevelViewState extends BaseState<LevelView> {
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             Expanded(
-                              child: Text(
-                                widget.levels[index].cefr,
-                                style: currentTextTheme.bodySmall?.copyWith(
-                                  fontWeight: FontWeight.w500,
-                                  color: ColorConstant.instance.additionalWhite,
-                                  fontSize: width(1.0) % 18,
+                              child: SizedBox(
+                                width: 18.0,
+                                height: 20.0,
+                                child: Text(
+                                  widget.levels[index].cefr,
+                                  style: currentTextTheme.bodySmall?.copyWith(
+                                    fontWeight: FontWeight.w500,
+                                    color:
+                                        ColorConstant.instance.additionalWhite,
+                                    fontSize: 18,
+                                  ),
                                 ),
                               ),
                             ),
@@ -161,36 +179,34 @@ class _LevelViewState extends BaseState<LevelView> {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Expanded(
-                                    child: Text(
-                                      widget.levels[index].scale,
-                                      style: currentTextTheme.bodySmall?.copyWith(
-                                        fontWeight: FontWeight.w600,
-                                        color: ColorConstant
-                                            .instance.additionalWhite,
-                                        fontSize: width(1.0) % 16,
-                                      ),
+                                  const Expanded(child: SizedBox()),
+                                  Text(
+                                    widget.levels[index].scale,
+                                    style: currentTextTheme.bodySmall?.copyWith(
+                                      fontWeight: FontWeight.w600,
+                                      color: ColorConstant
+                                          .instance.additionalWhite,
+                                      fontSize: 16,
                                     ),
                                   ),
-                                  const SizedBox(height: 6.0),
-                                  Expanded(
-                                    child: SizedBox(  
-                                      width: width(50.0),
-                                      child: ClipRRect(
-                                        borderRadius: BorderRadius.circular(10.0),
-                                        child: LinearProgressIndicator(
-                                          backgroundColor:
-                                              const Color.fromRGBO(69, 70, 72, 1),
-                                          color:
-                                              ColorConstant.instance.paletteBlue,
-                                          value: double.parse(
-                                            widget.levels[index]
-                                                .conversationCompleted,
-                                          ),
+                                  const Expanded(child: SizedBox()),
+                                  SizedBox(
+                                    width: width(50.0),
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(10.0),
+                                      child: LinearProgressIndicator(
+                                        backgroundColor:
+                                            const Color.fromRGBO(69, 70, 72, 1),
+                                        color:
+                                            ColorConstant.instance.paletteBlue,
+                                        value: double.parse(
+                                          widget.levels[index]
+                                              .conversationCompleted,
                                         ),
                                       ),
                                     ),
                                   ),
+                                  const Expanded(child: SizedBox()),
                                 ],
                               ),
                             ),
@@ -234,6 +250,7 @@ class _LevelViewState extends BaseState<LevelView> {
               backgroundColor: ColorConstant.instance.paletteBackground,
               child: IconButton(
                 onPressed: () {
+                  analyticInstance.logEvent(name: "level_view_closed");
                   Navigator.of(context).pop();
                 },
                 icon: Icon(
