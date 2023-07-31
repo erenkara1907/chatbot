@@ -26,8 +26,13 @@ class _NativeLanguageViewState extends BaseState<NativeLanguageView> {
   LanguageViewModel viewModel = LanguageViewModel();
 
   @override
-  Widget build(BuildContext context) {
+  void initState() {
+    super.initState();
     analyticInstance.logEvent(name: "opened_native_language_view");
+  }
+
+  @override
+  Widget build(BuildContext context) {
     Provider.of<LanguageViewModel>(context, listen: false).setActivePage();
     return Scaffold(
       backgroundColor: ColorConstant.instance.paletteBackground,
@@ -207,7 +212,9 @@ class _NativeLanguageViewState extends BaseState<NativeLanguageView> {
                           languageId: index + 1,
                           selectedIndex: state.selectedIndex,
                           onTap: () {
-                            analyticInstance.logEvent(name: "clicked_${viewModel.languages[index].title!}");
+                            analyticInstance.logEvent(
+                                name:
+                                    "clicked_${viewModel.languages[index].title!}");
                             state.selectedLanguageId =
                                 viewModel.languages[index].id!;
 
@@ -227,7 +234,9 @@ class _NativeLanguageViewState extends BaseState<NativeLanguageView> {
                                   color: ColorConstant.instance.greyScale900) ??
                               const TextStyle(),
                           onChangedCheckBox: (value) {
-                            analyticInstance.logEvent(name: "clicked_${viewModel.languages[index].title!}_language_in_native_language_view");
+                            analyticInstance.logEvent(
+                                name:
+                                    "clicked_${viewModel.languages[index].title!}_language_in_native_language_view");
                             state.selectedLanguageId =
                                 viewModel.languages[index].id!;
 

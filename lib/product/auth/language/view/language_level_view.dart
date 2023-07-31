@@ -29,14 +29,14 @@ class _LanguageLevelViewState extends BaseState<LanguageLevelView>
   LanguageViewModel viewModel = LanguageViewModel();
   FirebaseAnalytics analyticInstance = FirebaseAnalytics.instance;
 
-  late final AnimationController _controller = AnimationController(
-    duration: const Duration(seconds: 1),
-    vsync: this,
-  )..repeat(reverse: true);
+  @override
+  void initState() {
+    super.initState();
+    analyticInstance.logEvent(name: "opened_language_level_view");
+  }
 
   @override
   Widget build(BuildContext context) {
-    analyticInstance.logEvent(name: "opened_language_level_view");
     Provider.of<LanguageViewModel>(context, listen: false).setActiveLevelPage();
     return Scaffold(
       backgroundColor: ColorConstant.instance.paletteBackground,

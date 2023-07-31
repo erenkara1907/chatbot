@@ -83,7 +83,7 @@ class ConversationView extends BaseStateless {
     );
   }
 
-  Stack   conversationBody(BuildContext context) {
+  Stack conversationBody(BuildContext context) {
     return Stack(
       children: [
         Positioned(

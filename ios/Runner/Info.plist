@@ -5,6 +5,9 @@
 		<key>LSApplicationQueriesSchemes</key>
 		<array>
     	<string>instagram</string>
+		<string>linkedin</string>
+		<string>twitter</string>
+		<string>threads</string>
 		</array>
 		<key>CADisableMinimumFrameDurationOnPhone</key>
 		<true/>

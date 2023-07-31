@@ -37,9 +37,15 @@ class LevelView extends StatefulWidget {
 
 class _LevelViewState extends BaseState<LevelView> {
   FirebaseAnalytics analyticInstance = FirebaseAnalytics.instance;
+
+  @override
+  void initState() {
+    super.initState();
+    analyticInstance.logEvent(name: "level_view_opened");
+  }
+
   @override
   Widget build(BuildContext context) {
-    analyticInstance.logEvent(name: "level_view_opened");
     return Scaffold(
       backgroundColor: ColorConstant.instance.paletteBackground,
       body: SingleChildScrollView(
@@ -52,6 +58,8 @@ class _LevelViewState extends BaseState<LevelView> {
               right: 0.0,
               child: Image.asset(
                 ImageConstant.instance.imageTopEllipse,
+                width: width(1.0),
+                fit: BoxFit.cover,
               ),
             ),
             level(),

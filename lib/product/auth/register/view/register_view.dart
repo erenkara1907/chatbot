@@ -29,12 +29,12 @@ class _RegisterViewState extends BaseState<RegisterView> {
 
   @override
   void initState() {
+    analyticInstance.logEvent(name: "opened_register_view");
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
-    analyticInstance.logEvent(name: "opened_register_view");
     Provider.of<RegisterViewModel>(context, listen: false).setActivePage();
     return GestureDetector(
       onTap: () => viewModel.startFocusNode(),
@@ -111,7 +111,8 @@ class _RegisterViewState extends BaseState<RegisterView> {
                     children: [
                       InkWell(
                         onTap: () {
-                          analyticInstance.logEvent(name: "clicked_name_textfield_in_register_view");
+                          analyticInstance.logEvent(
+                              name: "clicked_name_textfield_in_register_view");
                         },
                         child: AppFormField(
                           hintText: LocaleKeys.name.tr(),
@@ -129,7 +130,8 @@ class _RegisterViewState extends BaseState<RegisterView> {
                       const SizedBox(height: 3.0),
                       InkWell(
                         onTap: () {
-                          analyticInstance.logEvent(name: "clicked_email_textfield_in_register_view");
+                          analyticInstance.logEvent(
+                              name: "clicked_email_textfield_in_register_view");
                         },
                         child: AppFormField(
                           validator: (_) {
@@ -151,7 +153,9 @@ class _RegisterViewState extends BaseState<RegisterView> {
                         builder: (context, state, child) {
                           return InkWell(
                             onTap: () {
-                              analyticInstance.logEvent(name: "clicked_password_textfield_in_register_view");
+                              analyticInstance.logEvent(
+                                  name:
+                                      "clicked_password_textfield_in_register_view");
                             },
                             child: AppFormField(
                               heightValue: height(0.06),
@@ -208,7 +212,9 @@ class _RegisterViewState extends BaseState<RegisterView> {
                           ),
                           value: state.termsValue,
                           onChanged: (value) {
-                            analyticInstance.logEvent(name: "clicked_terms_checkbox_in_register_view");
+                            analyticInstance.logEvent(
+                                name:
+                                    "clicked_terms_checkbox_in_register_view");
                             state.checkTermsValue(value!);
                             state.checkErrorTerms(false);
                           },
@@ -218,7 +224,8 @@ class _RegisterViewState extends BaseState<RegisterView> {
                     ),
                     TextButton(
                       onPressed: () {
-                        analyticInstance.logEvent(name: "clicked_terms_modal_in_register_view");
+                        analyticInstance.logEvent(
+                            name: "clicked_terms_modal_in_register_view");
                         showModalBottomSheet(
                           isDismissible: true,
                           isScrollControlled: true,
@@ -320,7 +327,8 @@ class _RegisterViewState extends BaseState<RegisterView> {
                     children: [
                       AppButton(
                         onTap: () {
-                          analyticInstance.logEvent(name: "clicked_register_button_in_register_view");
+                          analyticInstance.logEvent(
+                              name: "clicked_register_button_in_register_view");
                           var checkValue = Provider.of<RegisterViewModel>(
                                   context,
                                   listen: false)
@@ -336,6 +344,8 @@ class _RegisterViewState extends BaseState<RegisterView> {
                               },
                               context,
                             );
+
+                            analyticInstance.logEvent(name: "user_registered");
                           } else {
                             Provider.of<RegisterViewModel>(context,
                                     listen: false)
@@ -357,7 +367,8 @@ class _RegisterViewState extends BaseState<RegisterView> {
                       const SizedBox(height: 8.0),
                       InkWell(
                         onTap: () {
-                          analyticInstance.logEvent(name: "clicked_go_to_login");
+                          analyticInstance.logEvent(
+                              name: "clicked_go_to_login");
                           Navigator.of(context)
                               .push(createRoute(page: LoginView()));
                         },

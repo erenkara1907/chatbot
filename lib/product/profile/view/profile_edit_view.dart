@@ -51,13 +51,13 @@ class _ProfileEditViewState extends BaseState<ProfileEditView> {
   @override
   void initState() {
     super.initState();
+    analyticInstance.logEvent(name: "profile_edit_view_opened");
     viewModel.nameController.text = widget.name;
     viewModel.emailController.text = widget.email;
   }
 
   @override
   Widget build(BuildContext context) {
-    analyticInstance.logEvent(name: "profile_edit_view_opened");
     return Scaffold(
       backgroundColor: ColorConstant.instance.paletteBackground,
       body: Stack(
@@ -109,10 +109,10 @@ class _ProfileEditViewState extends BaseState<ProfileEditView> {
               ),
               const SizedBox(height: 40.0),
               InkWell(
-                overlayColor: MaterialStateProperty.all(ColorConstant.instance.paletteBackground),
+                overlayColor: MaterialStateProperty.all(
+                    ColorConstant.instance.paletteBackground),
                 onTap: () {
-                  analyticInstance.logEvent(
-                      name: "clicked_profile_photo");
+                  analyticInstance.logEvent(name: "clicked_profile_photo");
                 },
                 child: Align(
                   alignment: Alignment.center,
@@ -312,8 +312,7 @@ class _ProfileEditViewState extends BaseState<ProfileEditView> {
               const SizedBox(height: 24.0),
               TextButton(
                 onPressed: () {
-                  analyticInstance.logEvent(
-                      name: "clicked_delete_my_account");
+                  analyticInstance.logEvent(name: "clicked_delete_my_account");
                   viewModel.deleteAccount(context);
                 },
                 child: Text(

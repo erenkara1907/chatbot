@@ -1,6 +1,28 @@
 PODS:
   - audioplayers_darwin (0.0.1):
     - Flutter
+  - aws_polly (0.0.1):
+    - AWSMobileClient
+    - AWSPolly
+    - Flutter
+  - AWSAuthCore (2.33.1):
+    - AWSCore (= 2.33.1)
+  - AWSAuthUI (2.33.1):
+    - AWSAuthCore (= 2.33.1)
+    - AWSCore (= 2.33.1)
+  - AWSCognitoIdentityProvider (2.33.1):
+    - AWSCognitoIdentityProviderASF (= 2.33.1)
+    - AWSCore (= 2.33.1)
+  - AWSCognitoIdentityProviderASF (2.33.1):
+    - AWSCore (= 2.33.1)
+  - AWSCore (2.33.1)
+  - AWSMobileClient (2.33.1):
+    - AWSAuthCore (= 2.33.1)
+    - AWSCognitoIdentityProvider (= 2.33.1)
+    - AWSCognitoIdentityProviderASF (= 2.33.1)
+    - AWSCore (= 2.33.1)
+  - AWSPolly (2.33.1):
+    - AWSCore (= 2.33.1)
   - connectivity_plus (0.0.1):
     - Flutter
     - ReachabilitySwift
@@ -144,6 +166,13 @@ PODS:
 
 DEPENDENCIES:
   - audioplayers_darwin (from `.symlinks/plugins/audioplayers_darwin/ios`)
+  - aws_polly (from `.symlinks/plugins/aws_polly/ios`)
+  - AWSAuthCore
+  - AWSAuthUI
+  - AWSCognitoIdentityProvider
+  - AWSCore
+  - AWSMobileClient
+  - AWSPolly
   - connectivity_plus (from `.symlinks/plugins/connectivity_plus/ios`)
   - firebase_analytics (from `.symlinks/plugins/firebase_analytics/ios`)
   - firebase_core (from `.symlinks/plugins/firebase_core/ios`)
@@ -161,6 +190,13 @@ DEPENDENCIES:
 
 SPEC REPOS:
   trunk:
+    - AWSAuthCore
+    - AWSAuthUI
+    - AWSCognitoIdentityProvider
+    - AWSCognitoIdentityProviderASF
+    - AWSCore
+    - AWSMobileClient
+    - AWSPolly
     - Firebase
     - FirebaseAnalytics
     - FirebaseCore
@@ -181,6 +217,8 @@ SPEC REPOS:
 EXTERNAL SOURCES:
   audioplayers_darwin:
     :path: ".symlinks/plugins/audioplayers_darwin/ios"
+  aws_polly:
+    :path: ".symlinks/plugins/aws_polly/ios"
   connectivity_plus:
     :path: ".symlinks/plugins/connectivity_plus/ios"
   firebase_analytics:
@@ -212,6 +250,14 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   audioplayers_darwin: 877d9a4d06331c5c374595e46e16453ac7eafa40
+  aws_polly: 9f95d0e3ee34be8f2f3df76ef39865d561f1a636
+  AWSAuthCore: bf1e351f9dc1bf2a11e4a63dce4e0cbec45c3036
+  AWSAuthUI: 08fc19d0744afab6533f1f2596e4c81f8e507487
+  AWSCognitoIdentityProvider: e375bd708ef224c8e6616c5609eaa75e41e4db54
+  AWSCognitoIdentityProviderASF: 5ffd06ec6db192e6eaa149b05af59bcd090fbd46
+  AWSCore: 0d016cdc9eaacbf3132b4fac1974f0b92d48c851
+  AWSMobileClient: f173cca93278857601e85e96465e6432d13af9ec
+  AWSPolly: 74747fc786188d2fe648ab5992ffe3a5eeed6f28
   connectivity_plus: 07c49e96d7fc92bc9920617b83238c4d178b446a
   Firebase: facd334e557a979bd03a0b58d90fd56b52b8aba0
   firebase_analytics: 1a5ad75876257318ba5fdc6bf7aae73b6e98d0cf
@@ -243,6 +289,6 @@ SPEC CHECKSUMS:
   Try: 5ef669ae832617b3cee58cb2c6f99fb767a4ff96
   url_launcher_ios: 08a3dfac5fb39e8759aeb0abbd5d9480f30fc8b4
 
-PODFILE CHECKSUM: ce202fb0b8c17b9d23439958326ed6c38ffd8cf6
+PODFILE CHECKSUM: 441e52ccb90ef524990fa6c7319da6a497933a76
 
 COCOAPODS: 1.11.2

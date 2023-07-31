@@ -12,6 +12,9 @@ class ApiConstant {
   // Auth
   String registerUrl = "$baseUrl/auth/register";
   String loginUrl = "$baseUrl/auth/login";
+  String forgotPassword = "$baseUrl/auth/forgot-password";
+  String verifyResetToken = "$baseUrl/auth/verify-reset-token";
+  String resetPassword = "$baseUrl/auth/reset-password";
 
   // Profile
   String profilUrl = "$baseUrl/profile";

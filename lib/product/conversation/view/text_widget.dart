@@ -26,3 +26,10 @@ class TextWidget extends StatelessWidget {
     );
   }
 }
+
+class MyValues {
+  final int isActive;
+  final bool isSelectVoice;
+
+  MyValues(this.isActive, this.isSelectVoice);
+}

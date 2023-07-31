@@ -1,6 +1,8 @@
 import 'dart:math';
 import 'dart:ui';
 
+import 'package:audioplayers/audioplayers.dart';
+import 'package:aws_polly/aws_polly.dart';
 import 'package:chatbot/core/constants/color_constant.dart';
 import 'package:chatbot/core/utils/connectivity_sevice.dart';
 import 'package:chatbot/core/view/base/base_state.dart';
@@ -42,17 +44,42 @@ class _HomeViewState extends BaseState<HomeView> {
     });
   }
 
+  String? _url;
+
+  final AwsPolly _awsPolly = AwsPolly.instance(
+    poolId: 'us-east-1:xxxx-xxx-xxxxx',
+    region: AWSRegionType.EUCentral1,
+  );
+
+  void onLoadUrl() async {
+    setState(() => _url = null);
+    final url = await _awsPolly.getUrl(
+      voiceId: AWSPolyVoiceId.nicole,
+      input: 'This is a sample text playing through Poly!',
+    );
+    setState(() => _url = url);
+  }
+
+  void onPlay() async {
+    if (_url == null) return;
+    final player = AudioPlayer();
+    // await player.setUrl(_url!);
+    await player.setSourceUrl(_url!);
+    print("url : $_url");
+    player.play(UrlSource(_url!));
+  }
+
   Future? categoriesFuture;
 
   @override
   void initState() {
     super.initState();
+    analyticInstance.logEvent(name: 'home_view_opened');
     categoriesFuture = viewModel.getCategories();
   }
 
   @override
   Widget build(BuildContext context) {
-    analyticInstance.logEvent(name: 'home_view_opened');
     return WillPopScope(
       onWillPop: () async {
         return false;

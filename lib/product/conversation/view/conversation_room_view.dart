@@ -1,5 +1,6 @@
 // ignore_for_file: prefer_final_fields, unused_field, must_be_immutable, use_build_context_synchronously, unused_element, deprecated_member_use
 
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:ui';
@@ -8,8 +9,9 @@ import 'package:animated_segmented_tab_control/animated_segmented_tab_control.da
 import 'package:audioplayers/audioplayers.dart';
 import 'package:avatar_glow/avatar_glow.dart';
 import 'package:chatbot/core/constants/color_constant.dart';
-import 'package:chatbot/core/utils/tts.dart';
 import 'package:chatbot/core/view/base/base_state.dart';
+import 'package:chatbot/product/conversation/view/popup_widget.dart';
+import 'package:chatbot/product/conversation/view/text_widget.dart';
 import 'package:chatbot/product/conversation/viewmodel/conversation_room_view_model.dart';
 import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
@@ -33,6 +35,7 @@ import 'package:top_snackbar_flutter/top_snack_bar.dart';
 import '../../../core/constants/icon_constant.dart';
 import '../../../core/constants/image_constant.dart';
 import '../../../core/language/locale_keys.g.dart';
+import '../../../core/utils/aws_polly.dart';
 import '../../../core/view/widget/button/app_button.dart';
 import '../../bottom_bar/view/bottom_bar_view.dart';
 
@@ -79,7 +82,7 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView>
   String voiceRatio = "";
 
   ConversationRoomViewModel viewModel = ConversationRoomViewModel();
-  TextToSpeechViewModel textViewModel = TextToSpeechViewModel();
+  // AwsPollyService awsViewModel = AwsPollyService();
 
   late ScrollController _listScrollController;
 
@@ -92,6 +95,7 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView>
 
   @override
   void initState() {
+    analyticInstance.logEvent(name: "opened_conversation_room_view");
     Provider.of<ConversationRoomViewModel>(context, listen: false)
         .getAllMessages(conversationId: widget.conversationId);
     requestPermission();
@@ -117,8 +121,7 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView>
 
     if (status.isGranted) {
       try {
-        analyticInstance.logEvent(
-            name: "worked_start_recording_in_conversation_room_view");
+        analyticInstance.logEvent(name: "worked_start_recording");
         HapticFeedback.mediumImpact();
         await player.play(AssetSource("sound/sound_click.wav"));
         // chatProvider.addUserMessage(
@@ -137,6 +140,8 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView>
 
         // Kaydediciyi başlatıyoruz
         await _recorder.openRecorder();
+        // _recorder.onProgress!.listen((event) {
+        // });
         await _recorder.startRecorder(toFile: _path);
 
         // await Future.delayed(
@@ -254,12 +259,15 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView>
           } else {
             var respJson = jsonDecode(str);
             voiceRatio = "${respJson["result"]["overall"]}";
-            chatProvider.chatList.removeLast();
+            // chatProvider.chatList.removeLast();
 
-            sendMessage(
-                chatProvider: Provider.of<ConversationRoomViewModel>(context,
-                    listen: false),
-                context);
+            chatProvider.availableMessage(true);
+            // chatProvider.setText(text);
+
+            // sendMessage(
+            //     chatProvider: Provider.of<ConversationRoomViewModel>(context,
+            //         listen: false),
+            //     context);
           }
         });
       }
@@ -292,35 +300,52 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView>
       if (response.statusCode == 200) {
         analyticInstance.logEvent(name: "upload_audio_status_code_200");
         // provider.addMessage(response.data["text"]);
+        chatProvider.setText(response.data["text"]);
         viewModel.sendTextController.clear();
         // chatProvider.chatList.removeLast();
         scrollListToEND();
 
-        chatProvider.setText(response.data["text"]);
         viewModel.sendTextController.text = response.data["text"];
         if (viewModel.sendTextController.text.isEmpty) {
-          chatProvider.chatList.removeLast();
+          // chatProvider.chatList.removeLast();
           chatProvider.setText("Please send message");
-          Provider.of<ConversationRoomViewModel>(context, listen: false)
-              .setIsTyping();
+          // Provider.of<ConversationRoomViewModel>(context, listen: false)
+          //     .setIsTyping();
+          Future.delayed(
+            const Duration(seconds: 1),
+            () {
+              chatProvider.setSpeaking();
+            },
+          );
           return;
         }
         await _pronunciationCheck(chatProvider);
 
-        Future.delayed(
-          const Duration(seconds: 1),
-          () {
-            analyticInstance.logEvent(name: "upload_audio_add_dump_message");
-            chatProvider.addUserMessage(
-              message: "loading",
-              betterSentence: "betterSentence",
-              correctSentence: "correctSentence",
-              sound: "sound",
-              soundRatio: "soundRatio",
-            );
-            chatProvider.voiceMessage != "" ? Navigator.pop(context) : null;
-          },
-        );
+        if (chatProvider.isPractice) {
+          analyticInstance.logEvent(name: "upload_audio_add_dump_message");
+          chatProvider.addUserMessage(
+            message: "loading",
+            betterSentence: "betterSentence",
+            correctSentence: "correctSentence",
+            sound: "sound",
+            soundRatio: "soundRatio",
+          );
+          chatProvider.voiceMessage != "" ? Navigator.pop(context) : null;
+        } else {
+          // Future.delayed(
+          //   const Duration(seconds: 1),
+          //   () {
+          //     analyticInstance.logEvent(name: "upload_audio_add_dump_message");
+          //     chatProvider.addUserMessage(
+          //       message: "loading",
+          //       betterSentence: "betterSentence",
+          //       correctSentence: "correctSentence",
+          //       sound: "sound",
+          //       soundRatio: "soundRatio",
+          //     );
+          //   },
+          // );
+        }
       }
     } catch (e) {
       analyticInstance.logEvent(
@@ -362,7 +387,6 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView>
 
   @override
   Widget build(BuildContext context) {
-    analyticInstance.logEvent(name: "opened_conversation_room_view");
     super.build(context);
     var chatProvider = Provider.of<ConversationRoomViewModel>(context);
 
@@ -539,7 +563,9 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView>
                           Provider.of<ConversationRoomViewModel>(context,
                                   listen: false)
                               .isReadMessage = false;
-                          textViewModel.stop();
+                          Provider.of<AwsPollyService>(context, listen: false)
+                              .stop();
+
                           await chatProvider.sendToBackendRateId(
                             context,
                             conversationId: widget.conversationId,
@@ -608,7 +634,9 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView>
                                 Provider.of<ConversationRoomViewModel>(context,
                                         listen: false)
                                     .isReadMessage = false;
-                                textViewModel.stop();
+                                Provider.of<AwsPollyService>(context,
+                                        listen: false)
+                                    .stop();
                                 chatProvider.isReadMessage = false;
                                 chatProvider.isGetMessage = false;
                                 Navigator.pushReplacement(
@@ -638,19 +666,90 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView>
                   ),
                   const SizedBox(height: 20.0),
                   Expanded(
-                    child: ListView.builder(
-                      controller: _listScrollController,
-                      itemCount: chatProvider.getChatList.length,
-                      addAutomaticKeepAlives: false,
-                      addRepaintBoundaries: false,
-                      physics: const ClampingScrollPhysics(),
-                      itemBuilder: (context, index) {
-                        // isScroll = false;
-                        return chatWidget(
-                          chatProvider,
-                          index,
-                        );
-                      },
+                    child: Stack(
+                      children: [
+                        Positioned(
+                          top: 0.0,
+                          left: 0.0,
+                          right: 0.0,
+                          bottom: 0.0,
+                          child: ListView.builder(
+                            controller: _listScrollController,
+                            itemCount: chatProvider.getChatList.length,
+                            addAutomaticKeepAlives: false,
+                            addRepaintBoundaries: false,
+                            physics: const ClampingScrollPhysics(),
+                            itemBuilder: (context, index) {
+                              // isScroll = false;
+                              return chatWidget(
+                                chatProvider,
+                                index,
+                              );
+                            },
+                          ),
+                        ),
+                        Consumer<ConversationRoomViewModel>(
+                          builder: (context, state, child) {
+                            return (state.isSpeaking &&
+                                    state.voiceMessage != state.dumpMessage)
+                                ? Positioned.fill(
+                                    child: BackdropFilter(
+                                      filter: ImageFilter.blur(
+                                          sigmaX: 10.0, sigmaY: 10.0),
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.center,
+                                        children: [
+                                          Image.asset(
+                                            "assets/images/image_circle_loop.gif",
+                                          ),
+                                          Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 18.0),
+                                            child: state.voiceMessage ==
+                                                    "loading"
+                                                ? SizedBox(
+                                                    width: width(0.3),
+                                                    child: SpinKitThreeBounce(
+                                                      color: ColorConstant
+                                                          .instance
+                                                          .additionalWhite,
+                                                      size: 18.0,
+                                                    ),
+                                                  )
+                                                : Text(
+                                                    state.voiceMessage,
+                                                    style: currentTextTheme
+                                                        .bodySmall
+                                                        ?.copyWith(
+                                                      fontWeight:
+                                                          FontWeight.w400,
+                                                      color: state.voiceMessage ==
+                                                              "Please send message"
+                                                          ? ColorConstant
+                                                              .instance
+                                                              .additionalRed
+                                                          : ColorConstant
+                                                              .instance
+                                                              .additionalWhite,
+                                                      fontSize: 20.0,
+                                                    ),
+                                                    maxLines: 4,
+                                                    textAlign: TextAlign.center,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                  ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  )
+                                : const Center();
+                          },
+                        ),
+                      ],
                     ),
                   ),
                   chatProvider.endChat == 1 || chatProvider.endChat == 3
@@ -703,24 +802,26 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView>
                             )
                       : const Center(),
                   const SizedBox(height: 5.0),
-                  Consumer<ConversationRoomViewModel>(
+                  Selector<ConversationRoomViewModel, MyValues>(
                     builder: (context, state, child) {
                       return state.isSelectVoice
                           ? AbsorbPointer(
-                              absorbing: chatProvider.isActive == 1 &&
-                                      !viewModel.isTyping
-                                  ? false
-                                  : true,
+                              absorbing:
+                                  state.isActive == 1 && !viewModel.isTyping
+                                      ? false
+                                      : true,
                               child: voiceButton(context),
                             )
                           : AbsorbPointer(
-                              absorbing: chatProvider.isActive == 1 &&
-                                      !viewModel.isTyping
-                                  ? false
-                                  : true,
+                              absorbing:
+                                  state.isActive == 1 && !viewModel.isTyping
+                                      ? false
+                                      : true,
                               child: sendMessageInput(chatProvider),
                             );
                     },
+                    selector: (context, model) =>
+                        MyValues(model.isActive, model.isSelectVoice),
                   ),
                 ],
               )
@@ -754,8 +855,7 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView>
   }
 
   SizedBox sendMessageInput(ConversationRoomViewModel chatProvider) {
-    analyticInstance.logEvent(
-        name: "clicked_send_message_input_conversation_room_view");
+    analyticInstance.logEvent(name: "clicked_send_message_input");
     return SizedBox(
       width: width(1.0),
       child: Row(
@@ -766,6 +866,9 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView>
               width: width(1.0),
               // height: height(0.075),
               child: TextField(
+                onTap: () {
+                  Provider.of<AwsPollyService>(context, listen: false).stop();
+                },
                 maxLines: null,
                 enabled: chatProvider.isActive == 0 ? false : true,
                 controller: viewModel.sendTextController,
@@ -787,17 +890,17 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView>
                         InkWell(
                           onTap: () {
                             analyticInstance.logEvent(
-                                name:
-                                    "clicked_open_speak_modal_input_button_conversation_room_view");
+                                name: "clicked_open_speak");
                             Provider.of<ConversationRoomViewModel>(context,
                                     listen: false)
                                 .isReadMessage = false;
-                            textViewModel.stop();
+                            Provider.of<AwsPollyService>(context, listen: false)
+                                .stop();
                             Provider.of<ConversationRoomViewModel>(context,
                                     listen: false)
                                 .selectVoice(true);
 
-                            speakModal(context);
+                            // speakModal(context);
                           },
                           child: SvgPicture.asset(
                             IconConstant.instance.iconVoice,
@@ -819,9 +922,10 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView>
                             child: IconButton(
                               onPressed: () async {
                                 analyticInstance.logEvent(
-                                    name:
-                                        "clicked_send_meessage_input_button_conversation_room_view");
-                                textViewModel.stop();
+                                    name: "clicked_send_meessage_input_button");
+                                Provider.of<AwsPollyService>(context,
+                                        listen: false)
+                                    .stop();
 
                                 await sendMessage(context,
                                     chatProvider: chatProvider);
@@ -873,388 +977,205 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView>
       mainAxisAlignment: MainAxisAlignment.start,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Align(
-          alignment: Alignment.center,
-          child: AvatarGlow(
-            endRadius: 75.0,
-            animate: !Provider.of<TextToSpeechViewModel>(context).isCompleted,
-            duration: const Duration(milliseconds: 500),
-            glowColor: const Color.fromRGBO(71, 115, 254, 1),
-            repeat: true,
-            repeatPauseDuration: const Duration(milliseconds: 100),
-            showTwoGlows: true,
-            curve: Curves.fastOutSlowIn,
-            child: GestureDetector(
-              onTap: () async {
-                analyticInstance.logEvent(name: "clicked_voice_button");
+        Stack(
+          children: [
+            Align(
+              alignment: Alignment.center,
+              child: AbsorbPointer(
+                absorbing: viewModel.isTyping,
+                child: AvatarGlow(
+                  endRadius: 75.0,
+                  animate: Provider.of<ConversationRoomViewModel>(context)
+                      .isRecording,
+                  duration: const Duration(milliseconds: 500),
+                  glowColor: const Color.fromRGBO(71, 115, 254, 1),
+                  repeat: true,
+                  repeatPauseDuration: const Duration(milliseconds: 100),
+                  showTwoGlows: true,
+                  curve: Curves.fastOutSlowIn,
+                  child: Consumer<ConversationRoomViewModel>(
+                    builder: (context, state, child) {
+                      return GestureDetector(
+                        onLongPress: () {
+                          Provider.of<ConversationRoomViewModel>(context,
+                                  listen: false)
+                              .setPractice(false);
+                          Provider.of<ConversationRoomViewModel>(context,
+                                  listen: false)
+                              .clickMiniVoiceButton(false);
+                          analyticInstance.logEvent(
+                              name: "press_record_button");
+                          Provider.of<ConversationRoomViewModel>(context,
+                                  listen: false)
+                              .setText("loading");
+
+                          Provider.of<AwsPollyService>(context, listen: false)
+                              .isSpeaking = true;
+                          Provider.of<AwsPollyService>(context, listen: false)
+                              .selectedIndex = -1;
+                          Provider.of<AwsPollyService>(context, listen: false)
+                              .stop();
+                          Provider.of<ConversationRoomViewModel>(context,
+                                  listen: false)
+                              .setIsRecord();
+                          Provider.of<ConversationRoomViewModel>(context,
+                                  listen: false)
+                              .setSpeaking();
+                          _startRecording(
+                              Provider.of<ConversationRoomViewModel>(context,
+                                  listen: false));
+                        },
+                        onLongPressEnd: (_) {
+                          analyticInstance.logEvent(
+                              name: "press_end_record_button");
+
+                          Provider.of<AwsPollyService>(context, listen: false)
+                              .isSpeaking = true;
+                          Provider.of<AwsPollyService>(context, listen: false)
+                              .selectedIndex = -1;
+                          Provider.of<AwsPollyService>(context, listen: false)
+                              .stop();
+                          Provider.of<ConversationRoomViewModel>(context,
+                                  listen: false)
+                              .setIsRecord();
+                          _stopRecording(Provider.of<ConversationRoomViewModel>(
+                              context,
+                              listen: false));
+                          Provider.of<ConversationRoomViewModel>(context,
+                                  listen: false)
+                              .setIsTyping();
+                        },
+                        onTap: () {
+                          if (state.isAvailableMessage) {
+                            sendMessage(
+                                chatProvider:
+                                    Provider.of<ConversationRoomViewModel>(
+                                        context,
+                                        listen: false),
+                                context);
+                            state.setSpeaking();
+                            state.availableMessage(false);
+                          } else {
+                            Provider.of<ConversationRoomViewModel>(context,
+                                    listen: false)
+                                .setPractice(false);
+                            Provider.of<ConversationRoomViewModel>(context,
+                                    listen: false)
+                                .clickMiniVoiceButton(false);
+                            Provider.of<AwsPollyService>(context, listen: false)
+                                .stop();
+                            Provider.of<ConversationRoomViewModel>(context,
+                                    listen: false)
+                                .showPopupWarning();
+                          }
+                        },
+                        child: Container(
+                          decoration: const BoxDecoration(
+                            shape: BoxShape.circle,
+                          ),
+                          child: CircleAvatar(
+                            radius: 55.0,
+                            backgroundColor:
+                                const Color.fromRGBO(120, 122, 124, 0.2),
+                            child: CircleAvatar(
+                              radius: 40.0,
+                              backgroundColor:
+                                  const Color.fromRGBO(120, 122, 124, 0.4),
+                              child: CircleAvatar(
+                                backgroundColor:
+                                    const Color.fromRGBO(172, 173, 177, 1),
+                                foregroundColor: Colors.red,
+                                radius: 30.0,
+                                child: state.isAvailableMessage
+                                    ? SvgPicture.asset(
+                                        IconConstant.instance.iconSendVoice,
+                                        color: ColorConstant
+                                            .instance.additionalWhite,
+                                      )
+                                    : SvgPicture.asset(
+                                        IconConstant.instance.iconVoice,
+                                      ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ),
+            PopupWidget(),
+          ],
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            InkWell(
+              onTap: () {
+                analyticInstance.logEvent(
+                    name: "clicked_keyboard_button_open_input");
+                Provider.of<AwsPollyService>(context, listen: false).stop();
                 Provider.of<ConversationRoomViewModel>(context, listen: false)
-                    .setText("");
+                    .clickMiniVoiceButton(false);
+                viewModel.sendTextController.text = "";
                 Provider.of<ConversationRoomViewModel>(context, listen: false)
-                    .isReadMessage = false;
-                textViewModel.stop();
-                speakModal(context);
+                    .selectVoice(false);
               },
-              child: Consumer<TextToSpeechViewModel>(
+              child: Container(
+                width: 40.0,
+                height: 40.0,
+                decoration: BoxDecoration(
+                  color: Colors.transparent,
+                  borderRadius: BorderRadius.circular(50.0),
+                  border: Border.all(
+                    color: ColorConstant.instance.additionalWhite,
+                  ),
+                ),
+                child: Center(
+                  child: SvgPicture.asset(
+                    IconConstant.instance.iconKeyboard,
+                    width: 15.0,
+                    height: 15.0,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+            ),
+            Selector<ConversationRoomViewModel, bool>(
                 builder: (context, state, child) {
-                  return Container(
-                    decoration: const BoxDecoration(
-                      shape: BoxShape.circle,
-                    ),
+                  return AnimatedOpacity(
+                    opacity: state ? 1.0 : 0.0,
+                    duration: const Duration(milliseconds: 300),
                     child: CircleAvatar(
-                      radius: 55.0,
-                      backgroundColor: const Color.fromRGBO(120, 122, 124, 0.2),
-                      child: CircleAvatar(
-                        radius: 40.0,
-                        backgroundColor:
-                            const Color.fromRGBO(120, 122, 124, 0.4),
-                        child: CircleAvatar(
-                          backgroundColor: !state.isCompleted
-                              ? ColorConstant.instance.additionalWhite
-                              : const Color.fromRGBO(172, 173, 177, 1),
-                          foregroundColor: Colors.red,
-                          radius: 30.0,
-                          child: !state.isCompleted
-                              ? ColorFiltered(
-                                  colorFilter: const ColorFilter.mode(
-                                    Color.fromRGBO(71, 115, 254, 1),
-                                    BlendMode.modulate,
-                                  ),
-                                  child: Lottie.asset(
-                                    "assets/lottie/lottie_recording.json",
-                                    width: 45.0,
-                                    height: 45.0,
-                                  ),
-                                )
-                              : SvgPicture.asset(
-                                  IconConstant.instance.iconVoice,
-                                ),
+                      radius: 20.0,
+                      backgroundColor: ColorConstant.instance.additionalWhite,
+                      child: IconButton(
+                        onPressed: () {
+                          if (state) {
+                            viewModel.sendTextController.text = '';
+                            Provider.of<ConversationRoomViewModel>(context,
+                                    listen: false)
+                                .setSpeaking();
+                            Provider.of<ConversationRoomViewModel>(context,
+                                    listen: false)
+                                .availableMessage(false);
+                          }
+                        },
+                        icon: Icon(
+                          Icons.close,
+                          color: ColorConstant.instance.paletteBackground,
+                          size: 15.0,
                         ),
                       ),
                     ),
                   );
                 },
-              ),
-            ),
-          ),
-        ),
-        InkWell(
-          onTap: () {
-            analyticInstance.logEvent(
-                name:
-                    "clicked_keyboard_button_conversation_room_view_for_open_input");
-            textViewModel.stop();
-            viewModel.sendTextController.text = "";
-            Provider.of<ConversationRoomViewModel>(context, listen: false)
-                .selectVoice(false);
-          },
-          child: Container(
-            width: 40.0,
-            height: 40.0,
-            decoration: BoxDecoration(
-              color: Colors.transparent,
-              borderRadius: BorderRadius.circular(50.0),
-              border: Border.all(
-                color: ColorConstant.instance.additionalWhite,
-              ),
-            ),
-            child: Center(
-              child: SvgPicture.asset(
-                IconConstant.instance.iconKeyboard,
-                width: 15.0,
-                height: 15.0,
-                fit: BoxFit.cover,
-              ),
-            ),
-          ),
+                selector: (context, state) => state.isAvailableMessage),
+          ],
         ),
       ],
-    );
-  }
-
-  Future<dynamic> speakModal(BuildContext context) {
-    return showModalBottomSheet(
-      enableDrag: false,
-      isDismissible: true,
-      isScrollControlled: true,
-      context: context,
-      builder: (BuildContext context) {
-        return BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
-          child: FractionallySizedBox(
-            heightFactor: 1.0,
-            child: Container(
-              decoration: BoxDecoration(
-                color: ColorConstant.instance.paletteBackground,
-              ),
-              width: width(1.0),
-              child: Padding(
-                padding:
-                    const EdgeInsets.only(top: 68.0, right: 24.0, left: 24.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Column(
-                      children: [
-                        speakHeader(context),
-                        const SizedBox(height: 17.0),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const SizedBox(width: 24.0),
-                            Text(
-                              "Go ahead, I’m listening",
-                              style: currentTextTheme.bodySmall?.copyWith(
-                                fontWeight: FontWeight.w500,
-                                color: const Color.fromRGBO(155, 150, 161, 1),
-                                fontSize: 14.0,
-                              ),
-                            ),
-                            const SizedBox(),
-                          ],
-                        ),
-                      ],
-                    ),
-                    const Expanded(child: SizedBox()),
-                    Consumer<ConversationRoomViewModel>(
-                      builder: (context, state, child) {
-                        return state.isSpeaking
-                            ? Expanded(
-                                flex: 2,
-                                child: Image.asset(
-                                  "assets/images/image_circle_loop.gif",
-                                ),
-                              )
-                            : Expanded(
-                                flex: 2,
-                                child: Image.asset(
-                                  ImageConstant.instance.imageAI,
-                                ),
-                              );
-                      },
-                    ),
-                    Consumer<ConversationRoomViewModel>(
-                      builder: (context, state, child) {
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 18.0),
-                          child: state.voiceMessage == "loading"
-                              ? SizedBox(
-                                  width: width(0.3),
-                                  child: SpinKitThreeBounce(
-                                    color:
-                                        ColorConstant.instance.additionalWhite,
-                                    size: 18.0,
-                                  ),
-                                )
-                              : Text(
-                                  state.voiceMessage,
-                                  style: currentTextTheme.bodySmall?.copyWith(
-                                    fontWeight: FontWeight.w400,
-                                    color: state.voiceMessage ==
-                                            "Please send message"
-                                        ? ColorConstant.instance.additionalRed
-                                        : ColorConstant
-                                            .instance.additionalWhite,
-                                    fontSize: 20.0,
-                                  ),
-                                  maxLines: 4,
-                                  textAlign: TextAlign.center,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                        );
-                      },
-                    ),
-                    const Expanded(child: SizedBox()),
-                    Stack(
-                      children: [
-                        Align(
-                          alignment: Alignment.center,
-                          child: AbsorbPointer(
-                            absorbing: viewModel.isTyping,
-                            child: AvatarGlow(
-                              endRadius: 75.0,
-                              animate: Provider.of<ConversationRoomViewModel>(
-                                      context)
-                                  .isRecording,
-                              duration: const Duration(milliseconds: 500),
-                              glowColor: const Color.fromRGBO(71, 115, 254, 1),
-                              repeat: true,
-                              repeatPauseDuration:
-                                  const Duration(milliseconds: 100),
-                              showTwoGlows: true,
-                              curve: Curves.fastOutSlowIn,
-                              child: GestureDetector(
-                                onLongPress: () {
-                                  analyticInstance.logEvent(
-                                      name: "press_record_button");
-                                  Provider.of<ConversationRoomViewModel>(
-                                          context,
-                                          listen: false)
-                                      .setText("loading");
-
-                                  textViewModel.isSpeaking = true;
-                                  Provider.of<TextToSpeechViewModel>(context,
-                                          listen: false)
-                                      .selectedIndex = -1;
-                                  textViewModel.stop();
-                                  Provider.of<ConversationRoomViewModel>(
-                                          context,
-                                          listen: false)
-                                      .setIsRecord();
-                                  Provider.of<ConversationRoomViewModel>(
-                                          context,
-                                          listen: false)
-                                      .setSpeaking();
-                                  _startRecording(
-                                      Provider.of<ConversationRoomViewModel>(
-                                          context,
-                                          listen: false));
-                                },
-                                onLongPressEnd: (_) {
-                                  analyticInstance.logEvent(
-                                      name: "press_end_record_button");
-
-                                  textViewModel.isSpeaking = true;
-                                  Provider.of<TextToSpeechViewModel>(context,
-                                          listen: false)
-                                      .selectedIndex = -1;
-                                  textViewModel.stop();
-                                  Provider.of<ConversationRoomViewModel>(
-                                          context,
-                                          listen: false)
-                                      .setIsRecord();
-                                  Provider.of<ConversationRoomViewModel>(
-                                          context,
-                                          listen: false)
-                                      .setSpeaking();
-                                  _stopRecording(
-                                      Provider.of<ConversationRoomViewModel>(
-                                          context,
-                                          listen: false));
-                                  Provider.of<ConversationRoomViewModel>(
-                                          context,
-                                          listen: false)
-                                      .setIsTyping();
-                                },
-                                onTap: () {
-                                  // analyticInstance.logEvent(
-                                  //     name:
-                                  //         "clicked_record_button_in_speak_modal_conversation_room_view_for_speaking");
-                                  // Provider.of<ConversationRoomViewModel>(
-                                  //         context,
-                                  //         listen: false)
-                                  //     .setText("loading");
-
-                                  // textViewModel.isSpeaking = true;
-                                  // Provider.of<TextToSpeechViewModel>(context,
-                                  //         listen: false)
-                                  //     .selectedIndex = -1;
-                                  // textViewModel.stop();
-                                  // Provider.of<ConversationRoomViewModel>(
-                                  //         context,
-                                  //         listen: false)
-                                  //     .setIsRecord();
-                                  // Provider.of<ConversationRoomViewModel>(
-                                  //         context,
-                                  //         listen: false)
-                                  //     .setSpeaking();
-                                  // if (Provider.of<ConversationRoomViewModel>(
-                                  //         context,
-                                  //         listen: false)
-                                  //     .isRecording) {
-                                  //   _startRecording(
-                                  //       Provider.of<ConversationRoomViewModel>(
-                                  //           context,
-                                  //           listen: false));
-                                  // } else {
-                                  //   _stopRecording(
-                                  //       Provider.of<ConversationRoomViewModel>(
-                                  //           context,
-                                  //           listen: false));
-                                  //   Provider.of<ConversationRoomViewModel>(
-                                  //           context,
-                                  //           listen: false)
-                                  //       .setIsTyping();
-                                  // }
-                                },
-                                child: Consumer<ConversationRoomViewModel>(
-                                  builder: (context, state, child) {
-                                    return Container(
-                                      decoration: const BoxDecoration(
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: CircleAvatar(
-                                        radius: 55.0,
-                                        backgroundColor: const Color.fromRGBO(
-                                            120, 122, 124, 0.2),
-                                        child: CircleAvatar(
-                                          radius: 40.0,
-                                          backgroundColor: const Color.fromRGBO(
-                                              120, 122, 124, 0.4),
-                                          child: CircleAvatar(
-                                            backgroundColor:
-                                                const Color.fromRGBO(
-                                                    172, 173, 177, 1),
-                                            foregroundColor: Colors.red,
-                                            radius: 30.0,
-                                            child: SvgPicture.asset(IconConstant
-                                                .instance.iconVoice),
-                                          ),
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 10.0),
-                        Positioned(
-                          bottom: 0.0,
-                          left: 0.0,
-                          child: InkWell(
-                            onTap: () {
-                              analyticInstance.logEvent(
-                                  name:
-                                      "clicked_keyboard_button_in_speak_modal_conversation_room_view_for_open_input");
-                              viewModel.sendTextController.text = "";
-                              Provider.of<ConversationRoomViewModel>(context,
-                                      listen: false)
-                                  .selectVoice(false);
-                              Navigator.pop(context);
-                            },
-                            child: Container(
-                              width: 40.0,
-                              height: 40.0,
-                              decoration: BoxDecoration(
-                                color: Colors.transparent,
-                                borderRadius: BorderRadius.circular(50.0),
-                                border: Border.all(
-                                  color: ColorConstant.instance.additionalWhite,
-                                ),
-                              ),
-                              child: Center(
-                                child: SvgPicture.asset(
-                                  IconConstant.instance.iconKeyboard,
-                                  width: 15.0,
-                                  height: 15.0,
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20.0),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        );
-      },
     );
   }
 
@@ -1274,7 +1195,7 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView>
               child: IconButton(
                 onPressed: () {
                   analyticInstance.logEvent(name: "closed_speak_modal");
-                  textViewModel.stop();
+                  Provider.of<AwsPollyService>(context, listen: false).stop();
                   Navigator.pop(context);
                 },
                 icon: Icon(
@@ -1326,7 +1247,7 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView>
                   children: [
                     Expanded(child: chats(chatProvider, index)),
                     const SizedBox(width: 15.0),
-                    Consumer<TextToSpeechViewModel>(
+                    Consumer<AwsPollyService>(
                       builder: (context, state, child) {
                         return state.isCompleted
                             ? const Center()
@@ -1534,11 +1455,14 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView>
                                         state: state,
                                         avatarPhoto: profilePhoto,
                                         onPressed: () async {
+                                          Provider.of<AwsPollyService>(context,
+                                                  listen: false)
+                                              .stop();
                                           analyticInstance.logEvent(
                                               name: "clicked_play_user_sound");
                                           state.setAvatarAISelect(false);
                                           state.setAvatarSelect(true);
-                                          textViewModel.stop();
+
                                           final player = AudioPlayer();
                                           await player.play(
                                             UrlSource(
@@ -1560,120 +1484,118 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView>
                           ),
                         ),
                         const SizedBox(height: 20.0),
-                        Align(
-                          alignment: Alignment.center,
-                          child: AvatarGlow(
-                            endRadius: 75.0,
-                            animate:
-                                Provider.of<ConversationRoomViewModel>(context)
+                        Stack(
+                          children: [
+                            Align(
+                              alignment: Alignment.center,
+                              child: AvatarGlow(
+                                endRadius: 75.0,
+                                animate: Provider.of<ConversationRoomViewModel>(
+                                        context)
                                     .isRecording,
-                            duration: const Duration(milliseconds: 500),
-                            glowColor: const Color.fromRGBO(71, 115, 254, 1),
-                            repeat: true,
-                            repeatPauseDuration:
-                                const Duration(milliseconds: 100),
-                            showTwoGlows: true,
-                            curve: Curves.fastOutSlowIn,
-                            child: GestureDetector(
-                              onLongPress: () {
-                                analyticInstance.logEvent(
-                                    name: "press_play_record_sound_practice");
-                                textViewModel.isSpeaking = true;
-                                Provider.of<TextToSpeechViewModel>(context,
-                                        listen: false)
-                                    .selectedIndex = -1;
-                                textViewModel.stop();
-                                Provider.of<ConversationRoomViewModel>(context,
-                                        listen: false)
-                                    .setIsRecord();
-                                Provider.of<ConversationRoomViewModel>(context,
-                                        listen: false)
-                                    .setSpeaking();
-                                _startRecording(
+                                duration: const Duration(milliseconds: 500),
+                                glowColor:
+                                    const Color.fromRGBO(71, 115, 254, 1),
+                                repeat: true,
+                                repeatPauseDuration:
+                                    const Duration(milliseconds: 100),
+                                showTwoGlows: true,
+                                curve: Curves.fastOutSlowIn,
+                                child: GestureDetector(
+                                  onLongPress: () {
                                     Provider.of<ConversationRoomViewModel>(
-                                        context,
-                                        listen: false));
-                              },
-                              onLongPressEnd: (_) {
-                                analyticInstance.logEvent(
-                                    name:
-                                        "press_end_play_record_sound_practice");
-                                textViewModel.isSpeaking = true;
-                                Provider.of<TextToSpeechViewModel>(context,
-                                        listen: false)
-                                    .selectedIndex = -1;
-                                textViewModel.stop();
-                                Provider.of<ConversationRoomViewModel>(context,
-                                        listen: false)
-                                    .setIsRecord();
-                                Provider.of<ConversationRoomViewModel>(context,
-                                        listen: false)
-                                    .setSpeaking();
+                                            context,
+                                            listen: false)
+                                        .setPractice(true);
+                                    analyticInstance.logEvent(
+                                        name:
+                                            "press_play_record_sound_practice");
+                                    Provider.of<AwsPollyService>(context,
+                                            listen: false)
+                                        .isSpeaking = true;
+                                    Provider.of<AwsPollyService>(context,
+                                            listen: false)
+                                        .selectedIndex = -1;
+                                    Provider.of<AwsPollyService>(context,
+                                            listen: false)
+                                        .stop();
+                                    Provider.of<ConversationRoomViewModel>(
+                                            context,
+                                            listen: false)
+                                        .setIsRecord();
+                                    _startRecording(
+                                        Provider.of<ConversationRoomViewModel>(
+                                            context,
+                                            listen: false));
+                                  },
+                                  onLongPressEnd: (_) {
+                                    analyticInstance.logEvent(
+                                        name:
+                                            "press_end_play_record_sound_practice");
+                                    Provider.of<AwsPollyService>(context,
+                                            listen: false)
+                                        .isSpeaking = true;
+                                    Provider.of<AwsPollyService>(context,
+                                            listen: false)
+                                        .selectedIndex = -1;
+                                    Provider.of<AwsPollyService>(context,
+                                            listen: false)
+                                        .stop();
+                                    Provider.of<ConversationRoomViewModel>(
+                                            context,
+                                            listen: false)
+                                        .setIsRecord();
 
-                                _stopRecording(
+                                    _stopRecording(
+                                        Provider.of<ConversationRoomViewModel>(
+                                            context,
+                                            listen: false));
+                                  },
+                                  onTap: () {
                                     Provider.of<ConversationRoomViewModel>(
-                                        context,
-                                        listen: false));
-                              },
-                              onTap: () {
-                                // analyticInstance.logEvent(
-                                //     name:
-                                //         "clicked_play_record_sound_practice_in_pronunciation_and_grammar_modal_conversation_room_view");
-                                // textViewModel.isSpeaking = true;
-                                // Provider.of<TextToSpeechViewModel>(context,
-                                //         listen: false)
-                                //     .selectedIndex = -1;
-                                // textViewModel.stop();
-                                // Provider.of<ConversationRoomViewModel>(context,
-                                //         listen: false)
-                                //     .setIsRecord();
-                                // Provider.of<ConversationRoomViewModel>(context,
-                                //         listen: false)
-                                //     .setSpeaking();
-                                // if (Provider.of<ConversationRoomViewModel>(
-                                //         context,
-                                //         listen: false)
-                                //     .isRecording) {
-                                //   _startRecording(
-                                //       Provider.of<ConversationRoomViewModel>(
-                                //           context,
-                                //           listen: false));
-                                // } else {
-                                //   _stopRecording(
-                                //       Provider.of<ConversationRoomViewModel>(
-                                //           context,
-                                //           listen: false));
-                                // }
-                              },
-                              child: Consumer<ConversationRoomViewModel>(
-                                builder: (context, state, child) {
-                                  return Container(
-                                    decoration: const BoxDecoration(
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: CircleAvatar(
-                                      radius: 55.0,
-                                      backgroundColor: const Color.fromRGBO(
-                                          120, 122, 124, 0.2),
-                                      child: CircleAvatar(
-                                        radius: 40.0,
-                                        backgroundColor: const Color.fromRGBO(
-                                            120, 122, 124, 0.4),
-                                        child: CircleAvatar(
-                                          backgroundColor: const Color.fromRGBO(
-                                              172, 173, 177, 1),
-                                          foregroundColor: Colors.red,
-                                          radius: 30.0,
-                                          child: SvgPicture.asset(
-                                              IconConstant.instance.iconVoice),
+                                            context,
+                                            listen: false)
+                                        .setPractice(true);
+                                    Provider.of<ConversationRoomViewModel>(
+                                            context,
+                                            listen: false)
+                                        .showPopupWarning();
+                                  },
+                                  child: Consumer<ConversationRoomViewModel>(
+                                    builder: (context, state, child) {
+                                      return Container(
+                                        decoration: const BoxDecoration(
+                                          shape: BoxShape.circle,
                                         ),
-                                      ),
-                                    ),
-                                  );
-                                },
+                                        child: CircleAvatar(
+                                          radius: 55.0,
+                                          backgroundColor: const Color.fromRGBO(
+                                              120, 122, 124, 0.2),
+                                          child: CircleAvatar(
+                                            radius: 40.0,
+                                            backgroundColor:
+                                                const Color.fromRGBO(
+                                                    120, 122, 124, 0.4),
+                                            child: CircleAvatar(
+                                              backgroundColor:
+                                                  const Color.fromRGBO(
+                                                      172, 173, 177, 1),
+                                              foregroundColor: Colors.red,
+                                              radius: 30.0,
+                                              child: SvgPicture.asset(
+                                                  IconConstant
+                                                      .instance.iconVoice),
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
                               ),
                             ),
-                          ),
+                            PopupWidget(),
+                          ],
                         ),
                       ],
                     )
@@ -1790,7 +1712,10 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView>
                                                     "clicked_play_user_sound<_in_pronunciation_and_grammar_modal_conversation_room_view");
                                             state.setAvatarAISelect(false);
                                             state.setAvatarSelect(true);
-                                            textViewModel.stop();
+                                            Provider.of<AwsPollyService>(
+                                                    context,
+                                                    listen: false)
+                                                .stop();
                                             final player = AudioPlayer();
                                             await player.play(
                                               UrlSource(viewModel
@@ -1811,83 +1736,121 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView>
                             ),
                           ),
                           const SizedBox(height: 20.0),
-                          Align(
-                            alignment: Alignment.center,
-                            child: AvatarGlow(
-                              endRadius: 75.0,
-                              animate: Provider.of<ConversationRoomViewModel>(
-                                      context)
-                                  .isRecording,
-                              duration: const Duration(milliseconds: 500),
-                              glowColor: const Color.fromRGBO(71, 115, 254, 1),
-                              repeat: true,
-                              repeatPauseDuration:
-                                  const Duration(milliseconds: 100),
-                              showTwoGlows: true,
-                              curve: Curves.fastOutSlowIn,
-                              child: GestureDetector(
-                                onTap: () {
-                                  analyticInstance.logEvent(
-                                      name:
-                                          "clicked_play_record_sound_practice_in_pronunciation_and_grammar_modal_conversation_room_view");
-                                  textViewModel.isSpeaking = true;
-                                  Provider.of<TextToSpeechViewModel>(context,
-                                          listen: false)
-                                      .selectedIndex = -1;
-                                  textViewModel.stop();
-                                  Provider.of<ConversationRoomViewModel>(
+                          Stack(
+                            children: [
+                              Align(
+                                alignment: Alignment.center,
+                                child: AvatarGlow(
+                                  endRadius: 75.0,
+                                  animate:
+                                      Provider.of<ConversationRoomViewModel>(
+                                              context)
+                                          .isRecording,
+                                  duration: const Duration(milliseconds: 500),
+                                  glowColor:
+                                      const Color.fromRGBO(71, 115, 254, 1),
+                                  repeat: true,
+                                  repeatPauseDuration:
+                                      const Duration(milliseconds: 100),
+                                  showTwoGlows: true,
+                                  curve: Curves.fastOutSlowIn,
+                                  child: GestureDetector(
+                                    onLongPress: () {
+                                      Provider.of<ConversationRoomViewModel>(
+                                              context,
+                                              listen: false)
+                                          .setPractice(true);
+                                      analyticInstance.logEvent(
+                                          name:
+                                              "press_play_record_sound_practice");
+                                      Provider.of<AwsPollyService>(context,
+                                              listen: false)
+                                          .isSpeaking = true;
+                                      Provider.of<AwsPollyService>(context,
+                                              listen: false)
+                                          .selectedIndex = -1;
+                                      Provider.of<AwsPollyService>(context,
+                                              listen: false)
+                                          .stop();
+                                      Provider.of<ConversationRoomViewModel>(
+                                              context,
+                                              listen: false)
+                                          .setIsRecord();
+
+                                      _startRecording(Provider.of<
+                                              ConversationRoomViewModel>(
                                           context,
-                                          listen: false)
-                                      .setIsRecord();
-                                  Provider.of<ConversationRoomViewModel>(
+                                          listen: false));
+                                    },
+                                    onLongPressEnd: (_) {
+                                      analyticInstance.logEvent(
+                                          name:
+                                              "press_end_play_record_sound_practice");
+                                      Provider.of<AwsPollyService>(context,
+                                              listen: false)
+                                          .isSpeaking = true;
+                                      Provider.of<AwsPollyService>(context,
+                                              listen: false)
+                                          .selectedIndex = -1;
+                                      Provider.of<AwsPollyService>(context,
+                                              listen: false)
+                                          .stop();
+                                      Provider.of<ConversationRoomViewModel>(
+                                              context,
+                                              listen: false)
+                                          .setIsRecord();
+
+                                      _stopRecording(Provider.of<
+                                              ConversationRoomViewModel>(
                                           context,
-                                          listen: false)
-                                      .setSpeaking();
-                                  if (Provider.of<ConversationRoomViewModel>(
-                                          context,
-                                          listen: false)
-                                      .isRecording) {
-                                    _startRecording(
-                                        Provider.of<ConversationRoomViewModel>(
-                                            context,
-                                            listen: false));
-                                  } else {
-                                    _stopRecording(
-                                        Provider.of<ConversationRoomViewModel>(
-                                            context,
-                                            listen: false));
-                                  }
-                                },
-                                child: Consumer<ConversationRoomViewModel>(
-                                  builder: (context, state, child) {
-                                    return Container(
-                                      decoration: const BoxDecoration(
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: CircleAvatar(
-                                        radius: 55.0,
-                                        backgroundColor: const Color.fromRGBO(
-                                            120, 122, 124, 0.2),
-                                        child: CircleAvatar(
-                                          radius: 40.0,
-                                          backgroundColor: const Color.fromRGBO(
-                                              120, 122, 124, 0.4),
+                                          listen: false));
+                                    },
+                                    onTap: () {
+                                      Provider.of<ConversationRoomViewModel>(
+                                              context,
+                                              listen: false)
+                                          .setPractice(true);
+                                      Provider.of<ConversationRoomViewModel>(
+                                              context,
+                                              listen: false)
+                                          .showPopupWarning();
+                                    },
+                                    child: Consumer<ConversationRoomViewModel>(
+                                      builder: (context, state, child) {
+                                        return Container(
+                                          decoration: const BoxDecoration(
+                                            shape: BoxShape.circle,
+                                          ),
                                           child: CircleAvatar(
+                                            radius: 55.0,
                                             backgroundColor:
                                                 const Color.fromRGBO(
-                                                    172, 173, 177, 1),
-                                            foregroundColor: Colors.red,
-                                            radius: 30.0,
-                                            child: SvgPicture.asset(IconConstant
-                                                .instance.iconVoice),
+                                                    120, 122, 124, 0.2),
+                                            child: CircleAvatar(
+                                              radius: 40.0,
+                                              backgroundColor:
+                                                  const Color.fromRGBO(
+                                                      120, 122, 124, 0.4),
+                                              child: CircleAvatar(
+                                                backgroundColor:
+                                                    const Color.fromRGBO(
+                                                        172, 173, 177, 1),
+                                                foregroundColor: Colors.red,
+                                                radius: 30.0,
+                                                child: SvgPicture.asset(
+                                                    IconConstant
+                                                        .instance.iconVoice),
+                                              ),
+                                            ),
                                           ),
-                                        ),
-                                      ),
-                                    );
-                                  },
+                                        );
+                                      },
+                                    ),
+                                  ),
                                 ),
                               ),
-                            ),
+                              PopupWidget(),
+                            ],
                           ),
                         ],
                       ),
@@ -1966,13 +1929,16 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView>
           ),
         ),
         onPressed: () async {
+          Provider.of<AwsPollyService>(context, listen: false).stop();
           analyticInstance.logEvent(name: "clicked_play_ai_sound");
           state.setAvatarSelect(false);
           state.setAvatarAISelect(true);
-          textViewModel.stop();
 
-          await Provider.of<TextToSpeechViewModel>(context, listen: false)
-              .speak(message);
+          // await Provider.of<TextToSpeechViewModel>(context, listen: false)
+          //     .speak(message);
+          await Provider.of<AwsPollyService>(context, listen: false)
+              .onLoadUrl(message);
+          await Provider.of<AwsPollyService>(context, listen: false).onPlay();
         },
         child: Row(
           children: [
@@ -2120,12 +2086,18 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView>
                       radius: 16.0,
                       backgroundColor: const Color.fromRGBO(60, 70, 72, 1),
                       child: IconButton(
-                        onPressed: () {
+                        onPressed: () async {
                           analyticInstance.logEvent(
                               name: "clicked_play_ai_speak_to_text_button");
-                          Provider.of<TextToSpeechViewModel>(context,
+                          // Provider.of<TextToSpeechViewModel>(context,
+                          //         listen: false)
+                          //     .speak(betterMessage);
+                          await Provider.of<AwsPollyService>(context,
                                   listen: false)
-                              .speak(betterMessage);
+                              .onLoadUrl(betterMessage);
+                          await Provider.of<AwsPollyService>(context,
+                                  listen: false)
+                              .onPlay();
                         },
                         icon: SvgPicture.asset(
                           IconConstant.instance.iconVoice,
@@ -2251,7 +2223,12 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView>
                                   name: "clicked_open_translate");
                               await viewModel.getAllMessages(
                                   conversationId: widget.conversationId);
-                              textViewModel.stop();
+                              Provider.of<AwsPollyService>(context,
+                                      listen: false)
+                                  .stop();
+                              Provider.of<ConversationRoomViewModel>(context,
+                                      listen: false)
+                                  .clickMiniVoiceButton(false);
                               chatProvider.translateMessage =
                                   chatProvider.chatList[index].message;
 
@@ -2267,7 +2244,12 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView>
                             onPressed: () async {
                               analyticInstance.logEvent(
                                   name: "clicked_open_pro_and_grammar_modal");
-                              textViewModel.stop();
+                              Provider.of<AwsPollyService>(context,
+                                      listen: false)
+                                  .stop();
+                              Provider.of<ConversationRoomViewModel>(context,
+                                      listen: false)
+                                  .clickMiniVoiceButton(false);
                               Provider.of<ConversationRoomViewModel>(context,
                                       listen: false)
                                   .setTranslateMessage("");
@@ -2280,6 +2262,7 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView>
                               await viewModel.getAllMessages(
                                 conversationId: widget.conversationId,
                               );
+
                               pronunciationAndGrammer(
                                 correctMessage:
                                     viewModel.chatList[index].correctSentence,
@@ -2460,10 +2443,18 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView>
 
   Column assistantMessage(ConversationRoomViewModel chatProvider, int index) {
     if (index == chatProvider.getChatList.length - 1 &&
-        !textViewModel.isSpeaking &&
+        !Provider.of<AwsPollyService>(context, listen: false).isSpeaking &&
         chatProvider.isReadMessage) {
       analyticInstance.logEvent(name: "voiced_message_worked");
-      textViewModel.speak(chatProvider.chatList[index].message);
+      // awsViewModel.speak(chatProvider.chatList[index].message);
+      Provider.of<AwsPollyService>(context, listen: false)
+          .onLoadUrl(chatProvider.chatList[index].message);
+      Future.delayed(
+        const Duration(seconds: 1),
+        () {
+          Provider.of<AwsPollyService>(context, listen: false).onPlay();
+        },
+      );
     }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -2508,7 +2499,11 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView>
                           analyticInstance.logEvent(name: "clicked_translate");
                           await viewModel.getAllMessages(
                               conversationId: widget.conversationId);
-                          textViewModel.stop();
+                          Provider.of<ConversationRoomViewModel>(context,
+                                  listen: false)
+                              .clickMiniVoiceButton(false);
+                          Provider.of<AwsPollyService>(context, listen: false)
+                              .stop();
                           chatProvider.translateMessage =
                               chatProvider.chatList[index].message;
 
@@ -2529,9 +2524,18 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView>
                           analyticInstance.logEvent(
                               name: "clicked_voice_message");
                           HapticFeedback.heavyImpact();
-                          Provider.of<TextToSpeechViewModel>(context,
+                          Provider.of<ConversationRoomViewModel>(context,
                                   listen: false)
-                              .speak(chatProvider.chatList[index].message);
+                              .clickMiniVoiceButton(true);
+                          // Provider.of<TextToSpeechViewModel>(context,
+                          //         listen: false)
+                          //     .speak(chatProvider.chatList[index].message);
+                          await Provider.of<AwsPollyService>(context,
+                                  listen: false)
+                              .onLoadUrl(chatProvider.chatList[index].message);
+                          await Provider.of<AwsPollyService>(context,
+                                  listen: false)
+                              .onPlay();
                         },
                         icon: Icon(
                           Icons.mic,
@@ -2608,7 +2612,8 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView>
         message: msg,
         conversationId: widget.conversationId,
       );
-      textViewModel.isSpeaking = false;
+
+      Provider.of<AwsPollyService>(context, listen: false).isSpeaking = false;
 
       // chatProvider.tempList = chatProvider.chatList;
     } catch (error) {

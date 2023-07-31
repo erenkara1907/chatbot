@@ -44,6 +44,13 @@ class ConversationRoomViewModel extends ChangeNotifier {
 
   TranscriptionModel transcriptionModel = TranscriptionModel();
 
+  bool isAvailableMessage = false;
+
+  availableMessage(bool value) {
+    isAvailableMessage = value;
+    notifyListeners();
+  }
+
   List<LanguageModel> languages = [
     LanguageModel(
       id: 1,
@@ -125,6 +132,30 @@ class ConversationRoomViewModel extends ChangeNotifier {
   bool isAvatarSelected = false;
   bool isAvatarAISelected = false;
 
+  bool showPopup = false;
+
+  bool isClickedMiniVoiceButton = false;
+  bool isPractice = false;
+
+  void setPractice(bool value) {
+    isPractice = value;
+    notifyListeners();
+  }
+
+  void clickMiniVoiceButton(bool value) {
+    isClickedMiniVoiceButton = value;
+    notifyListeners();
+  }
+
+  void showPopupWarning() {
+    showPopup = true;
+    notifyListeners();
+    Timer(const Duration(seconds: 2), () {
+      showPopup = false;
+      notifyListeners();
+    });
+  }
+
   setAvatarSelect(bool value) {
     isAvatarSelected = value;
     notifyListeners();
@@ -200,12 +231,6 @@ class ConversationRoomViewModel extends ChangeNotifier {
     );
     notifyListeners();
   }
-
-  // addMessage(String text) {
-  //   sendMessageController.text = text;
-  //   print("viewmodel : ${sendMessageController.text}");
-  //   notifyListeners();
-  // }
 
   bool isListening = false;
   late TextEditingController sendTextController;
@@ -317,9 +342,11 @@ class ConversationRoomViewModel extends ChangeNotifier {
   }
 
   String voiceMessage = "";
+  String dumpMessage = "dump";
 
   selectLanguageText(String text) {
     nativeLanguage = text;
+    dumpMessage = text;
     notifyListeners();
   }
 
@@ -438,7 +465,7 @@ class ConversationRoomViewModel extends ChangeNotifier {
 
   // isCompleteSpeak(bool value) {
   //   isCompleted = value;
-  //   notifyListeners();
+  //   notifyListeners();x
   // }
 
   // Future<bool?> sendTextToPlayAPI({required String content}) async {
@@ -471,7 +498,7 @@ class ConversationRoomViewModel extends ChangeNotifier {
   //   if (response.converted!) {
   //     sound = response.audioUrl!;
   //     return true;
-  //   } else {  
+  //   } else {
   //     return false;
   //   }
   // }

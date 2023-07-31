@@ -17,6 +17,7 @@ import 'package:chatbot/product/profile/viewmodel/profile_view_model.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -404,12 +405,63 @@ class ProfileView extends BaseStateless {
                     );
                   },
                 ),
-                // ElevatedButton(
-                //   onPressed: () {
-                //     SocialMediaData.instance.openInstagramApp();
-                //   },
-                //   child: const Text("Instagram"),
-                // ),
+                const Expanded(flex: 2, child: SizedBox()),
+                Text(
+                  "Join us on social media!",
+                  style: currentTextTheme(context).bodyLarge?.copyWith(
+                        fontWeight: FontWeight.w400,
+                        color: ColorConstant.instance.additionalWhite,
+                        fontSize: 14.0,
+                      ),
+                ),
+                const SizedBox(height: 10.0),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    IconButton(
+                      onPressed: () {
+                        SocialMediaData.instance.openInstagramApp();
+                      },
+                      icon: SvgPicture.asset(
+                        IconConstant.instance.iconInstagram,
+                        width: 24.0,
+                        height: 24.0,
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () {
+                        SocialMediaData.instance.openLinkedInApp();
+                      },
+                      icon: SvgPicture.asset(
+                        IconConstant.instance.iconLinkedin,
+                        width: 24.0,
+                        height: 24.0,
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () {
+                        SocialMediaData.instance.openTwitterApp();
+                      },
+                      icon: SvgPicture.asset(
+                        IconConstant.instance.iconTwitter,
+                        width: 24.0,
+                        height: 24.0,
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () {
+                        SocialMediaData.instance.openThreadsApp();
+                      },
+                      icon: SvgPicture.asset(
+                        IconConstant.instance.iconThreads,
+                        width: 24.0,
+                        height: 24.0,
+                      ),
+                    ),
+                  ],
+                ),
+                const Expanded(child: SizedBox()),
               ],
             ),
           );

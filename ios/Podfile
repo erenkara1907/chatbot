@@ -31,6 +31,13 @@ target 'Runner' do
   use_frameworks!
   use_modular_headers!
 
+  pod 'AWSCore'
+  pod 'AWSPolly'
+  pod 'AWSAuthCore'
+  pod 'AWSAuthUI'
+  pod 'AWSMobileClient'
+  pod 'AWSCognitoIdentityProvider'
+
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
 end
 

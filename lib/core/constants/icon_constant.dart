@@ -44,6 +44,11 @@ class IconConstant {
   String iconBubble = '$asset' 'bubble.svg';
   String iconRestart = '$asset' 'restart.svg';
   String iconKeyboard = '$asset' 'keyboard.svg';
+  String iconInstagram = '$asset' 'instagram.svg';
+  String iconLinkedin = '$asset' 'linkedin.svg';
+  String iconTwitter = '$asset' 'twitter.svg';
+  String iconThreads = '$asset' 'threads.svg';
+  String iconSendVoice = '$asset' 'send_voice.svg';
 
   String flagTurkish = '$flagAsset' 'turkish.svg';
   String flagEnglish = '$flagAsset' 'english.svg';

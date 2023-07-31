@@ -4,6 +4,7 @@ import 'package:chatbot/core/constants/color_constant.dart';
 import 'package:chatbot/core/extension/regex_extension.dart';
 import 'package:chatbot/core/utils/page_transition.dart';
 import 'package:chatbot/core/view/base/base_stateless.dart';
+import 'package:chatbot/product/auth/forgot_password/view/email_view.dart';
 import 'package:chatbot/product/auth/login/viewmodel/login_view_model.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
@@ -150,18 +151,39 @@ class LoginView extends BaseStateless {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 8.0),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: InkWell(
+                        onTap: () {
+                          Navigator.push(
+                              context, createRoute(page: EmailView()));
+                          analyticInstance.logEvent(
+                              name: "forgot_password_button");
+                        },
+                        overlayColor: MaterialStateProperty.all(
+                            ColorConstant.instance.paletteBackground),
+                        child: Text(
+                          "I forgot my password",
+                          style: currentTextTheme(context).bodyLarge?.copyWith(
+                                fontWeight: FontWeight.w400,
+                                color: ColorConstant.instance.paletteBlue,
+                                fontSize: 14.0,
+                              ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 14.0),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 21.0),
                       child: AppButton(
                         onTap: () async {
-                          analyticInstance.logEvent(name: "clicked_login_button__login_view");
+                          analyticInstance.logEvent(
+                              name: "clicked_login_button__login_view");
                           await viewModel.login({
                             'email': viewModel.emailController.text,
                             'password': viewModel.passwordController.text,
                           }, context);
-                          if (viewModel.loginFormKey.currentState!
-                              .validate()) {}
+                          analyticInstance.logEvent(name: "user_login");
                         },
                         widthValue: width(context: context, value: 1.0),
                         heightValue: height(context: context, value: 0.07),
@@ -181,7 +203,8 @@ class LoginView extends BaseStateless {
                     const SizedBox(height: 8.0),
                     InkWell(
                       onTap: () {
-                        analyticInstance.logEvent(name: "clicked_go_to_register");
+                        analyticInstance.logEvent(
+                            name: "clicked_go_to_register");
                         Navigator.of(context)
                             .push(createRoute(page: RegisterView()));
                       },

@@ -26,9 +26,15 @@ class CategoryView extends StatefulWidget {
 
 class _CategoryViewState extends BaseState<CategoryView> {
   FirebaseAnalytics analyticInstance = FirebaseAnalytics.instance;
+
+  @override
+  void initState() {
+    super.initState();
+    analyticInstance.logEvent(name: 'category_view_opened');
+  }
+
   @override
   Widget build(BuildContext context) {
-    analyticInstance.logEvent(name: 'category_view_opened');
     return Scaffold(
       backgroundColor: ColorConstant.instance.paletteBackground,
       body: Stack(
