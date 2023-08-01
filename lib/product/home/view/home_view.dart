@@ -44,30 +44,30 @@ class _HomeViewState extends BaseState<HomeView> {
     });
   }
 
-  String? _url;
+  // String? _url;
 
-  final AwsPolly _awsPolly = AwsPolly.instance(
-    poolId: 'us-east-1:xxxx-xxx-xxxxx',
-    region: AWSRegionType.EUCentral1,
-  );
+  // final AwsPolly _awsPolly = AwsPolly.instance(
+  //   poolId: 'us-east-1:xxxx-xxx-xxxxx',
+  //   region: AWSRegionType.EUCentral1,
+  // );
 
-  void onLoadUrl() async {
-    setState(() => _url = null);
-    final url = await _awsPolly.getUrl(
-      voiceId: AWSPolyVoiceId.nicole,
-      input: 'This is a sample text playing through Poly!',
-    );
-    setState(() => _url = url);
-  }
+  // void onLoadUrl() async {
+  //   setState(() => _url = null);
+  //   final url = await _awsPolly.getUrl(
+  //     voiceId: AWSPolyVoiceId.nicole,
+  //     input: 'This is a sample text playing through Poly!',
+  //   );
+  //   setState(() => _url = url);
+  // }
 
-  void onPlay() async {
-    if (_url == null) return;
-    final player = AudioPlayer();
-    // await player.setUrl(_url!);
-    await player.setSourceUrl(_url!);
-    print("url : $_url");
-    player.play(UrlSource(_url!));
-  }
+  // void onPlay() async {
+  //   if (_url == null) return;
+  //   final player = AudioPlayer();
+  //   // await player.setUrl(_url!);
+  //   await player.setSourceUrl(_url!);
+  //   print("url : $_url");
+  //   player.play(UrlSource(_url!));
+  // }
 
   Future? categoriesFuture;
 

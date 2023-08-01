@@ -25,6 +25,7 @@ class HomeViewModel extends ChangeNotifier {
   List<Scenarios> scenarios = [];
   List<Scenarios> scenariosTemp = [];
   List<Categories> categories = [];
+  List<Categories> dummyCategories = [];
   ProfileHomeModel profileModel = ProfileHomeModel();
   ProfileHomeModel profileModelTemp = ProfileHomeModel();
 
@@ -193,7 +194,16 @@ class HomeViewModel extends ChangeNotifier {
 
     if (categoryResponse.result == true) {
       categories = categoryResponse.data.categories;
+      dummyCategories.add(categoryResponse.data.categories[0]);
+      notifyListeners();
     }
+  }
+
+  changeCategory(int index) {
+    dummyCategories.clear();
+    dummyCategories.add(categories[index]);
+
+    notifyListeners();
   }
 
   Future getScenarioAndCategories() async {

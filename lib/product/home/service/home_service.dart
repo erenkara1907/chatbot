@@ -41,7 +41,6 @@ class HomeService {
       'Authorization': 'Bearer $token',
     });
 
-
     return CategoryModel.fromJson(jsonDecode(response.body));
   }
 
