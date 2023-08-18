@@ -1,4 +1,4 @@
-// ignore_for_file: prefer_final_fields, unused_field, must_be_immutable, use_build_context_synchronously, unused_element, deprecated_member_use
+// ignore_for_file: prefer_final_fields, unused_field, must_be_immutable, use_build_context_synchronously, unused_element, deprecated_member_use, unrelated_type_equality_checks
 
 import 'dart:async';
 import 'dart:convert';
@@ -9,6 +9,7 @@ import 'package:animated_segmented_tab_control/animated_segmented_tab_control.da
 import 'package:audioplayers/audioplayers.dart';
 import 'package:avatar_glow/avatar_glow.dart';
 import 'package:chatbot/core/constants/color_constant.dart';
+import 'package:chatbot/core/utils/speech_provider.dart';
 import 'package:chatbot/core/view/base/base_state.dart';
 import 'package:chatbot/product/conversation/view/popup_widget.dart';
 import 'package:chatbot/product/conversation/view/text_widget.dart';
@@ -35,7 +36,6 @@ import 'package:top_snackbar_flutter/top_snack_bar.dart';
 import '../../../core/constants/icon_constant.dart';
 import '../../../core/constants/image_constant.dart';
 import '../../../core/language/locale_keys.g.dart';
-import '../../../core/utils/aws_polly.dart';
 import '../../../core/view/widget/button/app_button.dart';
 import '../../bottom_bar/view/bottom_bar_view.dart';
 
@@ -262,12 +262,13 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView>
             // chatProvider.chatList.removeLast();
 
             chatProvider.availableMessage(true);
-            // chatProvider.setText(text);
-
-            // sendMessage(
-            //     chatProvider: Provider.of<ConversationRoomViewModel>(context,
-            //         listen: false),
-            //     context);
+            if (chatProvider.isPractice) {
+              chatProvider.chatList.removeLast();
+              sendMessage(
+                  chatProvider: Provider.of<ConversationRoomViewModel>(context,
+                      listen: false),
+                  context);
+            }
           }
         });
       }
@@ -323,13 +324,15 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView>
 
         if (chatProvider.isPractice) {
           analyticInstance.logEvent(name: "upload_audio_add_dump_message");
+
           chatProvider.addUserMessage(
             message: "loading",
-            betterSentence: "betterSentence",
-            correctSentence: "correctSentence",
-            sound: "sound",
-            soundRatio: "soundRatio",
+            betterSentence: "",
+            correctSentence: "",
+            sound: "",
+            soundRatio: "",
           );
+
           chatProvider.voiceMessage != "" ? Navigator.pop(context) : null;
         } else {
           // Future.delayed(
@@ -563,8 +566,8 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView>
                           Provider.of<ConversationRoomViewModel>(context,
                                   listen: false)
                               .isReadMessage = false;
-                          Provider.of<AwsPollyService>(context, listen: false)
-                              .stop();
+                          // Provider.of<AwsPollyService>(context, listen: false)
+                          //     .stop();
 
                           await chatProvider.sendToBackendRateId(
                             context,
@@ -634,7 +637,7 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView>
                                 Provider.of<ConversationRoomViewModel>(context,
                                         listen: false)
                                     .isReadMessage = false;
-                                Provider.of<AwsPollyService>(context,
+                                Provider.of<SpeechProvider>(context,
                                         listen: false)
                                     .stop();
                                 chatProvider.isReadMessage = false;
@@ -864,10 +867,9 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView>
             flex: 5,
             child: SizedBox(
               width: width(1.0),
-              // height: height(0.075),
               child: TextField(
                 onTap: () {
-                  Provider.of<AwsPollyService>(context, listen: false).stop();
+                  Provider.of<SpeechProvider>(context, listen: false).stop();
                 },
                 maxLines: null,
                 enabled: chatProvider.isActive == 0 ? false : true,
@@ -894,7 +896,7 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView>
                             Provider.of<ConversationRoomViewModel>(context,
                                     listen: false)
                                 .isReadMessage = false;
-                            Provider.of<AwsPollyService>(context, listen: false)
+                            Provider.of<SpeechProvider>(context, listen: false)
                                 .stop();
                             Provider.of<ConversationRoomViewModel>(context,
                                     listen: false)
@@ -923,7 +925,7 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView>
                               onPressed: () async {
                                 analyticInstance.logEvent(
                                     name: "clicked_send_meessage_input_button");
-                                Provider.of<AwsPollyService>(context,
+                                Provider.of<SpeechProvider>(context,
                                         listen: false)
                                     .stop();
 
@@ -1009,11 +1011,7 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView>
                                   listen: false)
                               .setText("loading");
 
-                          Provider.of<AwsPollyService>(context, listen: false)
-                              .isSpeaking = true;
-                          Provider.of<AwsPollyService>(context, listen: false)
-                              .selectedIndex = -1;
-                          Provider.of<AwsPollyService>(context, listen: false)
+                          Provider.of<SpeechProvider>(context, listen: false)
                               .stop();
                           Provider.of<ConversationRoomViewModel>(context,
                                   listen: false)
@@ -1029,11 +1027,7 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView>
                           analyticInstance.logEvent(
                               name: "press_end_record_button");
 
-                          Provider.of<AwsPollyService>(context, listen: false)
-                              .isSpeaking = true;
-                          Provider.of<AwsPollyService>(context, listen: false)
-                              .selectedIndex = -1;
-                          Provider.of<AwsPollyService>(context, listen: false)
+                          Provider.of<SpeechProvider>(context, listen: false)
                               .stop();
                           Provider.of<ConversationRoomViewModel>(context,
                                   listen: false)
@@ -1046,7 +1040,7 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView>
                               .setIsTyping();
                         },
                         onTap: () {
-                          if (state.isAvailableMessage) {
+                          if (state.isAvailableMessage && !state.isPractice) {
                             sendMessage(
                                 chatProvider:
                                     Provider.of<ConversationRoomViewModel>(
@@ -1062,7 +1056,7 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView>
                             Provider.of<ConversationRoomViewModel>(context,
                                     listen: false)
                                 .clickMiniVoiceButton(false);
-                            Provider.of<AwsPollyService>(context, listen: false)
+                            Provider.of<SpeechProvider>(context, listen: false)
                                 .stop();
                             Provider.of<ConversationRoomViewModel>(context,
                                     listen: false)
@@ -1086,7 +1080,8 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView>
                                     const Color.fromRGBO(172, 173, 177, 1),
                                 foregroundColor: Colors.red,
                                 radius: 30.0,
-                                child: state.isAvailableMessage
+                                child: state.isAvailableMessage &&
+                                        !state.isPractice
                                     ? SvgPicture.asset(
                                         IconConstant.instance.iconSendVoice,
                                         color: ColorConstant
@@ -1116,7 +1111,7 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView>
               onTap: () {
                 analyticInstance.logEvent(
                     name: "clicked_keyboard_button_open_input");
-                Provider.of<AwsPollyService>(context, listen: false).stop();
+                Provider.of<SpeechProvider>(context, listen: false).stop();
                 Provider.of<ConversationRoomViewModel>(context, listen: false)
                     .clickMiniVoiceButton(false);
                 viewModel.sendTextController.text = "";
@@ -1143,36 +1138,37 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView>
                 ),
               ),
             ),
-            Selector<ConversationRoomViewModel, bool>(
-                builder: (context, state, child) {
-                  return AnimatedOpacity(
-                    opacity: state ? 1.0 : 0.0,
-                    duration: const Duration(milliseconds: 300),
-                    child: CircleAvatar(
-                      radius: 20.0,
-                      backgroundColor: ColorConstant.instance.additionalWhite,
-                      child: IconButton(
-                        onPressed: () {
-                          if (state) {
-                            viewModel.sendTextController.text = '';
-                            Provider.of<ConversationRoomViewModel>(context,
-                                    listen: false)
-                                .setSpeaking();
-                            Provider.of<ConversationRoomViewModel>(context,
-                                    listen: false)
-                                .availableMessage(false);
-                          }
-                        },
-                        icon: Icon(
-                          Icons.close,
-                          color: ColorConstant.instance.paletteBackground,
-                          size: 15.0,
-                        ),
+            Consumer<ConversationRoomViewModel>(
+              builder: (context, state, child) {
+                return AnimatedOpacity(
+                  opacity:
+                      state.isAvailableMessage && !state.isPractice ? 1.0 : 0.0,
+                  duration: const Duration(milliseconds: 300),
+                  child: CircleAvatar(
+                    radius: 20.0,
+                    backgroundColor: ColorConstant.instance.additionalWhite,
+                    child: IconButton(
+                      onPressed: () {
+                        if (state.isAvailableMessage && !state.isPractice) {
+                          viewModel.sendTextController.text = '';
+                          Provider.of<ConversationRoomViewModel>(context,
+                                  listen: false)
+                              .setSpeaking();
+                          Provider.of<ConversationRoomViewModel>(context,
+                                  listen: false)
+                              .availableMessage(false);
+                        }
+                      },
+                      icon: Icon(
+                        Icons.close,
+                        color: ColorConstant.instance.paletteBackground,
+                        size: 15.0,
                       ),
                     ),
-                  );
-                },
-                selector: (context, state) => state.isAvailableMessage),
+                  ),
+                );
+              },
+            ),
           ],
         ),
       ],
@@ -1195,7 +1191,7 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView>
               child: IconButton(
                 onPressed: () {
                   analyticInstance.logEvent(name: "closed_speak_modal");
-                  Provider.of<AwsPollyService>(context, listen: false).stop();
+                  // Provider.of<AwsPollyService>(context, listen: false).stop();
                   Navigator.pop(context);
                 },
                 icon: Icon(
@@ -1247,31 +1243,31 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView>
                   children: [
                     Expanded(child: chats(chatProvider, index)),
                     const SizedBox(width: 15.0),
-                    Consumer<AwsPollyService>(
-                      builder: (context, state, child) {
-                        return state.isCompleted
-                            ? const Center()
-                            : index == state.selectedIndex
-                                ? CircleAvatar(
-                                    backgroundColor:
-                                        ColorConstant.instance.greyScale400,
-                                    radius: 15.0,
-                                    child: IconButton(
-                                      onPressed: () async {
-                                        HapticFeedback.heavyImpact();
-                                        state.stop();
-                                      },
-                                      icon: Icon(
-                                        Icons.mic_off,
-                                        color: ColorConstant
-                                            .instance.additionalRed,
-                                        size: 15.0,
-                                      ),
-                                    ),
-                                  )
-                                : const Center();
-                      },
-                    ),
+                    // Consumer<AwsPollyService>(
+                    //   builder: (context, state, child) {
+                    //     return state.isCompleted
+                    //         ? const Center()
+                    //         : index == state.selectedIndex
+                    //             ? CircleAvatar(
+                    //                 backgroundColor:
+                    //                     ColorConstant.instance.greyScale400,
+                    //                 radius: 15.0,
+                    //                 child: IconButton(
+                    //                   onPressed: () async {
+                    //                     HapticFeedback.heavyImpact();
+                    //                     state.stop();
+                    //                   },
+                    //                   icon: Icon(
+                    //                     Icons.mic_off,
+                    //                     color: ColorConstant
+                    //                         .instance.additionalRed,
+                    //                     size: 15.0,
+                    //                   ),
+                    //                 ),
+                    //               )
+                    //             : const Center();
+                    //   },
+                    // ),
                   ],
                 ),
               ),
@@ -1370,6 +1366,8 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView>
                     onTap: () {
                       analyticInstance.logEvent(name: "closed_pronunciation");
                       Navigator.pop(context);
+                      Provider.of<SpeechProvider>(context, listen: false)
+                          .stop();
                     },
                     child: Container(
                       width: 25.0,
@@ -1455,9 +1453,9 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView>
                                         state: state,
                                         avatarPhoto: profilePhoto,
                                         onPressed: () async {
-                                          Provider.of<AwsPollyService>(context,
-                                                  listen: false)
-                                              .stop();
+                                          // Provider.of<AwsPollyService>(context,
+                                          //         listen: false)
+                                          //     .stop();
                                           analyticInstance.logEvent(
                                               name: "clicked_play_user_sound");
                                           state.setAvatarAISelect(false);
@@ -1510,13 +1508,7 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView>
                                     analyticInstance.logEvent(
                                         name:
                                             "press_play_record_sound_practice");
-                                    Provider.of<AwsPollyService>(context,
-                                            listen: false)
-                                        .isSpeaking = true;
-                                    Provider.of<AwsPollyService>(context,
-                                            listen: false)
-                                        .selectedIndex = -1;
-                                    Provider.of<AwsPollyService>(context,
+                                    Provider.of<SpeechProvider>(context,
                                             listen: false)
                                         .stop();
                                     Provider.of<ConversationRoomViewModel>(
@@ -1532,13 +1524,7 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView>
                                     analyticInstance.logEvent(
                                         name:
                                             "press_end_play_record_sound_practice");
-                                    Provider.of<AwsPollyService>(context,
-                                            listen: false)
-                                        .isSpeaking = true;
-                                    Provider.of<AwsPollyService>(context,
-                                            listen: false)
-                                        .selectedIndex = -1;
-                                    Provider.of<AwsPollyService>(context,
+                                    Provider.of<SpeechProvider>(context,
                                             listen: false)
                                         .stop();
                                     Provider.of<ConversationRoomViewModel>(
@@ -1552,6 +1538,9 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView>
                                             listen: false));
                                   },
                                   onTap: () {
+                                    Provider.of<SpeechProvider>(context,
+                                            listen: false)
+                                        .stop();
                                     Provider.of<ConversationRoomViewModel>(
                                             context,
                                             listen: false)
@@ -1712,10 +1701,10 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView>
                                                     "clicked_play_user_sound<_in_pronunciation_and_grammar_modal_conversation_room_view");
                                             state.setAvatarAISelect(false);
                                             state.setAvatarSelect(true);
-                                            Provider.of<AwsPollyService>(
-                                                    context,
-                                                    listen: false)
-                                                .stop();
+                                            // Provider.of<AwsPollyService>(
+                                            //         context,
+                                            //         listen: false)
+                                            //     .stop();
                                             final player = AudioPlayer();
                                             await player.play(
                                               UrlSource(viewModel
@@ -1763,13 +1752,7 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView>
                                       analyticInstance.logEvent(
                                           name:
                                               "press_play_record_sound_practice");
-                                      Provider.of<AwsPollyService>(context,
-                                              listen: false)
-                                          .isSpeaking = true;
-                                      Provider.of<AwsPollyService>(context,
-                                              listen: false)
-                                          .selectedIndex = -1;
-                                      Provider.of<AwsPollyService>(context,
+                                      Provider.of<SpeechProvider>(context,
                                               listen: false)
                                           .stop();
                                       Provider.of<ConversationRoomViewModel>(
@@ -1786,13 +1769,7 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView>
                                       analyticInstance.logEvent(
                                           name:
                                               "press_end_play_record_sound_practice");
-                                      Provider.of<AwsPollyService>(context,
-                                              listen: false)
-                                          .isSpeaking = true;
-                                      Provider.of<AwsPollyService>(context,
-                                              listen: false)
-                                          .selectedIndex = -1;
-                                      Provider.of<AwsPollyService>(context,
+                                      Provider.of<SpeechProvider>(context,
                                               listen: false)
                                           .stop();
                                       Provider.of<ConversationRoomViewModel>(
@@ -1806,6 +1783,9 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView>
                                           listen: false));
                                     },
                                     onTap: () {
+                                      Provider.of<SpeechProvider>(context,
+                                              listen: false)
+                                          .stop();
                                       Provider.of<ConversationRoomViewModel>(
                                               context,
                                               listen: false)
@@ -1929,16 +1909,13 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView>
           ),
         ),
         onPressed: () async {
-          Provider.of<AwsPollyService>(context, listen: false).stop();
+          // Provider.of<AwsPollyService>(context, listen: false).stop();
           analyticInstance.logEvent(name: "clicked_play_ai_sound");
           state.setAvatarSelect(false);
           state.setAvatarAISelect(true);
 
-          // await Provider.of<TextToSpeechViewModel>(context, listen: false)
-          //     .speak(message);
-          await Provider.of<AwsPollyService>(context, listen: false)
-              .onLoadUrl(message);
-          await Provider.of<AwsPollyService>(context, listen: false).onPlay();
+          Provider.of<SpeechProvider>(context, listen: false)
+              .speak(message, -1);
         },
         child: Row(
           children: [
@@ -2089,15 +2066,9 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView>
                         onPressed: () async {
                           analyticInstance.logEvent(
                               name: "clicked_play_ai_speak_to_text_button");
-                          // Provider.of<TextToSpeechViewModel>(context,
-                          //         listen: false)
-                          //     .speak(betterMessage);
-                          await Provider.of<AwsPollyService>(context,
-                                  listen: false)
-                              .onLoadUrl(betterMessage);
-                          await Provider.of<AwsPollyService>(context,
-                                  listen: false)
-                              .onPlay();
+
+                          Provider.of<SpeechProvider>(context, listen: false)
+                              .speak(betterMessage, -1);
                         },
                         icon: SvgPicture.asset(
                           IconConstant.instance.iconVoice,
@@ -2223,9 +2194,9 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView>
                                   name: "clicked_open_translate");
                               await viewModel.getAllMessages(
                                   conversationId: widget.conversationId);
-                              Provider.of<AwsPollyService>(context,
-                                      listen: false)
-                                  .stop();
+                              // Provider.of<AwsPollyService>(context,
+                              //         listen: false)
+                              // .stop();
                               Provider.of<ConversationRoomViewModel>(context,
                                       listen: false)
                                   .clickMiniVoiceButton(false);
@@ -2244,7 +2215,7 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView>
                             onPressed: () async {
                               analyticInstance.logEvent(
                                   name: "clicked_open_pro_and_grammar_modal");
-                              Provider.of<AwsPollyService>(context,
+                              Provider.of<SpeechProvider>(context,
                                       listen: false)
                                   .stop();
                               Provider.of<ConversationRoomViewModel>(context,
@@ -2443,18 +2414,11 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView>
 
   Column assistantMessage(ConversationRoomViewModel chatProvider, int index) {
     if (index == chatProvider.getChatList.length - 1 &&
-        !Provider.of<AwsPollyService>(context, listen: false).isSpeaking &&
+        !Provider.of<SpeechProvider>(context, listen: false).isSpeaking &&
         chatProvider.isReadMessage) {
       analyticInstance.logEvent(name: "voiced_message_worked");
-      // awsViewModel.speak(chatProvider.chatList[index].message);
-      Provider.of<AwsPollyService>(context, listen: false)
-          .onLoadUrl(chatProvider.chatList[index].message);
-      Future.delayed(
-        const Duration(seconds: 1),
-        () {
-          Provider.of<AwsPollyService>(context, listen: false).onPlay();
-        },
-      );
+      Provider.of<SpeechProvider>(context, listen: false)
+          .speak(chatProvider.chatList[index].message, index);
     }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -2499,10 +2463,8 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView>
                           analyticInstance.logEvent(name: "clicked_translate");
                           await viewModel.getAllMessages(
                               conversationId: widget.conversationId);
-                          Provider.of<ConversationRoomViewModel>(context,
-                                  listen: false)
-                              .clickMiniVoiceButton(false);
-                          Provider.of<AwsPollyService>(context, listen: false)
+
+                          Provider.of<SpeechProvider>(context, listen: false)
                               .stop();
                           chatProvider.translateMessage =
                               chatProvider.chatList[index].message;
@@ -2524,23 +2486,29 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView>
                           analyticInstance.logEvent(
                               name: "clicked_voice_message");
                           HapticFeedback.heavyImpact();
-                          Provider.of<ConversationRoomViewModel>(context,
-                                  listen: false)
-                              .clickMiniVoiceButton(true);
-                          // Provider.of<TextToSpeechViewModel>(context,
-                          //         listen: false)
-                          //     .speak(chatProvider.chatList[index].message);
-                          await Provider.of<AwsPollyService>(context,
-                                  listen: false)
-                              .onLoadUrl(chatProvider.chatList[index].message);
-                          await Provider.of<AwsPollyService>(context,
-                                  listen: false)
-                              .onPlay();
+
+                          var provider = Provider.of<SpeechProvider>(context,
+                              listen: false);
+
+                          if (provider.isSpeaking) {
+                            provider.stop();
+                          } else {
+                            provider.speak(
+                                chatProvider.chatList[index].message, index);
+                          }
                         },
-                        icon: Icon(
-                          Icons.mic,
-                          color: ColorConstant.instance.additionalWhite,
-                          size: 18.0,
+                        icon: Consumer<SpeechProvider>(
+                          builder: (context, state, child) {
+                            // print("index :$index");
+                            // print("state index : ${state.messageIndex}");
+                            return Icon(
+                              state.isSpeaking && state.messageIndex == index
+                                  ? Icons.stop
+                                  : Icons.mic,
+                              color: ColorConstant.instance.additionalWhite,
+                              size: 18.0,
+                            );
+                          },
                         ),
                       ),
                     ),
@@ -2613,7 +2581,7 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView>
         conversationId: widget.conversationId,
       );
 
-      Provider.of<AwsPollyService>(context, listen: false).isSpeaking = false;
+      // Provider.of<AwsPollyService>(context, listen: false).isSpeaking = false;
 
       // chatProvider.tempList = chatProvider.chatList;
     } catch (error) {
@@ -2671,6 +2639,9 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView>
                           ),
                           TextButton(
                             onPressed: () {
+                              Provider.of<SpeechProvider>(context,
+                                      listen: false)
+                                  .stop();
                               analyticInstance.logEvent(
                                   name: "clicked_skip_ratel");
                               Navigator.pushReplacement(
@@ -2699,6 +2670,9 @@ class _ConversationRoomViewState extends BaseState<ConversationRoomView>
                             return Material(
                               child: InkWell(
                                 onTap: () async {
+                                  Provider.of<SpeechProvider>(context,
+                                          listen: false)
+                                      .stop();
                                   analyticInstance.logEvent(
                                       name:
                                           "clicked_rate_${state.rates[index].id!}");

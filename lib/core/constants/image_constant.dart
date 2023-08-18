@@ -11,6 +11,7 @@ class ImageConstant {
 
   // Svg
   String imageNoMessage = '$asset' 'no_message.svg';
+  String imageHomeLine = '$asset' 'home_line.svg';
 
   // Png
   String avatarFour = '$asset' 'avatar_four.png';
@@ -32,6 +33,8 @@ class ImageConstant {
   String smallRobot = '$asset' 'small_robot.png';
   String imageTopEllipse = '$asset' 'top_ellipse.png';
   String imageBottomEllipse = '$asset' 'bottom_ellipse.png';
+  String imageHomeBottomEllipse = '$asset' 'home_bottom_ellipse.png';
+  String imageHomeRightEllipse = '$asset' 'home_right_ellipse.png';
   String imageAI = '$asset' 'ai.png';
   String imageAIProfile = '$asset' 'ai_profile.png';
 }

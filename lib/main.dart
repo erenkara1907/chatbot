@@ -5,8 +5,8 @@ import 'dart:io';
 import 'package:chatbot/core/constants/color_constant.dart';
 import 'package:chatbot/core/enum/preference_keys.dart';
 import 'package:chatbot/core/language/localization_init.dart';
-import 'package:chatbot/core/utils/aws_polly.dart';
 import 'package:chatbot/core/utils/connectivity_sevice.dart';
+import 'package:chatbot/core/utils/speech_provider.dart';
 import 'package:chatbot/core/view/theme/theme.dart';
 import 'package:chatbot/product/auth/forgot_password/viewmodel/forgot_password_view_model.dart';
 import 'package:chatbot/product/auth/language/viewmodel/language_view_model.dart';
@@ -52,7 +52,7 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (context) => LoginViewModel()),
         ChangeNotifierProvider(create: (context) => ConnectivityService()),
         ChangeNotifierProvider(create: (context) => ForgotPasswordViewModel()),
-        ChangeNotifierProvider(create: (context) => AwsPollyService()),
+        ChangeNotifierProvider(create: (context) => SpeechProvider()),
         ChangeNotifierProvider(
             create: (context) => ConversationRoomViewModel()),
       ],

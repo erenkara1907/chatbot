@@ -1,8 +1,6 @@
 import 'dart:math';
 import 'dart:ui';
 
-import 'package:audioplayers/audioplayers.dart';
-import 'package:aws_polly/aws_polly.dart';
 import 'package:chatbot/core/constants/color_constant.dart';
 import 'package:chatbot/core/utils/connectivity_sevice.dart';
 import 'package:chatbot/core/view/base/base_state.dart';

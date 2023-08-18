@@ -1,10 +1,6 @@
 PODS:
   - audioplayers_darwin (0.0.1):
     - Flutter
-  - aws_polly (0.0.1):
-    - AWSMobileClient
-    - AWSPolly
-    - Flutter
   - AWSAuthCore (2.33.1):
     - AWSCore (= 2.33.1)
   - AWSAuthUI (2.33.1):
@@ -166,7 +162,6 @@ PODS:
 
 DEPENDENCIES:
   - audioplayers_darwin (from `.symlinks/plugins/audioplayers_darwin/ios`)
-  - aws_polly (from `.symlinks/plugins/aws_polly/ios`)
   - AWSAuthCore
   - AWSAuthUI
   - AWSCognitoIdentityProvider
@@ -217,8 +212,6 @@ SPEC REPOS:
 EXTERNAL SOURCES:
   audioplayers_darwin:
     :path: ".symlinks/plugins/audioplayers_darwin/ios"
-  aws_polly:
-    :path: ".symlinks/plugins/aws_polly/ios"
   connectivity_plus:
     :path: ".symlinks/plugins/connectivity_plus/ios"
   firebase_analytics:
@@ -250,7 +243,6 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   audioplayers_darwin: 877d9a4d06331c5c374595e46e16453ac7eafa40
-  aws_polly: 9f95d0e3ee34be8f2f3df76ef39865d561f1a636
   AWSAuthCore: bf1e351f9dc1bf2a11e4a63dce4e0cbec45c3036
   AWSAuthUI: 08fc19d0744afab6533f1f2596e4c81f8e507487
   AWSCognitoIdentityProvider: e375bd708ef224c8e6616c5609eaa75e41e4db54

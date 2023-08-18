@@ -134,7 +134,7 @@ class ConversationRoomViewModel extends ChangeNotifier {
 
   bool showPopup = false;
 
-  bool isClickedMiniVoiceButton = false;
+  // bool isClickedMiniVoiceButton = false;
   bool isPractice = false;
 
   void setPractice(bool value) {
@@ -143,7 +143,7 @@ class ConversationRoomViewModel extends ChangeNotifier {
   }
 
   void clickMiniVoiceButton(bool value) {
-    isClickedMiniVoiceButton = value;
+    // isClickedMiniVoiceButton = value;
     notifyListeners();
   }
 
